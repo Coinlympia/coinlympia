@@ -1,0 +1,56 @@
+{
+  "name": "@dexkit/web3forms",
+  "version": "2.0.0",
+  "private": false,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "lint": "TIMING=1 eslint \"**/*.ts*\"",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook",
+    "release": "changeset publish",
+    "extract": "formatjs extract",
+    "generate-lang-files": "yarn extract 'components/**/*.ts*' --ignore='**/*.d.ts' --out-file lang/main.json --id-interpolation-pattern '[sha512:contenthash:base64:6]'"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.0",
+    "@storybook/addon-actions": "^6.5.16",
+    "@storybook/addon-essentials": "^6.5.16",
+    "@storybook/addon-interactions": "^6.5.16",
+    "@storybook/addon-links": "^6.5.16",
+    "@storybook/builder-vite": "^0.4.2",
+    "@storybook/builder-webpack5": "^6.5.16",
+    "@storybook/manager-webpack5": "^6.5.16",
+    "@storybook/react": "^6.5.16",
+    "@storybook/testing-library": "^0.0.13",
+    "@vitejs/plugin-react": "^3.1.0",
+    "babel-loader": "^8.3.0",
+    "eslint": "^7.32.0",
+    "eslint-config-custom": "*",
+    "react-docgen-typescript-loader": "^3.7.2",
+    "storybook": "^6.5.16",
+    "ts-loader": "^9.4.2",
+    "tsconfig": "*",
+    "tsup": "^6.5.0",
+    "typescript": "5.8.3",
+    "vite": "^4.2.1"
+  },
+  "dependencies": {
+    "@dexkit/core": "*",
+    "@dexkit/ui": "*",
+    "@helia/strings": "^1.0.0",
+    "@helia/unixfs": "^1.3.0",
+    "@libp2p/webrtc-star": "^7.0.0",
+    "formik": "^2.2.9",
+    "formik-mui": "^5.0.0-alpha.0",
+    "formik-mui-x-date-pickers": "^0.0.1",
+    "helia": "^1.3.2",
+    "libp2p": "^0.45.6",
+    "multiformats": "^11.0.2",
+    "yup": "^1.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

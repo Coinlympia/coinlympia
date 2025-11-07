@@ -1,0 +1,58 @@
+{
+  "name": "@dexkit/dexappbuilder-render",
+  "private": false,
+  "type": "module",
+  "version": "2.0.0",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "type": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./widget": {
+      "type": "./dist/widget.d.ts",
+      "import": "./dist/widget.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -w",
+    "lint": "TIMING=1 eslint \"**/*.ts*\"",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "tsconfig": "*",
+    "typescript": "5.4.3"
+  },
+  "dependencies": {
+    "@dexkit/dexappbuilder-viewer": "*",
+    "@dexkit/evm-chains": "^1.15.2",
+    "@dexkit/ui": "*",
+    "@emotion/cache": "^11.7.1",
+    "@emotion/react": "^11.10.5",
+    "@emotion/server": "^11.4.0",
+    "@emotion/styled": "^11.8.1",
+    "@mui/icons-material": "7.3.2",
+    "@mui/lab": "^7.0.0-alpha.170",
+    "@mui/material": "7.3.2",
+    "@mui/x-data-grid": "^7.27.0",
+    "@mui/x-date-pickers": "^7.27.0",
+    "react-intersection-observer": "^9.8.0",
+    "react-error-boundary": "^3.1.4",
+    "react-markdown": "^8.0.3",
+    "remark-gfm": "^3.0.1",
+    "ethers": "^5.7.2",
+    "next": "15.5.5",
+    "next-auth": "^4.20.1",
+    "thirdweb": "^5.93.15",
+    "react-intl": "^5.24.8",
+    "yet-another-react-lightbox": "^3.17.0"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

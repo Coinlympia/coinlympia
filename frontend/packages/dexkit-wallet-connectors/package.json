@@ -1,0 +1,24 @@
+{
+  "name": "@dexkit/wallet-connectors",
+  "private": false,
+  "version": "0.8.0",
+  "license": "MIT",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "lint": "TIMING=1 eslint \"**/*.ts*\""
+  },
+  "dependencies": {
+    "@dexkit/core": "*"
+  },
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-custom": "*",
+    "tsconfig": "*",
+    "typescript": "5.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

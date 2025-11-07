@@ -1,0 +1,214 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserAccount {
+  id                String   @id @default(dbgenerated("gen_random_uuid()"))
+  address           String   @unique
+  username          String?  @unique
+  profileImageURL   String?
+  backgroundImageURL String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  gameParticipations GameParticipant[]
+  gameResults        GameResult[]
+  createdGames       Game[]           @relation("GameCreator")
+  affiliateEntriesAsUser AffiliateEntry[] @relation("AffiliateUser")
+  affiliateEntriesAsReferrer AffiliateEntry[] @relation("AffiliateReferrer")
+
+  totalWinnedGames     Int @default(0)
+  totalJoinedGames     Int @default(0)
+  totalFirstWinnedGames Int @default(0)
+  totalSecondWinnedGames Int @default(0)
+  totalThirdWinnedGames Int @default(0)
+  totalEarned          String @default("0")
+  totalSpent           String @default("0")
+  earnedMinusSpent     String @default("0")
+
+  @@index([address])
+  @@index([username])
+  @@map("user_accounts")
+}
+
+model GameToken {
+  id          String   @id @default(cuid())
+  address     String   @unique
+  symbol      String 
+  name        String
+  base        String
+  baseName    String 
+  quote       String   @default("USD")
+  logo        String?
+  tv          String?
+  chainId     Int
+  oracleChainId Int?
+  coingeckoPlatformId String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  currentPrice String?
+  price20m     String?
+  price1h      String?
+  price4h      String?
+  price8h      String?
+  price24h     String?
+  price7d      String?
+  price30d     String?
+  lastPriceUpdate DateTime?
+
+  gameCoinFeeds GameCoinFeed[]
+  participantCoinFeeds GameParticipantCoinFeed[] @relation("ParticipantCoinFeeds")
+
+  @@index([address])
+  @@index([chainId])
+  @@index([symbol])
+  @@index([lastPriceUpdate])
+  @@map("game_tokens")
+}
+
+// Games - Juegos creados
+model Game {
+  id                    String   @id @default(cuid())
+  intId                 Int      @unique
+  chainId               Int
+  address               String
+  type                  Int
+  status                String
+  duration              Int
+  numCoins              Int
+  numPlayers            Int
+  currentPlayers        Int      @default(0)
+  entry                 String
+  coinToPlay            String
+  amountToPlay          String
+  totalAmountCollected  String   @default("0")
+  startTimestamp        BigInt
+  abortTimestamp        BigInt
+  startedAt             DateTime?
+  endedAt               DateTime?
+  title                 String?
+  description           String?
+  smallDescription      String?
+  creatorAddress        String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relaciones
+  creator               UserAccount @relation("GameCreator", fields: [creatorAddress], references: [address])
+  participants          GameParticipant[]
+  coinFeeds             GameCoinFeed[]
+  results                GameResult[]
+  affiliateEntries       AffiliateEntry[]
+
+  @@index([intId])
+  @@index([chainId])
+  @@index([creatorAddress])
+  @@index([status])
+  @@index([startTimestamp])
+  @@map("games")
+}
+
+model GameParticipant {
+  id            String   @id @default(cuid())
+  gameId        String
+  userAddress   String
+  captainCoin   String
+  championId    String?
+  affiliate     String?
+  joinedAt      DateTime @default(now())
+
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user          UserAccount @relation(fields: [userAddress], references: [address])
+  coinFeeds     GameParticipantCoinFeed[]
+
+  @@unique([gameId, userAddress])
+  @@index([gameId])
+  @@index([userAddress])
+  @@map("game_participants")
+}
+
+model GameCoinFeed {
+  id            String   @id @default(cuid())
+  gameId        String
+  tokenAddress  String
+  startPrice    String
+  endPrice      String?
+  score         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  token         GameToken @relation(fields: [tokenAddress], references: [address])
+
+  @@unique([gameId, tokenAddress])
+  @@index([gameId])
+  @@index([tokenAddress])
+  @@map("game_coin_feeds")
+}
+
+model GameParticipantCoinFeed {
+  id                String   @id @default(cuid())
+  participantId     String
+  tokenAddress      String
+  createdAt         DateTime @default(now())
+
+  participant       GameParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  token             GameToken @relation("ParticipantCoinFeeds", fields: [tokenAddress], references: [address])
+
+  @@unique([participantId, tokenAddress])
+  @@index([participantId])
+  @@index([tokenAddress])
+  @@map("game_participant_coin_feeds")
+}
+
+model GameResult {
+  id            String   @id @default(cuid())
+  gameId        String   @unique
+  userAddress   String
+  position      Int 
+  score         String
+  prize         String
+  captainCoin   String
+  championId    String?
+  calculatedAt  DateTime @default(now())
+
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user          UserAccount @relation(fields: [userAddress], references: [address])
+
+  @@index([gameId])
+  @@index([userAddress])
+  @@index([position])
+  @@map("game_results")
+}
+
+model AffiliateEntry {
+  id            String   @id @default(cuid())
+  gameId        String
+  userAddress   String
+  affiliateAddress String
+  type          String
+  status        String
+  reward        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user          UserAccount @relation("AffiliateUser", fields: [userAddress], references: [address])
+  affiliate     UserAccount @relation("AffiliateReferrer", fields: [affiliateAddress], references: [address])
+
+  @@index([gameId])
+  @@index([userAddress])
+  @@index([affiliateAddress])
+  @@index([status])
+  @@map("affiliate_entries")
+}

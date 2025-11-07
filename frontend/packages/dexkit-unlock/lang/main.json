@@ -1,0 +1,20 @@
+{
+  "buy.key": {
+    "defaultMessage": "Buy key"
+  },
+  "connect.wallet": {
+    "defaultMessage": "Connect Wallet"
+  },
+  "left": {
+    "defaultMessage": "Left"
+  },
+  "see.key": {
+    "defaultMessage": "See key"
+  },
+  "switch.network": {
+    "defaultMessage": "Switch network"
+  },
+  "you.already.own.key": {
+    "defaultMessage": "You already own a key"
+  }
+}

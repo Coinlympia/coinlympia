@@ -1,0 +1,362 @@
+import { strPad } from '@/modules/common/utils/strings';
+import { PlayArrow } from '@mui/icons-material';
+import Share from '@mui/icons-material/Share';
+import {
+  Box,
+  Button,
+  Card,
+  CircularProgress,
+  Skeleton,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import { AnimatedButton } from '@/components/animated/AnimatedButton';
+import { AnimatedCircularProgress } from '@/components/animated/AnimatedCircularProgress';
+import Grid from '@mui/material/Grid';
+import { BigNumber, ethers } from 'ethers';
+import { useMemo } from 'react';
+import { FormattedMessage } from 'react-intl';
+import { GAME_STARTED, GAME_WAITING } from '../constants';
+import { GameType } from '../constants/enums';
+import {
+  useCoinLeagueGameOnChainQuery,
+  useCoinToPlay,
+} from '../hooks/coinleague';
+import { GET_GAME_LEVEL, getGameStatus } from '../utils/game';
+import { GET_LABEL_FROM_DURATION } from '../utils/time';
+import GameCountdown from './GameCountdown';
+import GameCounterSpan from './GameCounterSpan';
+
+interface Props {
+  chainId?: number;
+  provider?: ethers.providers.Web3Provider;
+  id: string;
+  factoryAddress: string;
+  onJoin: () => void;
+  onStart: () => void;
+  onEnd: () => void;
+  onShare: () => void;
+  onRefetch: () => void;
+  isStarting?: boolean;
+  isEnding?: boolean;
+  isInGame?: boolean;
+  isJoining?: boolean;
+  canJoinGame?: boolean;
+  canStart?: boolean;
+  canEnd?: boolean;
+}
+
+export function GameOverviewCard({
+  chainId,
+  id,
+  provider,
+  factoryAddress,
+  onJoin,
+  onStart,
+  onRefetch,
+  onShare,
+  isStarting,
+  isInGame,
+  canJoinGame,
+  canStart,
+  isJoining,
+  canEnd,
+  isEnding,
+  onEnd,
+}: Props) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { data: game, isLoading } = useCoinLeagueGameOnChainQuery({
+    id,
+    provider,
+    factoryAddress,
+  });
+
+  const coinToPlay = useCoinToPlay(chainId, game?.coin_to_play);
+
+  const prizeTotalValue = useMemo(() => {
+    if (game && coinToPlay) {
+      return ethers.utils.formatUnits(
+        BigNumber.from(game?.amount_to_play).mul(
+          BigNumber.from(game.num_players),
+        ),
+        coinToPlay.decimals,
+      );
+    }
+
+    return '';
+  }, [game, coinToPlay]);
+
+  const [coins, duration, players, maxPlayers, entry] = useMemo(() => {
+    if (!game) {
+      return [0, 0, 0, 0, 0];
+    }
+
+    const players = strPad(Number(game?.players.length) || 0);
+    const maxPlayers = strPad(Number(game?.num_players) || 0);
+
+    const entry = ethers.utils.formatUnits(
+      BigNumber.from(game?.amount_to_play),
+      coinToPlay?.decimals,
+    );
+
+    return [
+      Number(game.num_coins),
+      Number(game.duration),
+      players,
+      maxPlayers,
+      entry,
+    ];
+  }, [game, coinToPlay]);
+
+  return (
+    <Card>
+      <Box sx={{ p: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            flexDirection: { sm: 'row', xs: 'column' },
+            alignItems: { sm: 'center' },
+          }}
+        >
+          <Box>
+            <Grid
+              spacing={isMobile ? 2 : 1}
+              container
+              alignItems="center"
+            >
+              {/* <Grid>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage id="id" defaultMessage="ID" />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? <Skeleton /> : game?.id}
+                </Typography>
+              </Grid>*/}
+              <Grid size={{ xs: 6, sm: 2 }}>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage
+                    id="game.level"
+                    defaultMessage="Game Level"
+                  />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? (
+                    <Skeleton />
+                  ) : (
+                    game && (
+                      <FormattedMessage
+                        id={GET_GAME_LEVEL(
+                          BigNumber.from(game?.amount_to_play),
+                          chainId,
+                          game?.coin_to_play,
+                        )}
+                        defaultMessage={GET_GAME_LEVEL(
+                          BigNumber.from(game?.amount_to_play),
+                          chainId,
+                          game?.coin_to_play,
+                        )}
+                      />
+                    )
+                  )}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 2 }}>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage id="duration" defaultMessage="Duration" />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? (
+                    <Skeleton />
+                  ) : (
+                    <FormattedMessage
+                      id={GET_LABEL_FROM_DURATION(duration)}
+                      defaultMessage={GET_LABEL_FROM_DURATION(duration)}
+                    />
+                  )}
+                </Typography>
+              </Grid>
+              <Grid>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage id="entry" defaultMessage="Entry" />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? (
+                    <Skeleton />
+                  ) : (
+                    <>
+                      {entry} {coinToPlay?.symbol}
+                    </>
+                  )}
+                </Typography>
+              </Grid>
+              <Grid>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage id="type" defaultMessage="Type" />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? (
+                    <Skeleton />
+                  ) : game?.game_type === GameType.Bull - 1 ? (
+                    <FormattedMessage id="bull" defaultMessage="Bull" />
+                  ) : (
+                    <FormattedMessage id="bear" defaultMessage="Bear" />
+                  )}
+                </Typography>
+              </Grid>
+              <Grid>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage id="coins" defaultMessage="Coins" />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? <Skeleton /> : strPad(coins)}
+                </Typography>
+              </Grid>
+              <Grid>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage id="players" defaultMessage="Players" />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? (
+                    <Skeleton />
+                  ) : (
+                    <>
+                      {players}/{maxPlayers}
+                    </>
+                  )}
+                </Typography>
+              </Grid>
+
+              <Grid>
+                <Typography variant="caption" color="textSecondary">
+                  <FormattedMessage id="max.prize" defaultMessage="Max prize" />
+                </Typography>
+                <Typography variant="body2">
+                  {isLoading ? (
+                    <Skeleton />
+                  ) : (
+                    <>
+                      {prizeTotalValue} {coinToPlay?.symbol}
+                    </>
+                  )}
+                </Typography>
+              </Grid>
+              {game && getGameStatus(game) === GAME_WAITING && (
+                <Grid>
+                  <Typography variant="caption" color="textSecondary">
+                    <FormattedMessage
+                      id="starts.at"
+                      defaultMessage="Starts at"
+                    />
+                  </Typography>
+                  <Typography variant="body2">
+                    <GameCounterSpan startsAt={game.start_timestamp} />
+                  </Typography>
+                </Grid>
+              )}
+              {game &&
+                getGameStatus(game) === GAME_STARTED &&
+                new Date().getTime() / 1000 <
+                game.start_timestamp + game.duration && (
+                  <Grid>
+                    <Typography variant="caption" color="textSecondary">
+                      <FormattedMessage id="ends.in" defaultMessage="Ends in" />
+                    </Typography>
+                    <Typography variant="body2">
+                      <GameCountdown
+                        duration={game.duration}
+                        startTimestamp={game.start_timestamp}
+                        onEnd={onRefetch}
+                      />
+                    </Typography>
+                  </Grid>
+                )}
+              <Grid>
+                <Button
+                  sx={{
+                    ml: 4,
+                    color: '#FFFFFF',
+                    '& .MuiTypography-root': {
+                      color: '#FFFFFF',
+                    },
+                  }}
+                  variant="contained"
+                  onClick={onShare}
+                  startIcon={<Share />}
+                  size="small"
+                >
+                  <FormattedMessage id="share" defaultMessage="Share" />
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+          {canJoinGame && (
+            <Box sx={{ mt: { xs: 2, sm: 0 } }}>
+              <AnimatedButton
+                fullWidth
+                disabled={isJoining}
+                onClick={onJoin}
+                startIcon={
+                  isJoining ? (
+                    <AnimatedCircularProgress color="inherit" size="1rem" />
+                  ) : undefined
+                }
+                variant="contained"
+                color="primary"
+                sx={{ marginTop: 0 }}
+              >
+                <FormattedMessage id="join.game" defaultMessage="Join Game" />
+              </AnimatedButton>
+            </Box>
+          )}
+          {isInGame && canStart && (
+            <Box sx={{ mt: { xs: 2, sm: 0 } }}>
+              <Button
+                fullWidth
+                disabled={isStarting}
+                onClick={onStart}
+                startIcon={
+                  isStarting ? (
+                    <CircularProgress color="inherit" size="1rem" />
+                  ) : (
+                    <PlayArrow />
+                  )
+                }
+                variant="contained"
+                color="primary"
+                sx={{ marginTop: 0 }}
+              >
+                <FormattedMessage id="start.game" defaultMessage="Start Game" />
+              </Button>
+            </Box>
+          )}
+          {isInGame && canEnd && (
+            <Box sx={{ mt: { xs: 2, sm: 0 } }}>
+              <Button
+                fullWidth
+                disabled={isEnding}
+                onClick={onEnd}
+                startIcon={
+                  isEnding ? (
+                    <CircularProgress color="inherit" size="1rem" />
+                  ) : (
+                    <PlayArrow />
+                  )
+                }
+                variant="contained"
+                color="primary"
+                sx={{ marginTop: 0 }}
+              >
+                <FormattedMessage id="end.game" defaultMessage="End Game" />
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Card>
+  );
+}
+
+

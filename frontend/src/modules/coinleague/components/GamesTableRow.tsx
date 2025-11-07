@@ -1,0 +1,180 @@
+import ArrowDownSquare from '@/modules/common/components/icons/ArrowDownSquare';
+import ArrowUpSquare from '@/modules/common/components/icons/ArrowUpSquare';
+import Crown from '@/modules/common/components/icons/Crown';
+import { ChainId } from '@/modules/common/constants/enums';
+import { getNetworkSlugFromChainId } from '@/modules/common/utils';
+import {
+  Box,
+  Button,
+  Stack,
+  TableCell,
+  TableRow,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import Grid from '@mui/material/Grid';
+import { BigNumber, ethers } from 'ethers';
+import Link from 'next/link';
+import { useState } from 'react';
+import { FormattedMessage } from 'react-intl';
+import { useCoinToPlay } from '../hooks/coinleague';
+import { GameGraph } from '../types';
+import { GET_GAME_LEVEL } from '../utils/game';
+
+interface Props {
+  game: GameGraph;
+  onShare: (game: GameGraph) => void;
+  onShowMetadata: (game: GameGraph) => void;
+  chainId?: ChainId;
+  affiliate?: string;
+}
+
+export default function GamesTableRow({
+  game,
+  onShare,
+  onShowMetadata,
+  chainId,
+  affiliate,
+}: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const coinToPlay = useCoinToPlay(chainId, game?.coinToPlay);
+
+  const entry = ethers.utils.formatUnits(
+    BigNumber.from(game?.entry),
+    coinToPlay?.decimals,
+  );
+
+  const handleToggle = () => {
+    setExpanded((value) => !value);
+  };
+
+  return (
+    <>
+      <TableRow>
+        <TableCell>
+          <Stack
+            spacing={1}
+            direction="row"
+            alignItems="center"
+          >
+            {game.title && <Crown fontSize="small" />}
+            <Typography>#{game.id}</Typography>
+          </Stack>
+        </TableCell>
+        <TableCell>
+          <Stack
+            spacing={1}
+            direction="row"
+            alignItems="center"
+          >
+            {game?.type === 'Bull' ? <ArrowUpSquare /> : <ArrowDownSquare />}
+
+            {game?.type === 'Bull' ? (
+              <Typography
+                variant="inherit"
+                sx={(theme) => ({
+                  color: theme.palette.success.main,
+                })}
+              >
+                <FormattedMessage id="bull" defaultMessage="Bull" />
+              </Typography>
+            ) : (
+              <Typography
+                variant="inherit"
+                sx={(theme) => ({ color: theme.palette.error.main })}
+              >
+                <FormattedMessage id="bear" defaultMessage="Bear" />
+              </Typography>
+            )}
+          </Stack>
+        </TableCell>
+        <TableCell>
+          <FormattedMessage
+            id={GET_GAME_LEVEL(BigNumber.from(game.entry), chainId, game.coinToPlay)}
+            defaultMessage={GET_GAME_LEVEL(BigNumber.from(game.entry), chainId, game.coinToPlay)}
+          />
+        </TableCell>
+
+        <TableCell>
+          <Box>
+            <Link
+              href={`/game/${getNetworkSlugFromChainId(chainId)}/${game.id
+                }${affiliate ? '?affiliate=' + affiliate : ''}`}
+              prefetch={true}
+              style={{ textDecoration: 'none' }}
+            >
+              <Button
+                color="primary"
+                variant="contained"
+                size={isMobile ? "small" : "medium"}
+                sx={{
+                  fontWeight: 600,
+                  maxWidth: isMobile ? 90 : 250,
+                  minWidth: isMobile ? 0 : undefined,
+                  display: 'flex',
+                  justifyContent: isMobile ? 'center' : 'space-between',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  px: isMobile ? 1 : 2,
+                  color: '#FFFFFF',
+                  '& .MuiTypography-root': {
+                    color: '#FFFFFF',
+                  },
+                }}
+              >
+                <Typography variant="inherit" sx={{ color: '#FFFFFF' }}>
+                  {game?.startedAt ? (
+                    <FormattedMessage id="view.game" defaultMessage="View Game" />
+                  ) : (
+                    <FormattedMessage id="join.game" defaultMessage="Join Game" />
+                  )}
+                </Typography>
+                {!isMobile && (
+                  <Typography variant="inherit" sx={{ color: '#FFFFFF' }}>
+                    {entry} {coinToPlay?.symbol}
+                  </Typography>
+                )}
+              </Button>
+            </Link>
+            {isMobile && (
+              <Typography
+                variant="caption"
+                color="textSecondary"
+                align="center"
+                sx={{
+                  display: 'block',
+                  mt: 0.5,
+                  fontSize: '0.7rem'
+                }}
+              >
+                {entry} {coinToPlay?.symbol}
+              </Typography>
+            )}
+          </Box>
+        </TableCell>
+
+        {/*<TableCell>
+          <IconButton onClick={handleToggle}>
+            {expanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </TableCell>*/}
+      </TableRow>
+      {expanded && (
+        <TableRow>
+          <TableCell {...({ colSpan: 4 } as any)}>
+            <Grid container spacing={2}>
+              <Grid size="grow">
+                <Typography variant="caption"></Typography>
+                <Typography variant="body2"></Typography>
+              </Grid>
+            </Grid>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
+  );
+}
+
+

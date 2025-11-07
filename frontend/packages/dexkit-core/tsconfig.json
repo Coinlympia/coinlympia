@@ -1,0 +1,12 @@
+{
+  "extends": "tsconfig/react-library.json",
+  "include": [".", "../dexkit-ui/hooks/useBlockNumber.ts"],
+  "outDir": "./dist",
+
+  "exclude": ["dist", "build", "node_modules"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "moduleResolution": "node",
+    "lib": ["DOM", "ES6", "DOM.Iterable", "ScriptHost", "ES2016.Array.Include"]
+  }
+}

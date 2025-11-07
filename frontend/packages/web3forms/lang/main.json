@@ -1,0 +1,116 @@
+{
+  "Select.an.address": {
+    "defaultMessage": "Select an address"
+  },
+  "add": {
+    "defaultMessage": "add"
+  },
+  "add.airdrop.list": {
+    "defaultMessage": "Add airdrop list"
+  },
+  "add.recipient": {
+    "defaultMessage": "Add recipient"
+  },
+  "addresses": {
+    "defaultMessage": "Addresses"
+  },
+  "all.files.here.are.stored.on.ipfs": {
+    "defaultMessage": "All files here are stored on IPFS"
+  },
+  "amount": {
+    "defaultMessage": "Amount"
+  },
+  "call": {
+    "defaultMessage": "Call"
+  },
+  "calling": {
+    "defaultMessage": "Calling"
+  },
+  "cancel": {
+    "defaultMessage": "Cancel"
+  },
+  "confirm": {
+    "defaultMessage": "Confirm"
+  },
+  "confirm.call": {
+    "defaultMessage": "Confirm call"
+  },
+  "confirm.transaction": {
+    "defaultMessage": "Confirm transaction"
+  },
+  "deploy": {
+    "defaultMessage": "Deploy"
+  },
+  "do.you.really.want.to.switch.to.network": {
+    "defaultMessage": "Do you really want to switch to {network}?"
+  },
+  "field.required": {
+    "defaultMessage": "field required"
+  },
+  "get": {
+    "defaultMessage": "Get"
+  },
+  "image": {
+    "defaultMessage": "Image"
+  },
+  "invalid.address": {
+    "defaultMessage": "Invalid address"
+  },
+  "invalid.decimal": {
+    "defaultMessage": "Invalid decimal"
+  },
+  "load more": {
+    "defaultMessage": "Load more"
+  },
+  "loading": {
+    "defaultMessage": "Loading"
+  },
+  "method.label": {
+    "defaultMessage": "Method: {label}"
+  },
+  "no.files": {
+    "defaultMessage": "No files"
+  },
+  "pass.contract.contructor.arguments": {
+    "defaultMessage": "Pass the contract constructor arguments"
+  },
+  "payee": {
+    "defaultMessage": "Payee"
+  },
+  "percentage": {
+    "defaultMessage": "Percentage"
+  },
+  "please.confirm.the.transaction.in.your.wallet": {
+    "defaultMessage": "Please, confirm the transaction in your wallet"
+  },
+  "select.file": {
+    "defaultMessage": "Select file"
+  },
+  "select.the.network.you.want.to.deploy.this.contract": {
+    "defaultMessage": "Select the network you want to deploy this contract"
+  },
+  "switch.network": {
+    "defaultMessage": "switch.network"
+  },
+  "this.function.will.not.work.correctly.please.contact.the.creator": {
+    "defaultMessage": "this function will not work correctly. Please, contact the creator"
+  },
+  "total.shares.cannot.go.over.one.hundred": {
+    "defaultMessage": "Total shares cannot go over 100%."
+  },
+  "total.shares.currently.add.up.to.percentage": {
+    "defaultMessage": "Total shares currently add up to {percentage}%"
+  },
+  "total.shares.need.to.add.up.to.one.hundred": {
+    "defaultMessage": "Total shares need to add up to 100%."
+  },
+  "upload": {
+    "defaultMessage": "Upload"
+  },
+  "upload.a.file.to.ipfs": {
+    "defaultMessage": "Upload a file to ipfs"
+  },
+  "view.transaction": {
+    "defaultMessage": "View Transaction"
+  }
+}

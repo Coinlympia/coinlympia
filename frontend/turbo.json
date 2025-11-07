@@ -1,0 +1,43 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": [
+    "//"
+  ],
+  "globalEnv": [
+    "NEXT_PUBLIC_DEXKIT_DASH_ENDPOINT",
+    "MARKETPLACE_API_KEY"
+  ],
+  "pipeline": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**"
+      ]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "storybook": {
+      "cache": false
+    },
+    "storybook:web3forms": {
+      "cache": false
+    },
+    "bundle:widgets": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false
+    }
+  },
+  "globalDependencies": [
+    "**/.env.*local"
+  ],
+  "globalPassThroughEnv": [
+    "NODE_ENV"
+  ]
+}

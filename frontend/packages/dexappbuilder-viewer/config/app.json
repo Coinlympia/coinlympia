@@ -1,0 +1,532 @@
+{
+  "name": "DexAppBuilder",
+  "email": "info@dexkit.com",
+  "locale": "en-US",
+  "currency": "usd",
+  "hide_powered_by": false,
+  "defaultThemeMode": "light",
+  "theme": "kittygotchi",
+  "domain": "https://dexappbuilder.dexkit.com",
+  "logo": {
+    "url": "https://dexkit-storage.nyc3.cdn.digitaloceanspaces.com/dexkit/images/logo/dexappbuilder.svg",
+    "height": 50,
+    "width": 150
+  },
+  "logoDark": {
+    "url": "https://dexkit-storage.nyc3.cdn.digitaloceanspaces.com/dexkit/images/logo/dexappbuilder-dark.svg",
+    "height": 50,
+    "width": 150
+  },
+  "favicon_url": "",
+  "social": [
+    {
+      "type": "instagram",
+      "handle": "dexkit.io"
+    },
+    {
+      "type": "twitter",
+      "handle": "dexkit"
+    }
+  ],
+  "transak": {
+    "enabled": true
+  },
+  "fees": [
+    {
+      "amount_percentage": 1,
+      "recipient": "0x5bD68B4d6f90Bcc9F3a9456791c0Db5A43df676d"
+    }
+  ],
+  "swapFees": {
+    "amount_percentage": 0.3,
+    "recipient": "0x5bD68B4d6f90Bcc9F3a9456791c0Db5A43df676d"
+  },
+  "format": {
+    "date": "MM/DD/YYYY",
+    "datetime": "MM/DD/YYYY HH:mm:ss"
+  },
+  "footerMenuTree": [
+    {
+      "type": "External",
+      "href": "https://dexkit.com/contact-us",
+      "name": "Contact us"
+    }
+  ],
+  "menuTree": [
+    {
+      "type": "Page",
+      "href": "/",
+      "name": "Home"
+    },
+    {
+      "type": "Menu",
+      "href": "",
+      "name": "Pages",
+      "children": [
+        {
+          "type": "Page",
+          "href": "/swap",
+          "name": "Swap"
+        },
+        {
+          "type": "Page",
+          "href": "/wallet",
+          "name": "Wallet"
+        },
+        {
+          "type": "Page",
+          "href": "/collections",
+          "name": "Collections"
+        },
+        {
+          "type": "Page",
+          "href": "/order/create",
+          "name": "Create order"
+        }
+      ]
+    },
+    {
+      "type": "Menu",
+      "href": "",
+      "name": "App Builder",
+      "children": [
+        {
+          "type": "Page",
+          "href": "/admin/create",
+          "name": "Create App"
+        },
+        {
+          "type": "Page",
+          "href": "/admin/quick-builder/swap",
+          "name": "Create Swap App"
+        },
+        {
+          "type": "Page",
+          "href": "/admin/quick-builder/nft-store",
+          "name": "Create NFT Store App"
+        },
+        {
+          "type": "Page",
+          "href": "/admin/quick-builder/wallet",
+          "name": "Create Wallet App"
+        },
+        {
+          "type": "Page",
+          "href": "/admin",
+          "name": "Manage Apps"
+        }
+      ]
+    },
+    {
+      "type": "Menu",
+      "href": "",
+      "name": "Contract Generator",
+      "children": [
+        {
+          "type": "Page",
+          "href": "/contract-wizard",
+          "name": "Create collection"
+        }
+      ]
+    },
+    {
+      "type": "Menu",
+      "href": "",
+      "name": "Support",
+      "children": [
+        {
+          "type": "External",
+          "href": "https://docs.dexkit.com/defi-products/nft-marketplace/creating-my-first-marketplace",
+          "name": "Docs"
+        },
+        {
+          "type": "External",
+          "href": "https://dexkit.atlassian.net/servicedesk/customer/portals",
+          "name": "Help"
+        },
+        {
+          "type": "External",
+          "href": "https://dexkit.canny.io/feature-requests",
+          "name": "Request Feature"
+        },
+        {
+          "type": "External",
+          "href": "https://discord.gg/FnkrFAY7Za",
+          "name": "Discord"
+        }
+      ]
+    }
+  ],
+  "collections": [
+    {
+      "image": "/assets/kittygotchi/banner_eth.svg",
+      "name": "Kittygotchi",
+      "backgroundImage": "/assets/kittygotchi/banner_eth.svg",
+      "chainId": 1,
+      "contractAddress": "0xe76591AD590765e9Ab9EdE82BEa274aFcF5Ce703",
+      "description": "",
+      "uri": "kittygotchieth"
+    },
+    {
+      "image": "/assets/kittygotchi/banner_bsc.svg",
+      "name": "Kittygotchi",
+      "backgroundImage": "/assets/kittygotchi/banner_bsc.svg",
+      "chainId": 56,
+      "contractAddress": "0xf44112926506318e3Aace4381B2D76791D980Ac3",
+      "description": "",
+      "uri": "kittygotchibsc"
+    },
+    {
+      "image": "/assets/kittygotchi/banner_polygon.svg",
+      "name": "Kittygotchi",
+      "backgroundImage": "/assets/kittygotchi/banner_polygon.svg",
+      "chainId": 137,
+      "contractAddress": "0xEA88540adb1664999524d1a698cb84F6C922D2A1",
+      "description": "",
+      "uri": "kittygotchi"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "DexKit Token List",
+      "timestamp": "2022-09-13T22:11:02.673Z",
+      "version": {
+        "major": 0,
+        "minor": 0,
+        "patch": 1
+      },
+      "tags": {},
+      "logoURI": "https://raw.githubusercontent.com/DexKit/assets/main/images/logo.png",
+      "keywords": [
+        "dexkit",
+        "default"
+      ],
+      "tokens": [
+        {
+          "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+          "chainId": 1,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/dai.jpg",
+          "name": "Dai Stablecoin",
+          "symbol": "DAI"
+        },
+        {
+          "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "chainId": 1,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdc.jpg",
+          "name": "USD Coin",
+          "symbol": "USDC"
+        },
+        {
+          "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          "chainId": 1,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdt.jpg",
+          "name": "Tether USD",
+          "symbol": "USDT"
+        },
+        {
+          "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+          "chainId": 1,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/eth.jpg",
+          "name": "Wrapped Ether",
+          "symbol": "WETH"
+        },
+        {
+          "address": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+          "chainId": 10,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdc.jpg",
+          "name": "USD Coin",
+          "symbol": "USDC"
+        },
+        {
+          "address": "0x4200000000000000000000000000000000000006",
+          "chainId": 10,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/eth.jpg",
+          "name": "Wrapped Ether",
+          "symbol": "WETH"
+        },
+        {
+          "address": "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
+          "chainId": 56,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/dai.jpg",
+          "name": "Dai Token",
+          "symbol": "DAI"
+        },
+        {
+          "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+          "chainId": 56,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdc.jpg",
+          "name": "Binance-Peg USD Coin",
+          "symbol": "USDC"
+        },
+        {
+          "address": "0x55d398326f99059fF775485246999027B3197955",
+          "chainId": 56,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdt.jpg",
+          "name": "Tether USD",
+          "symbol": "USDT"
+        },
+        {
+          "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+          "chainId": 56,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/bnb.jpg",
+          "name": "WBNB Token",
+          "symbol": "WBNB"
+        },
+        {
+          "address": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+          "chainId": 137,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/dai.jpg",
+          "name": "Dai Stablecoin",
+          "symbol": "DAI"
+        },
+        {
+          "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+          "chainId": 137,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdc.jpg",
+          "name": "USD Coin",
+          "symbol": "USDC"
+        },
+        {
+          "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+          "chainId": 137,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdt.jpg",
+          "name": "Tether USD",
+          "symbol": "USDT"
+        },
+        {
+          "address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+          "chainId": 137,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/eth.jpg",
+          "name": "Wrapped Ether",
+          "symbol": "WETH"
+        },
+        {
+          "address": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+          "chainId": 137,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/polygon.jpg",
+          "name": "Wrapped Matic",
+          "symbol": "WMATIC"
+        },
+        {
+          "address": "0x8D11eC38a3EB5E956B052f67Da8Bdc9bef8Abf3E",
+          "chainId": 250,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/dai.jpg",
+          "name": "Dai Stablecoin",
+          "symbol": "DAI"
+        },
+        {
+          "address": "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75",
+          "chainId": 250,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdc.jpg",
+          "name": "USD Coin",
+          "symbol": "USDC"
+        },
+        {
+          "address": "0x74b23882a30290451A17c44f4F05243b6b58C76d",
+          "chainId": 250,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/eth.jpg",
+          "name": "Wrapped Ether",
+          "symbol": "WETH"
+        },
+        {
+          "address": "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+          "chainId": 250,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/ftm.jpg",
+          "name": "Wrapped Fantom",
+          "symbol": "WFTM"
+        },
+        {
+          "address": "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70",
+          "chainId": 43114,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/dai.jpg",
+          "name": "Dai Stablecoin",
+          "symbol": "DAI"
+        },
+        {
+          "address": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+          "chainId": 43114,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdc.jpg",
+          "name": "USD Coin",
+          "symbol": "USDC"
+        },
+        {
+          "address": "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+          "chainId": 43114,
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/usdt.jpg",
+          "name": "Tether USD",
+          "symbol": "USDT"
+        },
+        {
+          "address": "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+          "chainId": 43114,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/avax.jpg",
+          "name": "Wrapped AVAX",
+          "symbol": "WAVAX"
+        },
+        {
+          "address": "0x50b7545627a5162F82A992c33b87aDc75187B218",
+          "chainId": 43114,
+          "decimals": 8,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/wbtc.jpg",
+          "name": "Wrapped BTC",
+          "symbol": "WBTC"
+        },
+        {
+          "address": "0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB",
+          "chainId": 43114,
+          "decimals": 18,
+          "logoURI": "https://raw.githubusercontent.com/dexkit/icons/master/token/weth.jpg",
+          "name": "Wrapped Ether",
+          "symbol": "WETH"
+        }
+      ]
+    }
+  ],
+  "pages": {
+    "home": {
+      "sections": [
+        {
+          "type": "custom",
+          "data": "{\"id\":\"atybdk\",\"version\":1,\"rows\":[{\"id\":\"e8gic5\",\"cells\":[{\"id\":\"suexnz\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"aiusq5\",\"cells\":[{\"id\":\"mgjbzi\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":83,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"g5kbf4\",\"cells\":[{\"id\":\"xqi2b6\",\"size\":12,\"plugin\":{\"id\":\"stack\",\"version\":1},\"dataI18n\":{\"default\":{\"padding\":2}},\"rows\":[{\"id\":\"6mdiim\",\"cells\":[{\"id\":\"swb0va\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"Welcome to DexAppBuilder!\",\"EMPHASIZE/STRONG\":true}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"69lfno\",\"cells\":[{\"id\":\"5ubv5t\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"Start your crypto app in seconds using our builder.\\nYou will start for free with a\"},{\"text\":\" .dexkit.app\",\"SetColor\":{\"color\":\"rgba(0,0,255,1)\"}},{\"text\":\" domain and you can earn fees selling your nfts or tokens. \\n\\n\"},{\"text\":\"Note: this whole page was done using our builder.\",\"EMPHASIZE/EM\":true}],\"data\":{\"align\":\"center\"}},{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"\"}]}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"um7acr\",\"cells\":[{\"id\":\"wnh7zg\",\"size\":12,\"plugin\":{\"id\":\"button-dexkit-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"text\":\"Open Builder\",\"variant\":\"contained\",\"color\":\"primary\",\"size\":\"large\",\"position\":\"center\",\"action\":\"Open link\",\"href\":\"https://whitelabel-nft.dexkit.com/admin/setup\"}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]},{\"id\":\"iieuco\",\"cells\":[{\"id\":\"hrpsap\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}",
+          "title": "Welcome"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"ibe7oy\",\"version\":1,\"rows\":[{\"id\":\"3td31s\",\"cells\":[{\"id\":\"249p91\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/layout/background\",\"version\":1},\"dataI18n\":{\"default\":{\"modeFlag\":3,\"backgroundColor\":{\"r\":0,\"g\":0,\"b\":0,\"a\":1},\"hasPadding\":true}},\"rows\":[{\"id\":\"15nu9t\",\"cells\":[{\"id\":\"zllgyg\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"0rhind\",\"cells\":[{\"id\":\"3ksgzw\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":24}},\"rows\":[],\"inline\":null}]},{\"id\":\"cd8bv7\",\"cells\":[{\"id\":\"n30y4l\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"You don't have design skills?\",\"SetColor\":{\"color\":\"rgba(250, 199, 72, 1)\"}}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"b9eafq\",\"cells\":[{\"id\":\"332rsh\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"children\":[{\"text\":\"Just clone right way a marketplace \"}],\"data\":{\"align\":\"center\"}},{\"data\":{\"align\":\"center\"},\"children\":[{\"text\":\"made by community.\"}]}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"eznran\",\"cells\":[{\"id\":\"ijkkb0\",\"size\":12,\"plugin\":{\"id\":\"button-dexkit-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"text\":\"Clone Marketplace\",\"variant\":\"contained\",\"size\":\"large\",\"position\":\"center\",\"action\":\"Open link\",\"href\":\"https://whitelabel-nft.dexkit.com/site\"}},\"rows\":[],\"inline\":null}]},{\"id\":\"p1j9zf\",\"cells\":[{\"id\":\"ngr0nc\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}",
+          "title": "CloneSection"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"74xnco\",\"version\":1,\"rows\":[{\"id\":\"opzhyi\",\"cells\":[{\"id\":\"on1u8m\",\"rows\":[{\"id\":\"uht78k\",\"cells\":[{\"id\":\"umucuw\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"pztigj\",\"cells\":[{\"id\":\"0iehrz\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"7syjgh\",\"cells\":[{\"id\":\"kc77jo\",\"size\":6,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"Add any NFT \",\"EMPHASIZE/STRONG\":true}]},{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"EMPHASIZE/STRONG\":true,\"text\":\"supported by DexKit\"}]},{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"You can add any NFT supported by DexKit just by searching or importing it on the networks we support.\"}]},{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"We currently support the following networks: Ethereum, Polygon, BSC, Optimism, Avalanche and Fantom.\",\"EMPHASIZE/EM\":true}]}]}},\"rows\":[],\"inline\":null},{\"id\":\"7efxzc\",\"size\":6,\"plugin\":{\"id\":\"image-dexkit-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"width\":450,\"height\":450,\"padding\":0,\"src\":\"https://dexkit-storage.nyc3.digitaloceanspaces.com/dexkit/media-library/account/0x5bd68b4d6f90bcc9f3a9456791c0db5a43df676d/Networks_DexKit.png\",\"alt\":\"Supported Networks\"}},\"rows\":[],\"inline\":null}]},{\"id\":\"z2d9cl\",\"cells\":[{\"id\":\"u9c6pb\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}],\"size\":12,\"inline\":null,\"dataI18n\":{}}]}]}",
+          "title": "SupportedNetworks"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"4dz4l7\",\"version\":1,\"rows\":[{\"id\":\"ihxpas\",\"cells\":[{\"id\":\"0iyqj8\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/layout/background\",\"version\":1},\"dataI18n\":{\"default\":{\"modeFlag\":3,\"backgroundColor\":{\"r\":0,\"g\":0,\"b\":0,\"a\":1}}},\"rows\":[{\"id\":\"xverex\",\"cells\":[{\"id\":\"ln3bdg\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":50,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"umb5m5\",\"cells\":[{\"id\":\"vark7v\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"4tggl8\",\"cells\":[{\"id\":\"siklnv\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-FOUR\",\"children\":[{\"text\":\"\\n\\n\"},{\"text\":\"Check examples of Bored Apes\\n\",\"SetColor\":{\"color\":\"rgba(250, 199, 72, 1)\"}},{\"text\":\"\\n\"}]}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"j2k9nl\",\"cells\":[{\"id\":\"vbugcg\",\"size\":4,\"plugin\":{\"id\":\"nft-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"name\":\"BoredApeYachtClub #5230\",\"contractAddress\":\"0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d\",\"network\":\"Ethereum\",\"chainId\":1,\"image\":\"https://dexkit-storage.nyc3.digitaloceanspaces.com/dexkit/images/optimized/ethereum/asset/0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d/5230.png\",\"id\":\"5230\"}},\"rows\":[],\"inline\":null},{\"id\":\"g503zg\",\"size\":4,\"plugin\":{\"id\":\"nft-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"name\":\"BoredApeYachtClub #2\",\"contractAddress\":\"0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d\",\"network\":\"Ethereum\",\"chainId\":1,\"image\":\"https://dexkit-storage.nyc3.digitaloceanspaces.com/dexkit/images/optimized/ethereum/asset/0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d/2.png\",\"id\":\"2\"}},\"rows\":[],\"inline\":null},{\"id\":\"dtjier\",\"size\":4,\"plugin\":{\"id\":\"nft-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"name\":\"BoredApeYachtClub #1000\",\"contractAddress\":\"0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d\",\"network\":\"Ethereum\",\"chainId\":1,\"image\":\"https://dexkit-storage.nyc3.digitaloceanspaces.com/dexkit/images/optimized/ethereum/asset/0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d/1000.png\",\"id\":\"1000\"}},\"rows\":[],\"inline\":null}]},{\"id\":\"rfmezh\",\"cells\":[{\"id\":\"fzd2af\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}],\"inline\":null}]}]}",
+          "title": "BoredApesSection"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"5wgxs8\",\"version\":1,\"rows\":[{\"id\":\"poonsv\",\"cells\":[{\"id\":\"ke6oeu\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"bwkms3\",\"cells\":[{\"id\":\"1d0r0n\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"l1yshx\",\"cells\":[{\"id\":\"c14etn\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"Add your collections\",\"EMPHASIZE/STRONG\":true}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"4kkp2c\",\"cells\":[{\"id\":\"i99fnh\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"You can also easily add your collections and  highlight them on your front page.\"}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"hymflx\",\"cells\":[{\"id\":\"41hj80\",\"size\":12,\"plugin\":{\"id\":\"image-dexkit-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"width\":1400,\"height\":250,\"padding\":0,\"src\":\"https://dexkit-storage.nyc3.digitaloceanspaces.com/dexkit/media-library/account/0x5bd68b4d6f90bcc9f3a9456791c0db5a43df676d/Collections.png\",\"alt\":\"collection image\"}},\"rows\":[],\"inline\":null}]},{\"id\":\"d8encd\",\"cells\":[{\"id\":\"7me6he\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}",
+          "title": "FeaturedCollections"
+        },
+        {
+          "type": "featured",
+          "items": [
+            {
+              "type": "collection",
+              "backgroundImageUrl": "/assets/kittygotchi/banner_eth.svg",
+              "chainId": 1,
+              "contractAddress": "0xe76591AD590765e9Ab9EdE82BEa274aFcF5Ce703",
+              "subtitle": "Kittygotchi running on BSC",
+              "title": "KittyETH",
+              "featured": false,
+              "variant": "default"
+            },
+            {
+              "type": "collection",
+              "backgroundImageUrl": "/assets/kittygotchi/banner_bsc.svg",
+              "chainId": 56,
+              "contractAddress": "0xf44112926506318e3Aace4381B2D76791D980Ac3",
+              "subtitle": "Kittygotchi on BSC",
+              "title": "KittyBSC",
+              "featured": false,
+              "variant": "default"
+            },
+            {
+              "type": "collection",
+              "backgroundImageUrl": "/assets/kittygotchi/banner_polygon.svg",
+              "chainId": 137,
+              "contractAddress": "0xEA88540adb1664999524d1a698cb84F6C922D2A1",
+              "subtitle": "Kittygotchi on Polygon",
+              "title": "KittyMatic",
+              "featured": false,
+              "variant": "default"
+            }
+          ],
+          "title": "Featured Collections"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"bewgau\",\"version\":1,\"rows\":[{\"id\":\"9roybu\",\"cells\":[{\"id\":\"4wq4a0\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/layout/background\",\"version\":1},\"dataI18n\":{\"default\":{\"modeFlag\":3,\"backgroundColor\":{\"r\":8,\"g\":8,\"b\":8,\"a\":1}}},\"rows\":[{\"id\":\"jfy0fy\",\"cells\":[{\"id\":\"sbgr6t\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"wk5vig\",\"cells\":[{\"id\":\"u89wdl\",\"size\":6,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"wnp36x\",\"cells\":[{\"id\":\"m9vkav\",\"size\":12,\"plugin\":{\"id\":\"stack\",\"version\":1},\"dataI18n\":{\"default\":{\"padding\":2}},\"rows\":[{\"id\":\"xdkwp0\",\"cells\":[{\"id\":\"9ggvot\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"Start profit from your tokens using our Swap plugin\",\"SetColor\":{\"color\":\"rgba(250, 199, 40, 1)\"}},{\"text\":\"\\n\"}],\"data\":{\"align\":\"left\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"brt4ap\",\"cells\":[{\"id\":\"plu6rx\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"children\":[{\"text\":\"\\nYou can  easily add it to any page.  Open the custom page we created with just  Swap and few texts.\\n\\n\"}]}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"7o0lcy\",\"cells\":[{\"id\":\"g6umcb\",\"size\":12,\"plugin\":{\"id\":\"button-dexkit-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"text\":\"Open Custom Swap\",\"size\":\"large\",\"variant\":\"contained\",\"position\":\"center\",\"action\":\"Open page\",\"pageUri\":\"/custom-swap\"}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}],\"inline\":null},{\"id\":\"s3t47o\",\"size\":1,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":24,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null},{\"id\":\"1t768z\",\"size\":5,\"plugin\":{\"id\":\"stack\",\"version\":1},\"dataI18n\":{\"default\":{\"padding\":2}},\"rows\":[{\"id\":\"fc7u11\",\"cells\":[{\"id\":\"c6naio\",\"size\":12,\"plugin\":{\"id\":\"swap-settings-plugin\",\"version\":1},\"dataI18n\":{\"default\":{}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]},{\"id\":\"hkya1l\",\"cells\":[{\"id\":\"g489w7\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}",
+          "title": "SwapSection"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"7a05ay\",\"version\":1,\"rows\":[{\"id\":\"e07g7m\",\"cells\":[{\"id\":\"meutq9\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"wuc1fd\",\"cells\":[{\"id\":\"zb0kg1\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":44,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"46ew9x\",\"cells\":[{\"id\":\"mj3xrn\",\"size\":6,\"dataI18n\":{},\"rows\":[{\"id\":\"9tnohv\",\"cells\":[{\"id\":\"gzx1xk\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":161,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"ms6c75\",\"cells\":[{\"id\":\"xt8a78\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-TWO\",\"children\":[{\"EMPHASIZE/STRONG\":true,\"text\":\"Add Widgets\"}]}]}},\"rows\":[],\"inline\":null}]}],\"inline\":null},{\"id\":\"h9ksmj\",\"size\":6,\"plugin\":{\"id\":\"stack\",\"version\":1},\"dataI18n\":{\"default\":{\"padding\":2}},\"rows\":[{\"id\":\"c0934k\",\"cells\":[{\"id\":\"tvvjzl\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"\\nWidget added using the Widget component to show a Coingecko Price Widget.\\n\"}]}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"7mj5e1\",\"cells\":[{\"id\":\"3ndf05\",\"size\":12,\"plugin\":{\"id\":\"code-snippet\",\"version\":1},\"dataI18n\":{\"default\":{\"code\":\"<script src=\\\"https://widgets.coingecko.com/coingecko-coin-ticker-widget.js\\\"></script>\\n<coingecko-coin-ticker-widget  coin-id=\\\"dexkit\\\" currency=\\\"usd\\\" locale=\\\"en\\\" background-color=\\\"#fafafa\\\"></coingecko-coin-ticker-widget>\",\"language\":\"html\"}},\"rows\":[],\"inline\":null}]},{\"id\":\"7nzq45\",\"cells\":[{\"id\":\"qah2zs\",\"size\":12,\"plugin\":{\"id\":\"dexkit-widget-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"html\":\"<script src=\\\"https://widgets.coingecko.com/coingecko-coin-ticker-widget.js\\\"></script>\\n<coingecko-coin-ticker-widget  coin-id=\\\"dexkit\\\" currency=\\\"usd\\\" locale=\\\"en\\\" background-color=\\\"#fafafa\\\"></coingecko-coin-ticker-widget>\"}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]},{\"id\":\"2t6dak\",\"cells\":[{\"id\":\"psagsj\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}",
+          "title": "Coingecko Widget"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"gjdm00\",\"version\":1,\"rows\":[{\"id\":\"u0uiqr\",\"cells\":[{\"id\":\"4f30hf\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/layout/background\",\"version\":1},\"dataI18n\":{\"default\":{\"modeFlag\":3,\"backgroundColor\":{\"r\":0,\"g\":0,\"b\":0,\"a\":1}}},\"rows\":[{\"id\":\"b7zw3l\",\"cells\":[{\"id\":\"qdvkrv\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"\\n\"},{\"text\":\"Add a Twitter timeline\",\"SetColor\":{\"color\":\"rgba(250, 199, 72, 1)\"}}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"43nlu1\",\"cells\":[{\"id\":\"dzr9xa\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"\\nUsers will be able to follow you to check your tweets and latest news.\"}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"2wspla\",\"cells\":[{\"id\":\"3xc576\",\"size\":4,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":24,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null},{\"id\":\"r79a6k\",\"size\":4,\"plugin\":{\"id\":\"twitter-timeline\",\"version\":1},\"dataI18n\":{\"default\":{\"title\":\"\",\"screenName\":\"dexkit\",\"height\":500}},\"rows\":[],\"inline\":null},{\"id\":\"m8m77k\",\"size\":4,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":24,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"k4qqmi\",\"cells\":[{\"id\":\"2h0q7o\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}",
+          "title": "TwitterTimeline"
+        },
+        {
+          "type": "custom",
+          "data": "{\"id\":\"8tvx5p\",\"version\":1,\"rows\":[{\"id\":\"mappfc\",\"cells\":[{\"id\":\"oovx7x\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"yfeq9v\",\"cells\":[{\"id\":\"bf15wt\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"tk4x67\",\"cells\":[{\"id\":\"g9y4rh\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"Do you want to learn more how to use this amazing tool?\"}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"9p87n6\",\"cells\":[{\"id\":\"suklrr\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"PARAGRAPH/PARAGRAPH\",\"children\":[{\"text\":\"Check our docs and understand more details of DexAppBuilder.\"}],\"data\":{\"align\":\"center\"}}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"8cpkzj\",\"cells\":[{\"id\":\"c6uap5\",\"size\":12,\"plugin\":{\"id\":\"button-dexkit-plugin\",\"version\":1},\"dataI18n\":{\"default\":{\"text\":\"Open Docs\",\"variant\":\"contained\",\"color\":\"secondary\",\"size\":\"large\",\"position\":\"center\",\"padding\":2,\"action\":\"Open link\",\"href\":\"https://docs.dexkit.com/defi-products/nft-marketplace/creating-my-first-marketplace\",\"targetBlank\":true}},\"rows\":[],\"inline\":null}]},{\"id\":\"fh8rdq\",\"cells\":[{\"id\":\"idvnbg\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/spacer\",\"version\":1},\"dataI18n\":{\"default\":{\"height\":100,\"hideInDesktop\":false,\"hideInMobile\":true}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}"
+        }
+      ],
+      "title": "Home",
+      "uri": "/",
+      "key": "home"
+    },
+    "custom-swap": {
+      "sections": [
+        {
+          "type": "custom",
+          "data": "{\"id\":\"5c8tm8\",\"version\":1,\"rows\":[{\"id\":\"9g9fo9\",\"cells\":[{\"id\":\"5ejwpz\",\"size\":12,\"dataI18n\":{},\"rows\":[{\"id\":\"itg7n9\",\"cells\":[{\"id\":\"dbi0bq\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/divider\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[],\"inline\":null}]},{\"id\":\"kacb7x\",\"cells\":[{\"id\":\"7eea0w\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"ljuuj2\",\"cells\":[{\"id\":\"milc9n\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"Welcome to Swap Page\"}]}]}},\"rows\":[],\"inline\":null}]},{\"id\":\"xxnkvt\",\"cells\":[{\"id\":\"52ynxk\",\"size\":6,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-THREE\",\"children\":[{\"text\":\"\"}],\"data\":{\"align\":\"center\"}},{\"type\":\"HEADINGS/HEADING-THREE\",\"data\":{\"align\":\"center\"},\"children\":[{\"text\":\"This is custom swap component. \"}]},{\"type\":\"HEADINGS/HEADING-THREE\",\"data\":{\"align\":\"center\"},\"children\":[{\"text\":\"\"}]},{\"type\":\"HEADINGS/HEADING-THREE\",\"data\":{\"align\":\"center\"},\"children\":[{\"text\":\"Trade tokens here defined in your settings.\"}]}]}},\"rows\":[],\"inline\":null},{\"id\":\"qy3y3i\",\"size\":6,\"plugin\":{\"id\":\"swap-crypto\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}],\"inline\":null}]}]}"
+        }
+      ],
+      "title": "Custom Swap",
+      "uri": "/custom-swap",
+      "key": "custom-swap"
+    },
+    "blog": {
+      "sections": [
+        {
+          "type": "custom",
+          "data": "{\"id\":\"sdi3o3\",\"version\":1,\"rows\":[{\"id\":\"jqik5o\",\"cells\":[{\"id\":\"vdt48f\",\"size\":12,\"plugin\":{\"id\":\"container\",\"version\":1},\"dataI18n\":{\"default\":null},\"rows\":[{\"id\":\"1jp1ue\",\"cells\":[{\"id\":\"ywm2yt\",\"size\":12,\"plugin\":{\"id\":\"ory/editor/core/content/slate\",\"version\":1},\"dataI18n\":{\"default\":{\"slate\":[{\"type\":\"HEADINGS/HEADING-ONE\",\"children\":[{\"text\":\"\"}],\"data\":{\"align\":\"center\"}},{\"type\":\"HEADINGS/HEADING-ONE\",\"data\":{\"align\":\"center\"},\"children\":[{\"text\":\"This is a Text Title\"}]},{\"children\":[{\"text\":\"\"}]},{\"data\":{\"align\":\"center\"},\"children\":[{\"text\":\"This block is a a block of text that is inside a container, this is good to build a text \"}]},{\"data\":{\"align\":\"center\"},\"children\":[{\"text\":\"\"}]},{\"type\":\"LISTS/UNORDERED-LIST\",\"children\":[{\"data\":{\"align\":\"left\"},\"children\":[{\"text\":\"I am in a list\"}],\"type\":\"LISTS/LIST-ITEM\"},{\"data\":{\"align\":\"left\"},\"type\":\"LISTS/LIST-ITEM\",\"children\":[{\"text\":\"And this is second element of a list\"}]}]}]}},\"rows\":[],\"inline\":null}]}],\"inline\":null}]}]}"
+        }
+      ],
+      "title": "Blog",
+      "uri": "/blog",
+      "key": "blog"
+    }
+  },
+  "seo": {
+    "home": {
+      "title": "DexAppBuilder",
+      "description": "DexAppBuilder: use our decentralized app builder to create your marketplace in seconds. You are able to display your nfts, sell them, profit from nft sales, earn from swap fees. Options are endless",
+      "images": [
+        {
+          "url": "https://dexkit-storage.nyc3.cdn.digitaloceanspaces.com/dexkit%2Fimages%2Finternal%2Fdexappbuilderopengraph.png",
+          "alt": "DexAppBuilder: create crypto apps easily",
+          "type": "image/png"
+        }
+      ]
+    }
+  }
+}

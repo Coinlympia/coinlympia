@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "outDir": "./dist",
+    "rootDir": "../",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["../frontend/*"],
+      "@/modules/*": ["../frontend/src/modules/*"],
+      "@/hooks/*": ["../frontend/src/hooks/*"],
+      "@/components/*": ["../frontend/src/components/*"],
+      "@/lib/*": ["../frontend/src/lib/*"],
+      "@/backend/*": ["./*"]
+    },
+    "typeRoots": [
+      "../node_modules/@types",
+      "../node_modules/@0x/typescript-typings/types"
+    ],
+    "types": ["node"]
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
+

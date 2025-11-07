@@ -1,0 +1,981 @@
+{
+  "AI": {
+    "defaultMessage": "AI"
+  },
+  "Create.Order": {
+    "defaultMessage": "Create Order"
+  },
+  "ID": {
+    "defaultMessage": "ID"
+  },
+  "Listing": {
+    "defaultMessage": "Listing"
+  },
+  "Network": {
+    "defaultMessage": "Network",
+    "description": "Network caption"
+  },
+  "accordion.details": {
+    "defaultMessage": "Details",
+    "description": "Details in the nft accordion"
+  },
+  "account": {
+    "defaultMessage": "Account"
+  },
+  "accounts": {
+    "defaultMessage": "Accounts"
+  },
+  "activate": {
+    "defaultMessage": "Activate AI"
+  },
+  "activate.ai": {
+    "defaultMessage": "Activate AI"
+  },
+  "add": {
+    "defaultMessage": "Add"
+  },
+  "add.addresses.to.airdrop": {
+    "defaultMessage": "Add addresses to airdrop"
+  },
+  "add.credit": {
+    "defaultMessage": "Add Credit"
+  },
+  "add.credits": {
+    "defaultMessage": "Add credits"
+  },
+  "add.image": {
+    "defaultMessage": "Add image"
+  },
+  "add.record": {
+    "defaultMessage": "Add record"
+  },
+  "address.or.ens": {
+    "defaultMessage": "Address or ENS"
+  },
+  "advanced": {
+    "defaultMessage": "Advanced",
+    "description": "Make listing advanced accordion"
+  },
+  "advanced.info": {
+    "defaultMessage": "Only the address entered below can buy this listing. If empty, any account can buy this listing."
+  },
+  "ai.activated": {
+    "defaultMessage": "AI Activated"
+  },
+  "ai.assistant": {
+    "defaultMessage": "AI Assistant"
+  },
+  "ai.completation": {
+    "defaultMessage": "AI Completation"
+  },
+  "ai.edit": {
+    "defaultMessage": "AI Edit"
+  },
+  "ai.generator": {
+    "defaultMessage": "AI Generator"
+  },
+  "ai.image.generator": {
+    "defaultMessage": "AI Image Generator"
+  },
+  "airdrop": {
+    "defaultMessage": "Airdrop"
+  },
+  "amount": {
+    "defaultMessage": "Amount"
+  },
+  "answer": {
+    "defaultMessage": "Answer:"
+  },
+  "artificial.inteligence": {
+    "defaultMessage": "Artificial Inteligence"
+  },
+  "asset.will.be.added.to.favorites": {
+    "defaultMessage": "This asset will be added to your favorites"
+  },
+  "attributes": {
+    "defaultMessage": "Attributes",
+    "description": "Attributes accordion"
+  },
+  "auto.slippage": {
+    "defaultMessage": "Auto Slippage"
+  },
+  "available.balance": {
+    "defaultMessage": "Available Balance"
+  },
+  "back": {
+    "defaultMessage": "Back"
+  },
+  "balance": {
+    "defaultMessage": "Balance"
+  },
+  "billing.and.usage": {
+    "defaultMessage": "Billing & Usage"
+  },
+  "block.explorer": {
+    "defaultMessage": "Block explorer"
+  },
+  "browser.not.support.video.tage": {
+    "defaultMessage": "Your browser does not support the video tag."
+  },
+  "burn": {
+    "defaultMessage": "Burn"
+  },
+  "burn.name.value": {
+    "defaultMessage": "Burn Token \"{tokenName}\""
+  },
+  "burning": {
+    "defaultMessage": "Burning"
+  },
+  "buy": {
+    "defaultMessage": "Buy",
+    "description": "Buy"
+  },
+  "buy.asset": {
+    "defaultMessage": "Buy Asset",
+    "description": "Buy asset title"
+  },
+  "buyer.address": {
+    "defaultMessage": "Buyer address",
+    "description": "Buyer address input label"
+  },
+  "cancel": {
+    "defaultMessage": "Cancel"
+  },
+  "change.cat.head": {
+    "defaultMessage": "ex. Change cat head"
+  },
+  "changing.network": {
+    "defaultMessage": "Changing Network"
+  },
+  "choose.network": {
+    "defaultMessage": "Choose Network"
+  },
+  "clear": {
+    "defaultMessage": "Clear"
+  },
+  "clone": {
+    "defaultMessage": "Clone"
+  },
+  "close": {
+    "defaultMessage": "Close"
+  },
+  "close.anyway": {
+    "defaultMessage": "Close anyway"
+  },
+  "coin": {
+    "defaultMessage": "Coin"
+  },
+  "coin.on.network": {
+    "defaultMessage": "{name} on {network}"
+  },
+  "collection": {
+    "defaultMessage": "Collection"
+  },
+  "collections": {
+    "defaultMessage": "Collections"
+  },
+  "confirm": {
+    "defaultMessage": "Confirm"
+  },
+  "confirm.sign.message": {
+    "defaultMessage": "Please, sign the message on your wallet"
+  },
+  "confirm.the.transaction.on.your.wallet": {
+    "defaultMessage": "Please, confirm the transaction on your wallet",
+    "description": "Transaction dialog message before transaction be confirmed in the wallet"
+  },
+  "confirm.transaction": {
+    "defaultMessage": "Confirm Transaction"
+  },
+  "confirming": {
+    "defaultMessage": "Confirming"
+  },
+  "connect.wallet": {
+    "defaultMessage": "Connect Wallet"
+  },
+  "connect.wallet.to.see.apps.associated.with.your.account": {
+    "defaultMessage": "Connect wallet to see apps associated with your account"
+  },
+  "connect.wallet.to.see.or.upload.images": {
+    "defaultMessage": "Connect wallet to see or upload images."
+  },
+  "connect.account": {
+    "defaultMessage": "Connect Account"
+  },
+  "not.applicable": {
+    "defaultMessage": "N/A"
+  },
+  "glass.hide.activity": {
+    "defaultMessage": "Hide Activity Tab"
+  },
+  "glass.hide.activity.description": {
+    "defaultMessage": "Hide the activity tab to remove transaction history from the wallet"
+  },
+  "connect.with.email": {
+    "defaultMessage": "Connect with e-mail"
+  },
+  "connect.your.wallet": {
+    "defaultMessage": "Connect Your Wallet"
+  },
+  "contract.address": {
+    "defaultMessage": "Contract Address"
+  },
+  "copied": {
+    "defaultMessage": "Copied!",
+    "description": "Copied text"
+  },
+  "copy": {
+    "defaultMessage": "Copy",
+    "description": "Copy text"
+  },
+  "create.form": {
+    "defaultMessage": "Create form"
+  },
+  "create.listing": {
+    "defaultMessage": "Create Listing"
+  },
+  "create.nft.order": {
+    "defaultMessage": "Create NFT order"
+  },
+  "create.offer": {
+    "defaultMessage": "Create Offer"
+  },
+  "create.order": {
+    "defaultMessage": "Create Order"
+  },
+  "creating.a.listing": {
+    "defaultMessage": "Creating a listing"
+  },
+  "creating.an.offer": {
+    "defaultMessage": "Creating an offer"
+  },
+  "credit.card.soming.soon": {
+    "defaultMessage": "Credit Card (Coming Soon)"
+  },
+  "credits.below0.50": {
+    "defaultMessage": "Your credits are now below $0.50. Please consider adding more credits to continue using our services."
+  },
+  "cryptocurrency": {
+    "defaultMessage": "Cryptocurrency"
+  },
+  "date": {
+    "defaultMessage": "Date"
+  },
+  "decimals": {
+    "defaultMessage": "Decimals"
+  },
+  "default.network": {
+    "defaultMessage": "Default network"
+  },
+  "default.network.info.swap.form": {
+    "defaultMessage": "Default network when wallet is not connected"
+  },
+  "default.slippage.percentage": {
+    "defaultMessage": "Default slippage (0-50%)"
+  },
+  "delete": {
+    "defaultMessage": "Delete"
+  },
+  "delete.column": {
+    "defaultMessage": "Delete column"
+  },
+  "deleting.image": {
+    "defaultMessage": "Deleting image"
+  },
+  "description": {
+    "defaultMessage": "Description",
+    "description": "Description Accordion"
+  },
+  "deselect.all": {
+    "defaultMessage": "Deselect All"
+  },
+  "details": {
+    "defaultMessage": "Details"
+  },
+  "do.you.really.want.to.delete.this.image": {
+    "defaultMessage": "Do you really want to delete this image?"
+  },
+  "do.you.really.want.to.edit.this.image": {
+    "defaultMessage": "Do you really want to edit this image?"
+  },
+  "edit": {
+    "defaultMessage": "Edit"
+  },
+  "edit.column": {
+    "defaultMessage": "Edit column"
+  },
+  "edit.image.name": {
+    "defaultMessage": "Edit image name"
+  },
+  "edit.profile": {
+    "defaultMessage": "Edit profile"
+  },
+  "email": {
+    "defaultMessage": "Email"
+  },
+  "empty.gallery.start.adding.images": {
+    "defaultMessage": "Empty gallery. Start adding images."
+  },
+  "error": {
+    "defaultMessage": "Error"
+  },
+  "error.try.again": {
+    "defaultMessage": "Error. Try again?"
+  },
+  "error.while.burning": {
+    "defaultMessage": "Error while burning"
+  },
+  "error.while.generating.images": {
+    "defaultMessage": "Error while generating images"
+  },
+  "error.while.importing.nft": {
+    "defaultMessage": "Error while importing NFT: {error}"
+  },
+  "error.while.transferring": {
+    "defaultMessage": "Error while transferring"
+  },
+  "ex.an.image.of.a.cat": {
+    "defaultMessage": "ex. An image of a cat"
+  },
+  "execute": {
+    "defaultMessage": "Execute"
+  },
+  "execute.transaction": {
+    "defaultMessage": "Execute transaction"
+  },
+  "expired": {
+    "defaultMessage": "Expired"
+  },
+  "expiry": {
+    "defaultMessage": "Expiry"
+  },
+  "explore": {
+    "defaultMessage": "Explore",
+    "description": "Collection card explorer button"
+  },
+  "export": {
+    "defaultMessage": "Export"
+  },
+  "favorite": {
+    "defaultMessage": "Favorite"
+  },
+  "filters": {
+    "defaultMessage": "Filters"
+  },
+  "fix.spelling.and.grammar": {
+    "defaultMessage": "Fix spelling and grammar"
+  },
+  "gallery": {
+    "defaultMessage": "Gallery 1"
+  },
+  "gas.cost": {
+    "defaultMessage": "Gas cost"
+  },
+  "gas.price": {
+    "defaultMessage": "Gas price"
+  },
+  "generate": {
+    "defaultMessage": "Generate"
+  },
+  "generate.image": {
+    "defaultMessage": "Generate image"
+  },
+  "generate.new.text": {
+    "defaultMessage": "Generate new text"
+  },
+  "generate.variant": {
+    "defaultMessage": "Generate variant"
+  },
+  "generate.variants": {
+    "defaultMessage": "Generate Variants"
+  },
+  "generating": {
+    "defaultMessage": "Generating"
+  },
+  "generating.variants": {
+    "defaultMessage": "Generating Variants"
+  },
+  "hide": {
+    "defaultMessage": "Hide"
+  },
+  "hide.form.info": {
+    "defaultMessage": "Hide form info"
+  },
+  "hide.form.info.tooltip": {
+    "defaultMessage": "Hide form info like: contract address, description and name from the section"
+  },
+  "hold.kit": {
+    "defaultMessage": "Hold KIT"
+  },
+  "home": {
+    "defaultMessage": "Home"
+  },
+  "image.deleted": {
+    "defaultMessage": "Image deleted"
+  },
+  "images.generated": {
+    "defaultMessage": "Images generated"
+  },
+  "images.notGenerated": {
+    "defaultMessage": "You haven't generated any images yet. Start generating images now to make the most out of our service."
+  },
+  "import": {
+    "defaultMessage": "Import"
+  },
+  "import.nft": {
+    "defaultMessage": "Import NFT"
+  },
+  "import.or.favorite.nfts": {
+    "defaultMessage": "Import or favorite NFTs"
+  },
+  "import.token": {
+    "defaultMessage": "Import token"
+  },
+  "improve.writing": {
+    "defaultMessage": "Improve writing"
+  },
+  "insufficient.funds": {
+    "defaultMessage": "insufficient funds"
+  },
+  "invalid address": {
+    "defaultMessage": "Invalid address"
+  },
+  "invalid.file.column.column.is.missing": {
+    "defaultMessage": "Invalid file: column {column} is missing"
+  },
+  "invalid.price": {
+    "defaultMessage": "Invalid price"
+  },
+  "least.recent": {
+    "defaultMessage": "Least recent"
+  },
+  "listing.price": {
+    "defaultMessage": "Listing price"
+  },
+  "logout.wallet": {
+    "defaultMessage": "Logout wallet"
+  },
+  "make.longer": {
+    "defaultMessage": "Make longer"
+  },
+  "make.shorter": {
+    "defaultMessage": "Make shorter"
+  },
+  "max.fee": {
+    "defaultMessage": "Max fee"
+  },
+  "max.image.size": {
+    "defaultMessage": "Max image size: 1 Mb"
+  },
+  "max.priority.fee": {
+    "defaultMessage": "Max priority fee"
+  },
+  "message.you.are.signing": {
+    "defaultMessage": "Message you are signing"
+  },
+  "mint": {
+    "defaultMessage": "Mint"
+  },
+  "mint.token.value": {
+    "defaultMessage": "Mint token \"{tokenName}\""
+  },
+  "most.recent": {
+    "defaultMessage": "Most recent"
+  },
+  "name": {
+    "defaultMessage": "Name"
+  },
+  "network": {
+    "defaultMessage": "Network"
+  },
+  "network.swap.options.info": {
+    "defaultMessage": "Choose the default tokens and slippage for each network."
+  },
+  "network.value": {
+    "defaultMessage": "{network}"
+  },
+  "networks": {
+    "defaultMessage": "Networks"
+  },
+  "nft.already.imported": {
+    "defaultMessage": "NFT already imported"
+  },
+  "nft.detail": {
+    "defaultMessage": "NFT detail"
+  },
+  "nft.image": {
+    "defaultMessage": "NFT Image"
+  },
+  "nft.imported": {
+    "defaultMessage": "NFT imported"
+  },
+  "nfts": {
+    "defaultMessage": "NFTs"
+  },
+  "no.available.offers": {
+    "defaultMessage": "No Available offers",
+    "description": "No Available offers message"
+  },
+  "no.credits": {
+    "defaultMessage": "No Credits"
+  },
+  "no.hidden.nfts.found": {
+    "defaultMessage": "No hidden NFTs Found"
+  },
+  "hide.nfts.hint": {
+    "defaultMessage": "Go to Collected tab and use the eye icon on any NFT to hide it from your main collection"
+  },
+  "no.images": {
+    "defaultMessage": "No Images"
+  },
+  "no.images.found.with.that.name": {
+    "defaultMessage": "No images found with that name."
+  },
+  "no.nfts.found": {
+    "defaultMessage": "No NFTs Found"
+  },
+  "no.orders.found": {
+    "defaultMessage": "No Orders Found"
+  },
+  "no.results": {
+    "defaultMessage": "No results",
+    "description": "No Available offers message"
+  },
+  "no.wallet.connected": {
+    "defaultMessage": "No Wallet connected"
+  },
+  "nonce": {
+    "defaultMessage": "Nonce"
+  },
+  "not.enough.balance": {
+    "defaultMessage": "Not enough balance"
+  },
+  "not.enough.kit": {
+    "defaultMessage": "Not enough KIT"
+  },
+  "nothing.to.see.here": {
+    "defaultMessage": "Nothing to see here"
+  },
+  "notifications": {
+    "defaultMessage": "Notifications"
+  },
+  "num.of.images": {
+    "defaultMessage": "Num. of Images"
+  },
+  "num.of.variant": {
+    "defaultMessage": "Num of variants"
+  },
+  "num.of.variants": {
+    "defaultMessage": "Num. of variants"
+  },
+  "offer": {
+    "defaultMessage": "Offer"
+  },
+  "oops.something.went.wrong": {
+    "defaultMessage": "Oops, something went wrong"
+  },
+  "open": {
+    "defaultMessage": "Open"
+  },
+  "order.created": {
+    "defaultMessage": "Order #{id} Created"
+  },
+  "orders": {
+    "defaultMessage": "Orders"
+  },
+  "original.image": {
+    "defaultMessage": "Original image"
+  },
+  "owned.by": {
+    "defaultMessage": "Owned by"
+  },
+  "owned.by.owner": {
+    "defaultMessage": "Owned by {owner}"
+  },
+  "payment.confirmation.message": {
+    "defaultMessage": "Please wait for 10 confirmations for payment recognition."
+  },
+  "payment.method": {
+    "defaultMessage": "Payment method"
+  },
+  "please.connect.your.wallet": {
+    "defaultMessage": "Please, connect your wallet to see orders"
+  },
+  "please.connect.your.wallet.to.see.balance": {
+    "defaultMessage": "Please, connect your wallet to see your balance"
+  },
+  "please.create.a.form.to.start.using.it.here": {
+    "defaultMessage": "Please, create a form to start using it here"
+  },
+  "please.login.with.your.wallet.to.delete.your.image": {
+    "defaultMessage": "Please, login with your wallet to delete your image"
+  },
+  "please.try.again.later": {
+    "defaultMessage": "Please, try again later"
+  },
+  "please.wait.for.the.block.confirmation": {
+    "defaultMessage": "Wait for the block confirmation",
+    "description": "Transaction dialog message after transaction confirmation in the wallet"
+  },
+  "post.offers": {
+    "defaultMessage": "Post offers",
+    "description": "Post offers"
+  },
+  "price": {
+    "defaultMessage": "Price",
+    "description": "Price label"
+  },
+  "price.fiat": {
+    "defaultMessage": "Price {currency}"
+  },
+  "prompt": {
+    "defaultMessage": "Prompt"
+  },
+  "provider.not.found": {
+    "defaultMessage": "Provider not found"
+  },
+  "quantity": {
+    "defaultMessage": "Quantity"
+  },
+  "reason": {
+    "defaultMessage": "Reason"
+  },
+  "receive": {
+    "defaultMessage": "Receive"
+  },
+  "receive.on.network.value": {
+    "defaultMessage": "Receive on {network}"
+  },
+  "receiver": {
+    "defaultMessage": "Receiver"
+  },
+  "reject": {
+    "defaultMessage": "Reject"
+  },
+  "remove.image": {
+    "defaultMessage": "Remove Image"
+  },
+  "request.sent.successfully": {
+    "defaultMessage": "Request sent successfully"
+  },
+  "save": {
+    "defaultMessage": "Save"
+  },
+  "save.column": {
+    "defaultMessage": "Save column"
+  },
+  "save.generated.images": {
+    "defaultMessage": "Save generated images?"
+  },
+  "save.your.row.changes.before.confirm": {
+    "defaultMessage": "Save your row changes before confirm"
+  },
+  "saved": {
+    "defaultMessage": "Saved"
+  },
+  "scan.using.crypto.mobile.app": {
+    "defaultMessage": "Scan QR code using crypto mobile app like Metamask or Trust"
+  },
+  "search": {
+    "defaultMessage": "Search"
+  },
+  "search.default.input.token": {
+    "defaultMessage": "Search default input token"
+  },
+  "search.default.output.token": {
+    "defaultMessage": "Search default output token"
+  },
+  "search.for.a.nft": {
+    "defaultMessage": "Search for a NFT"
+  },
+  "search.in.store": {
+    "defaultMessage": "Search in store"
+  },
+  "search.not.returned.results": {
+    "defaultMessage": "Search not returned results. Try other search words."
+  },
+  "select": {
+    "defaultMessage": "Select"
+  },
+  "select.all": {
+    "defaultMessage": "Select All"
+  },
+  "select.currency": {
+    "defaultMessage": "Select currency",
+    "description": "Select currency"
+  },
+  "select.image": {
+    "defaultMessage": "Select Image"
+  },
+  "select.language": {
+    "defaultMessage": "Select language",
+    "description": "Select language"
+  },
+  "select.network": {
+    "defaultMessage": "Select Network",
+    "description": "select network dialog title"
+  },
+  "select.or.import.nft": {
+    "defaultMessage": "Select or import a NFT to create an order"
+  },
+  "send": {
+    "defaultMessage": "Send"
+  },
+  "send.amount": {
+    "defaultMessage": "Send amount"
+  },
+  "sending.request": {
+    "defaultMessage": "Sending request"
+  },
+  "sent.to": {
+    "defaultMessage": "Sent to"
+  },
+  "settings": {
+    "defaultMessage": "Settings"
+  },
+  "share": {
+    "defaultMessage": "Share"
+  },
+  "share.receive.request": {
+    "defaultMessage": "Share receive request"
+  },
+  "share.your.address": {
+    "defaultMessage": "Share your address"
+  },
+  "sign": {
+    "defaultMessage": "Sign"
+  },
+  "sign.message": {
+    "defaultMessage": "Sign Message",
+    "description": "Sign message dialog title"
+  },
+  "slippage.is.above.one.hundred.percent": {
+    "defaultMessage": "Slippage is above 100%"
+  },
+  "slippage.is.below.zero": {
+    "defaultMessage": "Slippage is below zero"
+  },
+  "something.went.wrong": {
+    "defaultMessage": "Oops, something went wrong",
+    "description": "Something went wrong error message"
+  },
+  "sort.by": {
+    "defaultMessage": "Sort by"
+  },
+  "start.posting.offers.collection": {
+    "defaultMessage": "Start posting offers for this collection",
+    "description": "Start posting offers for this collection"
+  },
+  "status": {
+    "defaultMessage": "Status"
+  },
+  "store.without.order": {
+    "defaultMessage": "Store without offers. Came back later!"
+  },
+  "swap.settings": {
+    "defaultMessage": "Swap Settings"
+  },
+  "switch": {
+    "defaultMessage": "Switch",
+    "description": "switch"
+  },
+  "switch.network": {
+    "defaultMessage": "Switch network"
+  },
+  "switch.network.content.text": {
+    "defaultMessage": "Please, switch to {chainName} network to create listings or offers for this asset",
+    "description": "Switch network dialog content text"
+  },
+  "switch.to.network.value": {
+    "defaultMessage": "Switch to {networkName} network"
+  },
+  "switch.wallet": {
+    "defaultMessage": "Switch wallet"
+  },
+  "symbol": {
+    "defaultMessage": "Symbol"
+  },
+  "the.buyer.will.pay.percentage.in.fees": {
+    "defaultMessage": "The buyer will pay {price} {symbol} +{percentage} in fees"
+  },
+  "the.maximum.is.95": {
+    "defaultMessage": "the maximum is 95"
+  },
+  "the.minimum.is.five": {
+    "defaultMessage": "the minimum is 5"
+  },
+  "the.nft.has.no.metadata": {
+    "defaultMessage": "The NFT has no metadata"
+  },
+  "token": {
+    "defaultMessage": "Token"
+  },
+  "token.added": {
+    "defaultMessage": "Token added"
+  },
+  "token.already.imported": {
+    "defaultMessage": "Token already imported"
+  },
+  "token.id": {
+    "defaultMessage": "Token ID"
+  },
+  "total": {
+    "defaultMessage": "Total"
+  },
+  "total.cost": {
+    "defaultMessage": "Total cost"
+  },
+  "trades": {
+    "defaultMessage": "Trades"
+  },
+  "transaction": {
+    "defaultMessage": "Transaction"
+  },
+  "transaction.confirm.transaction": {
+    "defaultMessage": "Confirm transaction"
+  },
+  "transaction.confirmed": {
+    "defaultMessage": "Transaction confirmed"
+  },
+  "transaction.failed": {
+    "defaultMessage": "Transaction Failed"
+  },
+  "transaction.failed.reason": {
+    "defaultMessage": "Transaction failed"
+  },
+  "transaction.submitted": {
+    "defaultMessage": "Transaction Submitted"
+  },
+  "transaction.waiting.confirmation": {
+    "defaultMessage": "Waiting confirmation"
+  },
+  "transactions": {
+    "defaultMessage": "Transactions"
+  },
+  "transfer": {
+    "defaultMessage": "Transfer"
+  },
+  "transfer.name.value": {
+    "defaultMessage": "Transfer NFT {nftName}"
+  },
+  "transfer.nft": {
+    "defaultMessage": "Transfer NFT"
+  },
+  "transferring": {
+    "defaultMessage": "Transferring"
+  },
+  "try.again": {
+    "defaultMessage": "Try again",
+    "description": "Try again"
+  },
+  "type": {
+    "defaultMessage": "Type"
+  },
+  "unhide": {
+    "defaultMessage": "Unhide"
+  },
+  "unknown.collection": {
+    "defaultMessage": "Unknown collection"
+  },
+  "unknown.name": {
+    "defaultMessage": "Unknown name"
+  },
+  "unknown.token": {
+    "defaultMessage": "Unknown token"
+  },
+  "unlock.the.power.of.artificial.intelligence.by.activating.it": {
+    "defaultMessage": "Unlock the power of artificial intelligence by activating it"
+  },
+  "upload": {
+    "defaultMessage": "Upload"
+  },
+  "uploaded": {
+    "defaultMessage": "Uploaded"
+  },
+  "uploading": {
+    "defaultMessage": "Uploading"
+  },
+  "use": {
+    "defaultMessage": "use"
+  },
+  "use.as.prompt": {
+    "defaultMessage": "use as prompt"
+  },
+  "validating": {
+    "defaultMessage": "Validating"
+  },
+  "validating.ens": {
+    "defaultMessage": "Validating ENS name"
+  },
+  "variants": {
+    "defaultMessage": "Variants"
+  },
+  "view": {
+    "defaultMessage": "view"
+  },
+  "view.marketplace": {
+    "defaultMessage": "View Marketplace"
+  },
+  "view.order": {
+    "defaultMessage": "View Order"
+  },
+  "view.profile": {
+    "defaultMessage": "View profile"
+  },
+  "view.template": {
+    "defaultMessage": "View template"
+  },
+  "view.transaction": {
+    "defaultMessage": "View Transaction",
+    "description": "View transaction"
+  },
+  "waiting.payment": {
+    "defaultMessage": "Waiting payment"
+  },
+  "wallet": {
+    "defaultMessage": "Wallet"
+  },
+  "wallet.is.not.connected": {
+    "defaultMessage": "Wallet is not connected"
+  },
+  "you": {
+    "defaultMessage": "you"
+  },
+  "you.are.not.the.owner.of.this.NFT": {
+    "defaultMessage": "You are not the owner of this NFT"
+  },
+  "you.are.paying.percentage.in.fees": {
+    "defaultMessage": "You are paying {price} {symbol} + {percentage} in fees"
+  },
+  "you.cant.use.the.connected.account.to.burn": {
+    "defaultMessage": "You can't use the connected account to burn"
+  },
+  "you.cant.use.the.connected.account.to.transfer": {
+    "defaultMessage": "You can't use the connected to transfer"
+  },
+  "you.dont.have.any.forms": {
+    "defaultMessage": "You don't have any forms yet"
+  },
+  "you.need.to.add.credits.to.use.ai.features": {
+    "defaultMessage": "You need to add credits to use AI features"
+  },
+  "you.need.to.hold.kit.value": {
+    "defaultMessage": "You need to hold {value} KIT on one of these networks: BSC, ETH, or Polygon to use this feature"
+  },
+  "you.own.nfts": {
+    "defaultMessage": "You own {balance} NFTs"
+  },
+  "your.image.was.deleted.successfully": {
+    "defaultMessage": "Your image was deleted successfully"
+  },
+  "your.order.was.created.successfully": {
+    "defaultMessage": "Your order was created successfully"
+  },
+  "your.request.was.sent.successfully": {
+    "defaultMessage": "Your request was sent successfully"
+  },
+  "your.transaction.has.been.confirmed": {
+    "defaultMessage": "Your transaction has been confirmed",
+    "description": "Your transaction has been confirmed"
+  }
+}

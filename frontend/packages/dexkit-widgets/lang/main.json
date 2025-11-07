@@ -1,0 +1,191 @@
+{
+  "Unwrap": {
+    "defaultMessage": "Unwrap"
+  },
+  "address.or.ens": {
+    "defaultMessage": "Address or ENS"
+  },
+  "amount": {
+    "defaultMessage": "Amount"
+  },
+  "approve": {
+    "defaultMessage": "Approve"
+  },
+  "auto.slippage": {
+    "defaultMessage": "Auto Slippage"
+  },
+  "buy.crypto": {
+    "defaultMessage": "Buy Crypto"
+  },
+  "buy.crypto.with.transak": {
+    "defaultMessage": "Buy crypto with Transak"
+  },
+  "cancel": {
+    "defaultMessage": "Cancel"
+  },
+  "changing.network": {
+    "defaultMessage": "Changing Network"
+  },
+  "clear": {
+    "defaultMessage": "Clear"
+  },
+  "coin": {
+    "defaultMessage": "Coin"
+  },
+  "coin.on.network": {
+    "defaultMessage": "{name} on {network}"
+  },
+  "confirm": {
+    "defaultMessage": "Confirm"
+  },
+  "confirm.swap": {
+    "defaultMessage": "Confirm swap"
+  },
+  "connect.wallet": {
+    "defaultMessage": "Connect wallet"
+  },
+  "connect.with.email": {
+    "defaultMessage": "Connect with e-mail"
+  },
+  "connect.your.wallet": {
+    "defaultMessage": "Connect Your Wallet"
+  },
+  "copied": {
+    "defaultMessage": "Copied!",
+    "description": "Copied text"
+  },
+  "copy": {
+    "defaultMessage": "Copy",
+    "description": "Copy text"
+  },
+  "email": {
+    "defaultMessage": "Email"
+  },
+  "error.while.transferring": {
+    "defaultMessage": "Error while transferring"
+  },
+  "gas.gas": {
+    "defaultMessage": "Gas: {gas} Gwei"
+  },
+  "insufficient.symbol.balance": {
+    "defaultMessage": "Insufficient {symbol} balance"
+  },
+  "invalid address": {
+    "defaultMessage": "Invalid address"
+  },
+  "max": {
+    "defaultMessage": "Max"
+  },
+  "network.not.supported.msg": {
+    "defaultMessage": "Network not supported. Please change to a supported network: {networks}"
+  },
+  "network_not_supported": {
+    "defaultMessage": "Network not supported"
+  },
+  "no.coins": {
+    "defaultMessage": "No coins"
+  },
+  "no.coins.found": {
+    "defaultMessage": "No coins found"
+  },
+  "not.enough.balance": {
+    "defaultMessage": "Not enough balance"
+  },
+  "nothing.to.see.here": {
+    "defaultMessage": "Nothing to see here"
+  },
+  "notifications": {
+    "defaultMessage": "Notifications",
+    "description": "Notifications"
+  },
+  "owned.by.owner": {
+    "defaultMessage": "Owned by {owner}"
+  },
+  "powered.by.dexkit": {
+    "defaultMessage": "Powered by {dexkit}"
+  },
+  "price.impact": {
+    "defaultMessage": "Price impact"
+  },
+  "price.impact.swap.message.info": {
+    "defaultMessage": "Price impact refers to the fluctuation in the price of a coin that happens when a trade takes place. When the price impact is high, it can sometimes lead to buying coins at a price lower than what was initially expected."
+  },
+  "recent": {
+    "defaultMessage": "Recent"
+  },
+  "save": {
+    "defaultMessage": "Save"
+  },
+  "search.for.a.coin.by.name.symbol.and.address": {
+    "defaultMessage": "Search for a coin by name, symbol and address"
+  },
+  "select.token": {
+    "defaultMessage": "Select token"
+  },
+  "send": {
+    "defaultMessage": "Send"
+  },
+  "slippage.is.above.one.hundred.percent": {
+    "defaultMessage": "Slippage is above 100%"
+  },
+  "slippage.is.below.zero": {
+    "defaultMessage": "Slippage is below zero"
+  },
+  "swap": {
+    "defaultMessage": "Swap"
+  },
+  "swap.settings": {
+    "defaultMessage": "Swap Settings"
+  },
+  "swap.tokens": {
+    "defaultMessage": "Swap Tokens"
+  },
+  "switch.network": {
+    "defaultMessage": "Switch network"
+  },
+  "switch.to.network.value": {
+    "defaultMessage": "Switch to {networkName} network"
+  },
+  "switch.wallet.network": {
+    "defaultMessage": "Switch wallet to {networkName}"
+  },
+  "token.balance": {
+    "defaultMessage": "balance: {balance}"
+  },
+  "transaction.cost": {
+    "defaultMessage": "Transaction cost"
+  },
+  "transaction.failed.reason": {
+    "defaultMessage": "Transaction failed"
+  },
+  "transaction.rejected": {
+    "defaultMessage": "Transaction rejected"
+  },
+  "transaction.submitted": {
+    "defaultMessage": "Transaction Submitted"
+  },
+  "transfer": {
+    "defaultMessage": "Transfer"
+  },
+  "transfer.name.value": {
+    "defaultMessage": "Transfer NFT {nftName}"
+  },
+  "transferring": {
+    "defaultMessage": "Transferring"
+  },
+  "wrap": {
+    "defaultMessage": "Wrap"
+  },
+  "you.are.not.the.owner.of.this.NFT": {
+    "defaultMessage": "You are not the owner of this NFT"
+  },
+  "you.cant.use.the.connected.account.to.transfer": {
+    "defaultMessage": "You can't use the connected to transfer"
+  },
+  "you.receive": {
+    "defaultMessage": "You receive"
+  },
+  "you.send": {
+    "defaultMessage": "You send"
+  }
+}
