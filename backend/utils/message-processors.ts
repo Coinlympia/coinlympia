@@ -46,8 +46,10 @@ export function parseGameCreationAction(responseText: string): {
     }
 
     if (gameParams.gameType) {
-      gameParams.gameType = gameParams.gameType.toLowerCase();
-      if (gameParams.gameType !== 'bull' && gameParams.gameType !== 'bear') {
+      const gameTypeLower = gameParams.gameType.toLowerCase();
+      if (gameTypeLower === 'bull' || gameTypeLower === 'bear') {
+        gameParams.gameType = gameTypeLower as 'bull' | 'bear';
+      } else {
         gameParams.gameType = 'bull';
       }
     }
@@ -69,10 +71,10 @@ export function validateGameParams(gameParams: GameParams): {
   isValid: boolean;
   missingParams: string[];
 } {
-  const requiredParams = ['gameType', 'duration', 'gameLevel', 'maxCoins', 'maxPlayers', 'startDate'];
+  const requiredParams: Array<keyof GameParams> = ['gameType', 'duration', 'gameLevel', 'maxCoins', 'maxPlayers', 'startDate'];
   const missingParams = requiredParams.filter(param => {
     if (param === 'gameLevel') {
-      return !gameParams[param] || gameParams[param] < 1 || gameParams[param] > 6;
+      return !gameParams[param] || gameParams[param]! < 1 || gameParams[param]! > 6;
     }
     return !gameParams[param] && gameParams[param] !== 0;
   });
@@ -133,5 +135,91 @@ export function isAskingForCoinsInResponse(
     responseLower.includes('selecciona') || responseLower.includes('elige') ||
     responseLower.includes('por favor, elige') || responseLower.includes('please select')
   );
+}
+
+export interface FindGamesParams {
+  gameType?: 'bull' | 'bear';
+  maxEntry?: string;
+  minEntry?: string;
+  chainId?: number;
+  status?: 'Waiting' | 'Started' | 'Finished';
+  limit?: number;
+}
+
+export interface JoinGameParams {
+  gameId: number;
+  chainId: number;
+}
+
+export function parseFindGamesAction(responseText: string): {
+  hasAction: boolean;
+  findGamesParams?: FindGamesParams;
+  responseText?: string;
+} {
+  if (!responseText.includes('ACTION:FIND_GAMES')) {
+    return { hasAction: false };
+  }
+
+  try {
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { hasAction: false };
+    }
+
+    let jsonString = jsonMatch[0];
+    jsonString = jsonString.replace(/\/\/.*$/gm, '');
+    jsonString = jsonString.replace(/,(\s*[}\]])/g, '$1');
+
+    const findGamesParams = JSON.parse(jsonString) as FindGamesParams;
+
+    if (findGamesParams.gameType) {
+      findGamesParams.gameType = findGamesParams.gameType.toLowerCase() as 'bull' | 'bear';
+    }
+
+    const cleanedResponse = responseText.replace(/ACTION:FIND_GAMES[\s\S]*/, '').trim() || 'Searching for available games...';
+
+    return {
+      hasAction: true,
+      findGamesParams,
+      responseText: cleanedResponse,
+    };
+  } catch (error) {
+    console.error('Error parsing find games action:', error);
+    return { hasAction: false };
+  }
+}
+
+export function parseJoinExistingGameAction(responseText: string): {
+  hasAction: boolean;
+  joinGameParams?: JoinGameParams;
+  responseText?: string;
+} {
+  if (!responseText.includes('ACTION:JOIN_EXISTING_GAME')) {
+    return { hasAction: false };
+  }
+
+  try {
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { hasAction: false };
+    }
+
+    let jsonString = jsonMatch[0];
+    jsonString = jsonString.replace(/\/\/.*$/gm, '');
+    jsonString = jsonString.replace(/,(\s*[}\]])/g, '$1');
+
+    const joinGameParams = JSON.parse(jsonString) as JoinGameParams;
+
+    const cleanedResponse = responseText.replace(/ACTION:JOIN_EXISTING_GAME[\s\S]*/, '').trim() || 'Preparing to join the game...';
+
+    return {
+      hasAction: true,
+      joinGameParams,
+      responseText: cleanedResponse,
+    };
+  } catch (error) {
+    console.error('Error parsing join existing game action:', error);
+    return { hasAction: false };
+  }
 }
 

@@ -1,15 +1,6 @@
-import axios from 'axios';
 import OpenAI from 'openai';
 import { prisma } from '../../../frontend/src/lib/prisma';
 import type { TokenAnalysisRequest, TokenPerformance } from '../../types';
-
-const COINGECKO_ENDPOINT = 'https://api.coingecko.com/api/v3';
-const COINGECKO_PLATFORM_ID: { [key: number]: string } = {
-  137: 'polygon-pos',
-  80001: 'polygon-pos',
-  56: 'binance-smart-chain',
-  8453: 'base',
-};
 
 export async function analyzeTokens(
   request: TokenAnalysisRequest
@@ -33,12 +24,24 @@ export async function analyzeTokens(
       address: true,
       symbol: true,
       name: true,
+      logo: true,
+      currentPrice: true,
+      price20m: true,
+      price1h: true,
+      price4h: true,
+      price8h: true,
+      price24h: true,
+      price7d: true,
+      price30d: true,
     },
   });
 
   if (!availableTokens || availableTokens.length === 0) {
-    throw new Error('No active tokens found in database for this chain');
+    console.warn(`[Token Analysis Service] No active tokens found in database for chainId: ${chainId}`);
+    return { tokens: [], timePeriod: '24h' };
   }
+
+  console.log(`[Token Analysis Service] Found ${availableTokens.length} active tokens for chainId: ${chainId}`);
 
   const apiKey = process.env.OPENAI_API_KEY;
 
@@ -122,70 +125,49 @@ Return only valid JSON, no additional text.`;
 
   const timePeriod = parsed.timePeriod || '24h';
 
-  let days = 1;
-
-  if (timePeriod.includes('20m') || timePeriod.includes('20 minutes') || timePeriod.includes('20 minutos')) {
-    days = 1;
-  } else if (timePeriod.includes('1h') || timePeriod.includes('1 hour') || timePeriod.includes('1 hora')) {
-    days = 1;
-  } else if (timePeriod.includes('7d') || timePeriod.includes('week') || timePeriod.includes('7 days') || timePeriod.includes('7 días')) {
-    days = 7;
-  } else if (timePeriod.includes('30d') || timePeriod.includes('month') || timePeriod.includes('30 days') || timePeriod.includes('30 días')) {
-    days = 30;
-  } else if (timePeriod.includes('90d') || timePeriod.includes('3 months') || timePeriod.includes('90 days')) {
-    days = 90;
-  } else if (timePeriod.includes('1d') || timePeriod.includes('day') || timePeriod.includes('24h') || timePeriod.includes('24 hours') || timePeriod.includes('24 horas')) {
-    days = 1;
-  }
-
-  const platformId = COINGECKO_PLATFORM_ID[chainId];
-
-  if (!platformId) {
-    throw new Error('Chain not supported for price data');
-  }
-
   const tokenPerformances: TokenPerformance[] = [];
 
   for (const token of availableTokens) {
     try {
-      const currentPriceResponse = await axios.get(
-        `${COINGECKO_ENDPOINT}/simple/token_price/${platformId}?contract_addresses=${token.address}&vs_currencies=usd`,
-        {
-          timeout: 5000,
-        }
-      );
-
-      const currentPrice = currentPriceResponse.data[token.address.toLowerCase()]?.usd;
-
-      if (!currentPrice) {
+      const currentPriceStr = token.currentPrice;
+      if (!currentPriceStr) {
+        console.warn(`[Token Analysis Service] No currentPrice for token ${token.symbol} (${token.address})`);
         continue;
       }
 
-      const historicalPriceResponse = await axios.get(
-        `${COINGECKO_ENDPOINT}/coins/${platformId}/contract/${token.address}/market_chart?vs_currency=usd&days=${days}`,
-        {
-          timeout: 5000,
-        }
-      );
-
-      const prices = historicalPriceResponse.data?.prices;
-      if (!prices || prices.length === 0) {
+      const currentPrice = parseFloat(currentPriceStr);
+      if (isNaN(currentPrice) || currentPrice <= 0) {
+        console.warn(`[Token Analysis Service] Invalid currentPrice for token ${token.symbol}: ${currentPriceStr}`);
         continue;
       }
 
-      let historicalPrice: number;
-      const now = Date.now();
-
+      let historicalPriceStr: string | null = null;
+      
       if (timePeriod.includes('20m') || timePeriod.includes('20 minutes') || timePeriod.includes('20 minutos')) {
-        const twentyMinutesAgo = now - (20 * 60 * 1000);
-        const closestPrice = prices.find((p: [number, number]) => p[0] >= twentyMinutesAgo) || prices[0];
-        historicalPrice = closestPrice[1];
+        historicalPriceStr = token.price20m;
       } else if (timePeriod.includes('1h') || timePeriod.includes('1 hour') || timePeriod.includes('1 hora')) {
-        const oneHourAgo = now - (60 * 60 * 1000);
-        const closestPrice = prices.find((p: [number, number]) => p[0] >= oneHourAgo) || prices[0];
-        historicalPrice = closestPrice[1];
+        historicalPriceStr = token.price1h;
+      } else if (timePeriod.includes('4h') || timePeriod.includes('4 hours') || timePeriod.includes('4 horas')) {
+        historicalPriceStr = token.price4h;
+      } else if (timePeriod.includes('8h') || timePeriod.includes('8 hours') || timePeriod.includes('8 horas')) {
+        historicalPriceStr = token.price8h;
+      } else if (timePeriod.includes('7d') || timePeriod.includes('week') || timePeriod.includes('7 days') || timePeriod.includes('7 días')) {
+        historicalPriceStr = token.price7d;
+      } else if (timePeriod.includes('30d') || timePeriod.includes('month') || timePeriod.includes('30 days') || timePeriod.includes('30 días')) {
+        historicalPriceStr = token.price30d;
       } else {
-        historicalPrice = prices[0][1];
+        historicalPriceStr = token.price24h;
+      }
+
+      if (!historicalPriceStr) {
+        console.warn(`[Token Analysis Service] No historical price for token ${token.symbol} for timePeriod: ${timePeriod}`);
+        continue;
+      }
+
+      const historicalPrice = parseFloat(historicalPriceStr);
+      if (isNaN(historicalPrice) || historicalPrice <= 0) {
+        console.warn(`[Token Analysis Service] Invalid historical price for token ${token.symbol}: ${historicalPriceStr}`);
+        continue;
       }
 
       const priceChange = currentPrice - historicalPrice;
@@ -195,18 +177,25 @@ Return only valid JSON, no additional text.`;
         address: token.address,
         symbol: token.symbol,
         name: token.name,
+        logo: token.logo || null,
         priceChange,
         priceChangePercent,
         currentPrice,
         historicalPrice,
       });
     } catch (error) {
-      console.error(`Error fetching data for token ${token.symbol}:`, error);
+      console.error(`[Token Analysis Service] Error processing token ${token.symbol}:`, error);
       continue;
     }
   }
 
   tokenPerformances.sort((a, b) => b.priceChangePercent - a.priceChangePercent);
+
+  console.log(`[Token Analysis Service] Returning ${tokenPerformances.length} tokens for timePeriod: ${timePeriod}`);
+
+  if (tokenPerformances.length === 0) {
+    console.warn('[Token Analysis Service] No token performances found. This might indicate an issue with the API calls or token data.');
+  }
 
   return {
     tokens: tokenPerformances,

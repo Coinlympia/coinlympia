@@ -1623,5 +1623,21 @@
   "5minutes": "5 minutes",
   "token.performance.analysis": "Token Performance Analysis",
   "token.performance.period": "Performance in the last {timePeriod}",
-  "no.token.data.available": "No token data available"
+  "no.token.data.available": "No token data available",
+  "chat.join.game.start": "Perfect! You want to join game #{gameId}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin.",
+  "chat.error.join.game.start": "Error starting join flow: {error}. Please try again.",
+  "chat.token.analysis.available": "Here are the available tokens with their performance data to help you choose:",
+  "chat.error.missing.coins": "Please select your captain coin and at least one additional coin before joining the game.",
+  "chat.joining.game": "Joining the game... Please confirm the transaction in your wallet.",
+  "chat.join.game.success": "Successfully joined game #{gameId}! Redirecting to the game...",
+  "chat.error.join.game": "Error joining game: {error}. Please try again.",
+  "chat.searching.games": "Searching for available games...",
+  "chat.games.found": "Found {count} available games. Please select one from the list below:",
+  "chat.no.games.suggestion": "No games found matching your criteria. Would you like to create a new game instead?",
+  "chat.error.find.games": "Error searching for games: {error}. Please try again.",
+  "chat.analyzing": "Analyzing data...",
+  "chat.error.no.response": "I apologize, but I did not receive a valid response. Please try again.",
+  "available.tokens": "Available Tokens",
+  "available.games": "Available Games",
+  "available.slots": "Available"
 }

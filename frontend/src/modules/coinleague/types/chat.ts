@@ -5,10 +5,32 @@ export interface TokenPerformance {
   address: string;
   symbol: string;
   name: string;
+  logo?: string | null;
   priceChange: number;
   priceChangePercent: number;
   currentPrice: number;
   historicalPrice: number;
+}
+
+export interface AvailableGame {
+  id: number;
+  chainId: number;
+  type: 'bull' | 'bear';
+  typeName: string;
+  status: string;
+  duration: number;
+  durationFormatted: string;
+  numCoins: number;
+  numPlayers: number;
+  currentPlayers: number;
+  availableSlots: number;
+  entry: string;
+  entryFormatted: string;
+  coinToPlay: string;
+  creator: string;
+  participants: number;
+  createdAt: Date;
+  createdAtFormatted: string;
 }
 
 export interface Message {
@@ -21,5 +43,6 @@ export interface Message {
     tokens: TokenPerformance[];
     timePeriod: string;
   };
+  availableGames?: AvailableGame[];
 }
 

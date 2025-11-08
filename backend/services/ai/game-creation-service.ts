@@ -42,8 +42,24 @@ Return a JSON object with all parameters that were mentioned in the conversation
   "duration": number in seconds (only if mentioned, convert minutes/hours to seconds),
   "gameLevel": number 1-6 (only if mentioned),
   "maxCoins": number (only if mentioned),
-  "maxPlayers": number (only if mentioned)
+  "maxPlayers": number (only if mentioned),
+  "selectedCoins": array of token symbols/names (only if mentioned, e.g., ["BTC", "ETH", "ADA"])
 }
+
+IMPORTANT: When extracting selectedCoins, look for:
+- Token symbols (BTC, ETH, ADA, USDT, etc.)
+- Token names (Bitcoin, Ethereum, Cardano, Tether, etc.)
+- Phrases like "Bitcoin y Ethereum" = ["BTC", "ETH"]
+- Phrases like "BTC and ETH" = ["BTC", "ETH"]
+- Multiple tokens separated by commas, "y", "and", etc.
+- Map common token names to their symbols:
+  * Bitcoin -> BTC
+  * Ethereum -> ETH
+  * Cardano -> ADA
+  * Tether -> USDT
+  * Polygon -> MATIC
+  * Chainlink -> LINK
+  * etc.
 
 Example responses:
 - "Create a bull game for 10 players" -> {"gameType": "bull", "maxPlayers": 10}
@@ -109,6 +125,13 @@ Return only valid JSON, no additional text.`;
 
   if (parsedParams.maxPlayers && typeof parsedParams.maxPlayers === 'number' && parsedParams.maxPlayers > 0) {
     validatedParams.maxPlayers = parsedParams.maxPlayers;
+  }
+
+  if (parsedParams.selectedCoins && Array.isArray(parsedParams.selectedCoins) && parsedParams.selectedCoins.length > 0) {
+    validatedParams.selectedCoins = parsedParams.selectedCoins.map((coin: any) => {
+      const coinStr = String(coin).trim().toUpperCase();
+      return coinStr;
+    });
   }
 
   return validatedParams;

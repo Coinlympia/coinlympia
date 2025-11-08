@@ -2,9 +2,10 @@ import cors from 'cors';
 import express from 'express';
 import { generateChatResponse } from './services/ai/chat-service';
 import { parseGameRequest } from './services/ai/game-creation-service';
+import { prepareJoinGame } from './services/ai/join-game-service';
 import { analyzeTokens } from './services/ai/token-analysis-service';
 import { queryDatabase } from './services/database/query-service';
-import type { ChatRequest, DatabaseQueryRequest, TokenAnalysisRequest } from './types';
+import type { ChatRequest, DatabaseQueryRequest, FindGamesRequest, JoinGameRequest, TokenAnalysisRequest } from './types';
 
 const colors = {
   reset: '\x1b[0m',
@@ -222,6 +223,75 @@ app.post('/api/analyze-tokens', async (req, res) => {
   }
 });
 
+app.post('/api/join-game', async (req, res) => {
+  const startTime = Date.now();
+  logger.info('Join game request received');
+  logger.debug('Join game request:', JSON.stringify(req.body, null, 2));
+
+  try {
+    const request: JoinGameRequest = req.body;
+
+    if (!request.gameId) {
+      logger.warn('Join game request missing gameId');
+      return res.status(400).json({ error: 'Game ID is required' });
+    }
+
+    if (!request.selectedCoins || request.selectedCoins.length === 0) {
+      logger.warn('Join game request missing selectedCoins');
+      return res.status(400).json({ error: 'Selected coins are required' });
+    }
+
+    if (!request.chainId) {
+      logger.warn('Join game request missing chainId');
+      return res.status(400).json({ error: 'Chain ID is required' });
+    }
+
+    if (!request.maxCoins || request.maxCoins < 2) {
+      logger.warn('Join game request missing or invalid maxCoins');
+      return res.status(400).json({ error: 'Max coins must be at least 2' });
+    }
+
+    const result = await prepareJoinGame(request);
+    const duration = Date.now() - startTime;
+    logger.success(`Join game prepared successfully in ${duration}ms`);
+    logger.debug('Join game response:', JSON.stringify(result, null, 2));
+    return res.status(200).json(result);
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logger.error(`Error preparing join game after ${duration}ms:`, error);
+    if (error instanceof Error) {
+      logger.error('Error stack:', error.stack);
+    }
+    const errorMessage = error instanceof Error ? error.message : 'Failed to prepare join game';
+    return res.status(500).json({ error: errorMessage });
+  }
+});
+
+app.post('/api/find-games', async (req, res) => {
+  const startTime = Date.now();
+  logger.info('Find games request received');
+  logger.debug('Find games request:', JSON.stringify(req.body, null, 2));
+
+  try {
+    const { findAvailableGames } = await import('./services/ai/find-games-service');
+    const request: FindGamesRequest = req.body;
+
+    const result = await findAvailableGames(request);
+    const duration = Date.now() - startTime;
+    logger.success(`Found ${result.count} games in ${duration}ms`);
+    logger.debug('Find games response:', JSON.stringify(result, null, 2));
+    return res.status(200).json(result);
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    logger.error(`Error finding games after ${duration}ms:`, error);
+    if (error instanceof Error) {
+      logger.error('Error stack:', error.stack);
+    }
+    const errorMessage = error instanceof Error ? error.message : 'Failed to find games';
+    return res.status(500).json({ error: errorMessage });
+  }
+});
+
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.error('Unhandled error:', err);
   if (err.stack) {
@@ -238,10 +308,11 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   logger.success(`Backend server running on http://localhost:${PORT}`);
   logger.info(`Health check: http://localhost:${PORT}/health`);
-  logger.info(`Chat API: http://localhost:${PORT}/api/chat-response`);
-  logger.info(`Game Parser API: http://localhost:${PORT}/api/parse-game-request`);
-  logger.info(`Database Query API: http://localhost:${PORT}/api/query-database`);
-  logger.info(`Token Analysis API: http://localhost:${PORT}/api/analyze-tokens`);
+    logger.info(`Chat API: http://localhost:${PORT}/api/chat-response`);
+    logger.info(`Game Parser API: http://localhost:${PORT}/api/parse-game-request`);
+    logger.info(`Database Query API: http://localhost:${PORT}/api/query-database`);
+    logger.info(`Token Analysis API: http://localhost:${PORT}/api/analyze-tokens`);
+    logger.info(`Join Game API: http://localhost:${PORT}/api/join-game`);
   logger.info(`Debug mode: ${process.env.DEBUG === 'true' ? 'ENABLED' : 'DISABLED'}`);
   logger.info(`CORS origin: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });

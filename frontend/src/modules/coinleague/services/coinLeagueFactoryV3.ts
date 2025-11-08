@@ -43,22 +43,36 @@ export const createGame = async ({ address, params, provider, signer }: {
   ) as Promise<ContractTransaction>;
 };
 
-export const joinGame = async ({ factoryAddress, feeds, captainCoin, provider, id, affiliate, signer }: {
+export const joinGame = async ({ factoryAddress, feeds, captainCoin, provider, id, affiliate, signer, value }: {
   factoryAddress: string,
   feeds: string[],
   captainCoin: string,
   provider: providers.Web3Provider,
   signer?: providers.JsonRpcSigner,
   id: string,
-  affiliate?: string
+  affiliate?: string,
+  value?: BigNumber
 }) => {
-  return (
-    await getCoinLeagueV3Contract({ address: factoryAddress, provider, useSigner: true, signer })
-  ).joinGameWithCaptainCoin(
+  const contract = await getCoinLeagueV3Contract({ address: factoryAddress, provider, useSigner: true, signer });
+  
+  // If value is provided, send it with the transaction (payable function)
+  if (value) {
+    return contract.joinGameWithCaptainCoin(
+      feeds,
+      captainCoin,
+      affiliate || COINLEAGUE_DEFAULT_AFFILIATE,
+      id,
+      { value }
+    ) as Promise<ContractTransaction>;
+  }
+  
+  // Otherwise, call without value (for ERC20 tokens, value should be 0)
+  return contract.joinGameWithCaptainCoin(
     feeds,
     captainCoin,
     affiliate || COINLEAGUE_DEFAULT_AFFILIATE,
-    id
+    id,
+    { value: 0 }
   ) as Promise<ContractTransaction>;
 };
 

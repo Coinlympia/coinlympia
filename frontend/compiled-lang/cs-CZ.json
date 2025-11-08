@@ -1606,5 +1606,21 @@
   "5minutes": "5 minut",
   "token.performance.analysis": "Analýza výkonnosti tokenů",
   "token.performance.period": "Výkonnost za posledních {timePeriod}",
-  "no.token.data.available": "Nejsou k dispozici žádná data tokenů"
+  "no.token.data.available": "Nejsou k dispozici žádná data tokenů",
+  "chat.join.game.start": "Perfektní! Chcete se připojit ke hře #{gameId}. Nejprve potřebuji, abyste vybrali svou kapitánskou minci. Prosím, řekněte mi, který token chcete použít jako svou kapitánskou minci.",
+  "chat.error.join.game.start": "Chyba při spuštění procesu připojení: {error}. Zkuste to prosím znovu.",
+  "chat.token.analysis.available": "Zde jsou dostupné tokeny s jejich výkonnostními údaji, které vám pomohou vybrat:",
+  "chat.error.missing.coins": "Prosím, vyberte svou kapitánskou minci a alespoň jednu další minci před připojením ke hře.",
+  "chat.joining.game": "Připojování ke hře... Prosím, potvrďte transakci ve vaší peněžence.",
+  "chat.join.game.success": "Úspěšně jste se připojili ke hře #{gameId}! Přesměrování na hru...",
+  "chat.error.join.game": "Chyba při připojování ke hře: {error}. Zkuste to prosím znovu.",
+  "chat.searching.games": "Vyhledávání dostupných her...",
+  "chat.games.found": "Nalezeno {count} dostupných her. Prosím, vyberte jednu ze seznamu níže:",
+  "chat.no.games.suggestion": "Nebyly nalezeny žádné hry odpovídající vašim kritériím. Chtěli byste místo toho vytvořit novou hru?",
+  "chat.error.find.games": "Chyba při vyhledávání her: {error}. Zkuste to prosím znovu.",
+  "chat.analyzing": "Analyzuji data...",
+  "chat.error.no.response": "Omlouvám se, ale neobdržel jsem platnou odpověď. Zkuste to prosím znovu.",
+  "available.tokens": "Dostupné Tokeny",
+  "available.games": "Dostupné Hry",
+  "available.slots": "Dostupné"
 }

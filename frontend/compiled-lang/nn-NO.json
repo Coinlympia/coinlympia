@@ -1568,5 +1568,21 @@
   "5minutes": "5 minutter",
   "token.performance.analysis": "Token-ytelsesanalyse",
   "token.performance.period": "Ytelse i de siste {timePeriod}",
-  "no.token.data.available": "Ingen tokendata tilgjengelig"
+  "no.token.data.available": "Ingen tokendata tilgjengelig",
+  "chat.join.game.start": "Perfekt! Du vil bli med i spillet #{gameId}. Først må jeg at du velger din kapteinsmynt. Vennligst fortell meg hvilken token du vil bruke som din kapteinsmynt.",
+  "chat.error.join.game.start": "Feil ved start av tilkoblingsflyt: {error}. Vennligst prøv igjen.",
+  "chat.token.analysis.available": "Her er de tilgjengelige tokenene med deres ytelsesdata for å hjelpe deg med å velge:",
+  "chat.error.missing.coins": "Vennligst velg din kapteinsmynt og minst én ekstra mynt før du blir med i spillet.",
+  "chat.joining.game": "Bli med i spillet... Vennligst bekreft transaksjonen i lommeboken din.",
+  "chat.join.game.success": "Du har blitt med i spillet #{gameId}! Omdirigerer til spillet...",
+  "chat.error.join.game": "Feil ved å bli med i spillet: {error}. Vennligst prøv igjen.",
+  "chat.searching.games": "Søker etter tilgjengelige spill...",
+  "chat.games.found": "Fant {count} tilgjengelige spill. Vennligst velg ett fra listen nedenfor:",
+  "chat.no.games.suggestion": "Ingen spill funnet som matcher kriteriene dine. Vil du opprette et nytt spill i stedet?",
+  "chat.error.find.games": "Feil ved søk etter spill: {error}. Vennligst prøv igjen.",
+  "chat.analyzing": "Analyserer data...",
+  "chat.error.no.response": "Beklager, men jeg mottok ikke et gyldig svar. Vennligst prøv igjen.",
+  "available.tokens": "Tilgjengelige Tokens",
+  "available.games": "Tilgjengelige Spill",
+  "available.slots": "Tilgjengelig"
 }

@@ -4,7 +4,7 @@ import type { TokenAnalysisRequest, TokenPerformance } from '../../../backend/ty
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<{ tokens: TokenPerformance[]; timePeriod: string } | { error: string }>
+  res: NextApiResponse<{ tokens: TokenPerformance[]; timePeriod: string } | { error: string; message?: string }>
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -22,9 +22,13 @@ export default async function handler(
 
   try {
     const result = await analyzeTokens({ text, chainId });
+    console.log(`[Analyze Tokens API] Returning ${result.tokens?.length || 0} tokens for chainId: ${chainId}`);
     return res.status(200).json(result);
-  } catch (error) {
-    console.error('Error analyzing tokens:', error);
-    return res.status(500).json({ error: 'Failed to analyze tokens' });
+  } catch (error: any) {
+    console.error('[Analyze Tokens API] Error analyzing tokens:', error);
+    return res.status(500).json({ 
+      error: 'Failed to analyze tokens',
+      message: error?.message || 'Unknown error',
+    });
   }
 }

@@ -7,7 +7,9 @@ import SendIcon from '@mui/icons-material/Send';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
+  Avatar,
   Box,
+  Button,
   Dialog,
   DialogContent,
   DialogProps,
@@ -16,9 +18,12 @@ import {
   IconButton,
   Paper,
   Stack,
+  Tab,
+  Tabs,
   Typography,
   useTheme
 } from '@mui/material';
+import { BigNumber } from 'ethers';
 import { getAddress } from 'ethers/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/router';
@@ -28,7 +33,7 @@ import { useCoinToPlayStable, useCreateGameMutation, useCreateGameServerMutation
 import { useFactoryAddress } from '../hooks/coinleagueFactory';
 import { joinGame } from '../services/coinLeagueFactoryV3';
 import { GET_GAME_LEVEL_AMOUNTS } from '../utils/game';
-import { Message, TokenPerformance } from '../types/chat';
+import { AvailableGame, Message, TokenPerformance } from '../types/chat';
 
 interface ChatBoxProps {
   dialogProps: DialogProps;
@@ -82,6 +87,19 @@ export function ChatBox({
     selectedCoins?: string[];
   }>({});
   const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [gameJoinState, setGameJoinState] = useState<{
+    gameId?: number;
+    chainId?: number;
+    maxCoins?: number;
+    captainCoin?: string;
+    selectedCoins?: string[];
+  }>({});
+  const [isJoiningGame, setIsJoiningGame] = useState(false);
+  const [isSelectingToken, setIsSelectingToken] = useState(false); // Block token selection while processing
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>('24h');
+  const [tokenAnalysisData, setTokenAnalysisData] = useState<{
+    [timeframe: string]: { tokens: TokenPerformance[]; timePeriod: string };
+  }>({});
   const router = useRouter();
   const { provider, chainId: accountChainId, signer, account } = useWeb3React();
   const factoryAddress = useFactoryAddress();
@@ -101,17 +119,13 @@ export function ChatBox({
 
   const createGameServerMutation = useCreateGameServerMutation();
 
-  // Function to get token addresses from symbols or addresses
   const getTokenAddressesFromSymbols = async (symbolsOrAddresses: string[], chainId: number): Promise<{ captainCoin: string; coinFeeds: string[] } | null> => {
     try {
       console.log('Processing tokens (symbols or addresses):', symbolsOrAddresses, 'chainId:', chainId);
-
-      // Separate addresses from symbols
       const addresses: string[] = [];
       const symbols: string[] = [];
 
       for (const item of symbolsOrAddresses) {
-        // Check if it's already an address (starts with 0x and has valid length)
         if (item.startsWith('0x') && item.length === 42) {
           console.log(`Item is already an address: ${item}`);
           addresses.push(item);
@@ -121,7 +135,6 @@ export function ChatBox({
         }
       }
 
-      // If all items are already addresses, use them directly
       if (symbols.length === 0 && addresses.length === symbolsOrAddresses.length) {
         console.log('All items are addresses, using them directly');
         const captainCoin = addresses[0];
@@ -130,7 +143,6 @@ export function ChatBox({
         return { captainCoin, coinFeeds };
       }
 
-      // If we have symbols to resolve, fetch from database
       if (symbols.length > 0) {
         console.log('Fetching token addresses for symbols:', symbols);
         const response = await fetch('/api/query-database', {
@@ -155,7 +167,6 @@ export function ChatBox({
           return null;
         }
 
-        // Map symbols to addresses
         for (const symbol of symbols) {
           const token = data.tokens.find((t: any) =>
             t.symbol.toLowerCase() === symbol.toLowerCase() ||
@@ -177,7 +188,6 @@ export function ChatBox({
         return null;
       }
 
-      // First token is captain, rest are coin feeds
       const captainCoin = addresses[0];
       const coinFeeds = addresses.slice(1);
 
@@ -198,13 +208,11 @@ export function ChatBox({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Only auto-scroll if user is not manually scrolling
     if (!isUserScrolling) {
     scrollToBottom();
     }
   }, [messages, isUserScrolling]);
 
-  // Detect user scrolling
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -215,7 +223,7 @@ export function ChatBox({
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         setIsUserScrolling(false);
-      }, 1000); // Reset after 1 second of no scrolling
+      }, 1000);
     };
 
     container.addEventListener('scroll', handleScroll);
@@ -225,14 +233,12 @@ export function ChatBox({
     };
   }, []);
 
-  // Update ref when initialData changes
   useEffect(() => {
     initialDataRef.current = initialData;
   }, [initialData]);
 
   useEffect(() => {
     if (initialMessage && !hasGeneratedInitialResponse) {
-      // Add initial user message
       const userMessage: Message = {
         id: `user-${Date.now()}`,
         role: 'user',
@@ -241,26 +247,20 @@ export function ChatBox({
       };
       setMessages([userMessage]);
 
-      // Si tenemos initialData, usarlo directamente; si no, intentar obtenerlo
       if (initialData && initialData.tokens && initialData.tokens.length > 0) {
-        // Usar los datos iniciales directamente
         setHasGeneratedInitialResponse(true);
         generateAIResponse(initialMessage, initialData);
       } else {
-        // Intentar obtener datos de análisis si no los tenemos
         setHasGeneratedInitialResponse(true);
         generateAIResponse(initialMessage);
       }
     }
   }, [initialMessage, hasGeneratedInitialResponse]);
 
-  // Si initialData llega después de que ya generamos la respuesta, regenerar
   useEffect(() => {
     if (initialMessage && hasGeneratedInitialResponse && initialData && initialData.tokens && initialData.tokens.length > 0) {
-      // Verificar si ya tenemos un mensaje del asistente
       const hasAssistantMessage = messages.some(m => m.role === 'assistant');
 
-      // Si no hay mensaje del asistente o el último mensaje es muy corto (probablemente "dame un momento")
       const lastMessage = messages[messages.length - 1];
       const isPlaceholderMessage = lastMessage?.role === 'assistant' &&
         (lastMessage.content.length < 100 ||
@@ -270,24 +270,20 @@ export function ChatBox({
 
       if (!hasAssistantMessage || isPlaceholderMessage) {
         console.log('Regenerating response with token data that arrived late');
-        // Remover el mensaje placeholder si existe
         if (isPlaceholderMessage) {
           setMessages(prev => prev.filter(m => m.id !== lastMessage.id));
         }
-        // Regenerar la respuesta con los datos
         generateAIResponse(initialMessage, initialData);
       }
     }
   }, [initialData, initialMessage, hasGeneratedInitialResponse, messages]);
 
-  const generateAIResponse = async (userMessage: string, tokenData?: { tokens: TokenPerformance[]; timePeriod: string }) => {
+  const generateAIResponse = async (userMessage: string, tokenData?: { tokens: TokenPerformance[]; timePeriod: string }, overrideGameJoinState?: typeof gameJoinState) => {
     setIsLoading(true);
     try {
-      // Always try to get token analysis if we have chainId and user is asking about tokens
-      // Tokens are now fetched from database in the API, not from availableTokens prop
+      const currentGameJoinState = overrideGameJoinState !== undefined ? overrideGameJoinState : gameJoinState;
+      
       if (chainId) {
-        // Check if user is in the middle of creating a game
-        // This includes checking gameCreationState and conversation history
         const hasGameCreationContext = 
           gameCreationState?.gameType ||
           gameCreationState?.duration ||
@@ -315,7 +311,6 @@ export function ChatBox({
             )
           );
 
-        // Check if user is asking about token performance (but not during game creation)
         const isTokenQuery =
           !hasGameCreationContext &&
           (userMessage.toLowerCase().includes('token') ||
@@ -340,8 +335,16 @@ export function ChatBox({
            !userMessage.toLowerCase().includes('juego') && 
            !userMessage.toLowerCase().includes('game')));
 
-        // If we don't have tokenData and user is asking about tokens, fetch it
-        if (!tokenData && isTokenQuery) {
+        const isAskingForCaptainCoin = userMessage.toLowerCase().includes('capitán') || 
+          userMessage.toLowerCase().includes('captain') ||
+          userMessage.toLowerCase().includes('moneda capitán') ||
+          userMessage.toLowerCase().includes('captain coin') ||
+          userMessage.toLowerCase().includes('seleccionar') ||
+          userMessage.toLowerCase().includes('select') ||
+          userMessage.toLowerCase().includes('elegir') ||
+          userMessage.toLowerCase().includes('choose');
+        
+        if (!tokenData && (isTokenQuery || isAskingForCaptainCoin)) {
           try {
             const analysisResponse = await fetch('/api/analyze-tokens', {
               method: 'POST',
@@ -357,18 +360,15 @@ export function ChatBox({
             if (analysisResponse.ok) {
               const analysisData = await analysisResponse.json();
               if (analysisData.tokens && analysisData.tokens.length > 0) {
-                // Use the new token data for the response
                 tokenData = analysisData;
               }
             }
           } catch (error) {
-            // Continue without token data if fetch fails
             console.error('Error fetching token analysis:', error);
           }
         }
       }
 
-      // Log token data for debugging
       if (tokenData && tokenData.tokens && tokenData.tokens.length > 0) {
         console.log('Sending token data to API:', {
           tokenCount: tokenData.tokens.length,
@@ -379,11 +379,99 @@ export function ChatBox({
         console.log('No token data available for API call');
       }
 
-      // Extract parameters from the conversation BEFORE calling the AI
-      // This ensures the AI knows what information we already have
+      const hasGameJoinContext = currentGameJoinState?.gameId !== undefined;
+
       let updatedGameCreationState = { ...gameCreationState };
+      let updatedGameJoinState = { ...currentGameJoinState };
+
+      if (hasGameJoinContext) {
+        if (overrideGameJoinState !== undefined) {
+          updatedGameJoinState = overrideGameJoinState;
+          console.log('[ChatBox] Using override gameJoinState:', updatedGameJoinState);
+        } else {
+          const userMessageLower = userMessage.toLowerCase();
+          const wantsToCancel = userMessageLower.includes('no') ||
+            userMessageLower.includes('cancel') ||
+            userMessageLower.includes('cancelar') ||
+            userMessageLower.includes('change') ||
+            userMessageLower.includes('cambiar') ||
+            userMessageLower.includes('empezar de nuevo') ||
+            userMessageLower.includes('start over') ||
+            userMessageLower.includes('reset');
+
+          if (wantsToCancel) {
+            updatedGameJoinState = {
+              ...updatedGameJoinState,
+              captainCoin: undefined,
+              selectedCoins: [],
+            };
+            setGameJoinState(updatedGameJoinState);
+          } else {
+            const tokenSymbolPattern = /^[A-Z]{2,10}$/;
+            const isTokenSymbol = tokenSymbolPattern.test(userMessage.trim().toUpperCase());
+
+            if (isTokenSymbol) {
+              const tokenSymbol = userMessage.trim().toUpperCase();
+              
+              if (updatedGameJoinState.captainCoin === tokenSymbol) {
+                console.log('[ChatBox] Token is already the captain coin, skipping state update');
+              } else if (!updatedGameJoinState.captainCoin) {
+                updatedGameJoinState.captainCoin = tokenSymbol;
+                updatedGameJoinState.selectedCoins = [];
+              } else {
+                const maxCoinsNum = typeof updatedGameJoinState.maxCoins === 'string' 
+                  ? parseInt(updatedGameJoinState.maxCoins, 10) 
+                  : (updatedGameJoinState.maxCoins || 2);
+                const requiredCoins = maxCoinsNum - 1;
+                const currentSelected = updatedGameJoinState.selectedCoins || [];
+                
+                if (!currentSelected.includes(tokenSymbol) && currentSelected.length < requiredCoins) {
+                  updatedGameJoinState.selectedCoins = [...currentSelected, tokenSymbol];
+                }
+              }
+            } else {
+              try {
+                const conversationText = messages
+                  .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+                  .join('\n') + `\nUser: ${userMessage}`;
+
+                const parseResponse = await fetch('/api/parse-game-request', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ text: conversationText }),
+                });
+
+                if (parseResponse.ok) {
+                  const parsedParams = await parseResponse.json();
+                  
+                  if (parsedParams.selectedCoins && Array.isArray(parsedParams.selectedCoins) && parsedParams.selectedCoins.length > 0) {
+                    if (!updatedGameJoinState.captainCoin && parsedParams.selectedCoins.length > 0) {
+                      updatedGameJoinState.captainCoin = parsedParams.selectedCoins[0];
+                      updatedGameJoinState.selectedCoins = parsedParams.selectedCoins.slice(1);
+                    } else if (updatedGameJoinState.captainCoin) {
+                      const maxCoins = updatedGameJoinState.maxCoins || 2;
+                      const remainingSlots = maxCoins - 1 - (updatedGameJoinState.selectedCoins?.length || 0);
+                      const coinsToAdd = parsedParams.selectedCoins
+                        .filter((coin: string) => !updatedGameJoinState.selectedCoins?.includes(coin))
+                        .slice(0, remainingSlots);
+                      
+                      updatedGameJoinState.selectedCoins = [
+                        ...(updatedGameJoinState.selectedCoins || []),
+                        ...coinsToAdd
+                      ];
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('Error parsing coin selections:', error);
+              }
+            }
+          }
+        }
+      } else {
       try {
-        // Build conversation context for parameter extraction
         const conversationText = messages
           .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
           .join('\n') + `\nUser: ${userMessage}`;
@@ -405,16 +493,27 @@ export function ChatBox({
             ...(parsedParams.gameLevel !== undefined && { gameLevel: parsedParams.gameLevel }),
             ...(parsedParams.maxCoins && { maxCoins: parsedParams.maxCoins }),
             ...(parsedParams.maxPlayers && { maxPlayers: parsedParams.maxPlayers }),
-            // Set default startDate if not set
             ...(updatedGameCreationState.startDate === undefined && { startDate: Date.now() }),
           };
 
-          // Update state immediately so it's available for the AI
           setGameCreationState(updatedGameCreationState);
         }
       } catch (error) {
         console.error('Error parsing game parameters:', error);
       }
+      }
+
+      if (hasGameJoinContext) {
+        setGameJoinState(updatedGameJoinState);
+      }
+
+      console.log('[ChatBox] Sending request to backend:', {
+        userMessage,
+        hasGameJoinContext,
+        gameJoinState: updatedGameJoinState,
+        captainCoin: updatedGameJoinState?.captainCoin,
+        selectedCoins: updatedGameJoinState?.selectedCoins,
+      });
 
       const response = await fetch('/api/chat-response', {
         method: 'POST',
@@ -430,70 +529,218 @@ export function ChatBox({
           tokenData: tokenData,
           chainId: chainId,
           gameCreationState: updatedGameCreationState,
+          gameJoinState: hasGameJoinContext ? updatedGameJoinState : undefined,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('[ChatBox] API response not OK:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        throw new Error(errorData.error || errorData.message || 'Failed to get AI response');
       }
 
       const data = await response.json();
 
-      // Check if the AI wants to create a game
+      if (!data || !data.response) {
+        console.error('[ChatBox] Missing response in data:', data);
+      }
+
+      console.log('[ChatBox] AI Response received:', {
+        hasResponse: !!data.response,
+        responseLength: data.response?.length || 0,
+        responsePreview: data.response?.substring(0, 200) || '',
+        hasAction: !!data.action,
+        actionType: data.action?.type,
+        gameJoinState: updatedGameJoinState,
+        captainCoin: updatedGameJoinState?.captainCoin,
+        selectedCoins: updatedGameJoinState?.selectedCoins,
+        maxCoins: updatedGameJoinState?.maxCoins,
+      });
+
       if (data.action && data.action.type === 'create_game' && data.action.gameParams) {
         await handleCreateGame(data.action.gameParams);
+        return;
+      }
+
+      if (data.action && data.action.type === 'find_games' && data.action.findGamesParams && !hasGameJoinContext) {
+        await handleFindGames(data.action.findGamesParams);
+        return;
+      }
+      
+      if (data.action && data.action.type === 'find_games' && hasGameJoinContext) {
+        console.log('[ChatBox] Ignoring find_games action during join flow, showing AI response instead');
+      }
+
+      if (data.action && data.action.type === 'join_existing_game' && data.action.joinGameParams) {
+        await handleJoinExistingGame(data.action.joinGameParams);
+        return;
+      }
+
+      if (hasGameJoinContext) {
+        const userMessageLower = userMessage.toLowerCase();
+        const wantsToEdit = userMessageLower.includes('no') ||
+          userMessageLower.includes('cancel') ||
+          userMessageLower.includes('cancelar') ||
+          userMessageLower.includes('change') ||
+          userMessageLower.includes('cambiar') ||
+          userMessageLower.includes('editar') ||
+          userMessageLower.includes('edit') ||
+          userMessageLower.includes('reset') ||
+          userMessageLower.includes('empezar de nuevo') ||
+          userMessageLower.includes('start over');
+
+        if (wantsToEdit) {
+          setGameJoinState({
+            gameId: updatedGameJoinState.gameId,
+            chainId: updatedGameJoinState.chainId,
+            maxCoins: updatedGameJoinState.maxCoins,
+            captainCoin: undefined,
+            selectedCoins: [],
+          });
+          
+        }
+      }
+
+      if (hasGameJoinContext && updatedGameJoinState.captainCoin && updatedGameJoinState.selectedCoins) {
+        const maxCoinsNum = typeof updatedGameJoinState.maxCoins === 'string' 
+          ? parseInt(updatedGameJoinState.maxCoins, 10) 
+          : (updatedGameJoinState.maxCoins || 2);
+        const requiredCoins = maxCoinsNum - 1;
+        const hasAllCoins = updatedGameJoinState.selectedCoins.length >= requiredCoins;
+
+        const isReadyToJoin = userMessage.toLowerCase().includes('listo') ||
+          userMessage.toLowerCase().includes('ready') ||
+          userMessage.toLowerCase().includes('unirse') ||
+          userMessage.toLowerCase().includes('join') ||
+          userMessage.toLowerCase().includes('confirmar') ||
+          userMessage.toLowerCase().includes('confirm') ||
+          userMessage.toLowerCase().includes('ejecutar') ||
+          userMessage.toLowerCase().includes('execute') ||
+          userMessage.toLowerCase().includes('sí') ||
+          userMessage.toLowerCase().includes('yes');
+
+        if (isReadyToJoin && hasAllCoins) {
+          await executeJoinGame();
+          return;
+        }
+      }
+
+      if (!data.response || typeof data.response !== 'string' || data.response.trim().length === 0) {
+        console.error('[ChatBox] No valid response from AI:', data);
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content: formatMessage({
+            id: 'chat.error.no.response',
+            defaultMessage: 'I apologize, but I did not receive a valid response. Please try again.',
+          }),
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
         return;
       }
 
       const messageId = `assistant-${Date.now()}`;
       const fullContent = data.response;
 
-      // Store token performance data with the message if available
-      const tokenDataForMessage = data.tokenPerformanceData && data.tokenPerformanceData.tokens
+      let tokenDataForMessage = data.tokenPerformanceData && data.tokenPerformanceData.tokens
         ? data.tokenPerformanceData
         : undefined;
 
-      // Create message with typing effect
+      if (hasGameJoinContext && updatedGameJoinState.captainCoin && !tokenDataForMessage) {
+        const maxCoinsNum = typeof updatedGameJoinState.maxCoins === 'string' 
+          ? parseInt(updatedGameJoinState.maxCoins, 10) 
+          : (updatedGameJoinState.maxCoins || 2);
+          const requiredCoins = maxCoinsNum - 1;
+        const selectedCoinsCount = updatedGameJoinState.selectedCoins?.length || 0;
+        const needsMoreCoins = selectedCoinsCount < requiredCoins;
+        
+        const isAskingForRemainingCoins = fullContent.toLowerCase().includes('restante') ||
+          fullContent.toLowerCase().includes('remaining') ||
+          fullContent.toLowerCase().includes('más') ||
+          fullContent.toLowerCase().includes('more') ||
+          fullContent.toLowerCase().includes('adicional') ||
+          fullContent.toLowerCase().includes('additional') ||
+          fullContent.toLowerCase().includes('selecciona') ||
+          fullContent.toLowerCase().includes('select') ||
+          fullContent.toLowerCase().includes('elige') ||
+          fullContent.toLowerCase().includes('choose');
+        
+        if (needsMoreCoins && isAskingForRemainingCoins && chainId) {
+          try {
+            const finalChainId = chainId || accountChainId;
+            if (finalChainId) {
+              const analysisResponse = await fetch('/api/analyze-tokens', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  text: `Show me all available tokens with their performance data and price analysis for the last 24 hours. I need to see all tokens with their current prices and price changes.`,
+                  chainId: finalChainId,
+                }),
+              });
+
+              if (analysisResponse.ok) {
+                const analysisData = await analysisResponse.json();
+                if (analysisData && analysisData.tokens && Array.isArray(analysisData.tokens) && analysisData.tokens.length > 0) {
+                  tokenDataForMessage = {
+                    tokens: analysisData.tokens,
+                    timePeriod: analysisData.timePeriod || '24h',
+                  };
+                }
+              }
+            }
+          } catch (error) {
+            console.error('[ChatBox] Error fetching token analysis for remaining coins:', error);
+          }
+        }
+      }
+
       const assistantMessage: Message = {
         id: messageId,
         role: 'assistant',
-        content: '',
+        content: fullContent,
         timestamp: new Date(),
-        isTyping: true,
+        isTyping: false,
         tokenPerformanceData: tokenDataForMessage,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
-      setTypingMessage({ id: messageId, content: fullContent });
+      console.log('[ChatBox] Creating assistant message:', {
+        messageId,
+        contentLength: fullContent.length,
+        contentPreview: fullContent.substring(0, 100),
+        hasTokenData: !!tokenDataForMessage,
+      });
 
-      // Typewriter effect
-      let currentIndex = 0;
-      const typingInterval = setInterval(() => {
-        if (currentIndex < fullContent.length) {
-          currentIndex += 2; // Adjust speed: higher = faster
-          const partialContent = fullContent.substring(0, currentIndex);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === messageId
-                ? { ...msg, content: partialContent, isTyping: true, tokenPerformanceData: tokenDataForMessage }
-                : msg
-            )
-          );
+      setMessages((prev) => {
+        const updated = [...prev, assistantMessage];
+        console.log('[ChatBox] Messages after adding assistant message:', {
+          totalMessages: updated.length,
+          lastMessageId: updated[updated.length - 1]?.id,
+          lastMessageContent: updated[updated.length - 1]?.content?.substring(0, 50) || '',
+        });
+        return updated;
+      });
+      
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+      
+      if (tokenDataForMessage) {
+        setTimeout(() => {
           scrollToBottom();
-        } else {
-          clearInterval(typingInterval);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === messageId
-                ? { ...msg, content: fullContent, isTyping: false, tokenPerformanceData: tokenDataForMessage }
-                : msg
-            )
-          );
-          setTypingMessage(null);
-        }
-      }, 20); // Adjust delay: lower = faster
+        }, 300);
+      }
+      
+      setIsSelectingToken(false);
     } catch (error) {
       console.error('Error generating AI response:', error);
+      setIsSelectingToken(false);
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
@@ -534,7 +781,6 @@ export function ChatBox({
 
     setIsCreatingGame(true);
     try {
-      // Get token addresses BEFORE creating the game
       let tokenAddresses: { captainCoin: string; coinFeeds: string[] } | null = null;
       if (gameParams.selectedCoins && gameParams.selectedCoins.length > 0) {
         console.log('Getting token addresses BEFORE creating game...');
@@ -561,7 +807,6 @@ export function ChatBox({
 
         console.log('Token addresses obtained successfully:', tokenAddresses);
       }
-      // Validate coinToPlay exists
       if (!coinToPlay || !coinToPlay.address) {
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
@@ -577,7 +822,6 @@ export function ChatBox({
         return;
       }
 
-      // Validate chainId exists
       if (!chainId) {
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
@@ -625,7 +869,6 @@ export function ChatBox({
         return;
       }
 
-      // Validate amountToPlay is valid and not zero
       if (!amountToPlay || amountToPlay.isZero()) {
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
@@ -641,12 +884,10 @@ export function ChatBox({
         return;
       }
 
-      // Map gameType: 'bear' = 1, 'bull' = 0
       const gameTypeValue = gameParams.gameType === 'bear' ? 1 : 0;
 
-      // Ensure startDate is in the future (at least 1 minute from now)
       const currentTime = Date.now();
-      const minFutureTime = currentTime + 60000; // 1 minute buffer
+      const minFutureTime = currentTime + 60000;
       const finalStartDate = gameParams.startDate < minFutureTime ? minFutureTime : gameParams.startDate;
 
       console.log('Creating game with params:', {
@@ -665,16 +906,14 @@ export function ChatBox({
         abortTimestamp: Math.floor(finalStartDate / 1000) + gameParams.duration,
       });
 
-      // Valid durations that the smart contract accepts (in seconds)
       const validDurations = [
-        3600,    // 1 hour
-        14400,   // 4 hours
-        28800,   // 8 hours
-        86400,   // 24 hours
-        604800,  // 1 week
+        3600,
+        14400,
+        28800,
+        86400,
+        604800,
       ];
 
-      // Validate all parameters before creating the game
       if (!amountToPlay || amountToPlay.isZero()) {
         throw new Error('Invalid amount to play');
       }
@@ -694,7 +933,6 @@ export function ChatBox({
         throw new Error('Number of players must be at least 2');
       }
 
-      // Show message that game is being created
       const creatingMessage: Message = {
         id: `creating-${Date.now()}`,
         role: 'assistant',
@@ -706,7 +944,6 @@ export function ChatBox({
       };
       setMessages((prev) => [...prev, creatingMessage]);
 
-      // Create game on blockchain
       console.log('Starting game creation on blockchain with validated params:', {
         type: gameTypeValue,
         duration: gameParams.duration,
@@ -735,7 +972,6 @@ export function ChatBox({
           abortTimestamp: Math.floor(finalStartDate / 1000) + gameParams.duration,
         });
 
-        // Verify the receipt is valid and the transaction succeeded
         if (!createGameReceipt) {
           throw new Error('Transaction receipt is null - transaction may have failed');
         }
@@ -747,23 +983,19 @@ export function ChatBox({
           confirmations: createGameReceipt.confirmations,
         });
 
-        // Verify transaction status (1 = success, 0 = failure)
         if (createGameReceipt.status !== 1) {
           throw new Error(`Transaction failed with status ${createGameReceipt.status}. Transaction hash: ${createGameReceipt.transactionHash}`);
         }
 
-        // Verify transaction hash is valid
         if (!createGameReceipt.transactionHash || createGameReceipt.transactionHash.length !== 66) {
           throw new Error(`Invalid transaction hash: ${createGameReceipt.transactionHash}`);
         }
 
         console.log('Game creation transaction confirmed successfully:', createGameReceipt.transactionHash);
 
-        // Wait for blockchain to fully process the game creation
         console.log('Waiting for blockchain to process game creation...');
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Get game ID and verify it's valid
         console.log('Getting game ID from blockchain...');
         let attempts = 0;
         const maxAttempts = 5;
@@ -800,7 +1032,6 @@ export function ChatBox({
           stack: createError.stack,
         });
 
-        // Check if it's a revert error
         if (createError.reason || createError.message?.includes('Panic') || createError.message?.includes('revert')) {
           const errorMessage: Message = {
             id: `error-${Date.now()}`,
@@ -816,11 +1047,9 @@ export function ChatBox({
           return;
         }
 
-        // Re-throw if it's not a revert error
         throw createError;
       }
 
-      // Create game on server
       console.log('Creating game on server with:', {
         id: gameId?.toNumber(),
         chainId: chainId,
@@ -832,7 +1061,6 @@ export function ChatBox({
         coinToPlay: coinToPlay.address,
       });
 
-      // Create game on server - this is critical for the game to appear in the UI
       console.log('Creating game on server...');
       try {
         await createGameServerMutation.mutateAsync({
@@ -847,12 +1075,9 @@ export function ChatBox({
         });
         console.log('Game created successfully on server');
 
-        // Wait a moment for the server to fully process the game creation
         await new Promise(resolve => setTimeout(resolve, 8000));
       } catch (serverError: any) {
         console.error('Error creating game on server:', serverError);
-        // Log the error but continue - the game is already on blockchain
-        // The user can still join manually if needed
         const serverErrorMessage: Message = {
           id: `server-error-${Date.now()}`,
           role: 'assistant',
@@ -865,7 +1090,6 @@ export function ChatBox({
         setMessages((prev) => [...prev, serverErrorMessage]);
       }
 
-      // Show message that game was created successfully
       const gameCreatedMessage: Message = {
         id: `game-created-${Date.now()}`,
         role: 'assistant',
@@ -877,11 +1101,9 @@ export function ChatBox({
       };
       setMessages((prev) => [...prev, gameCreatedMessage]);
 
-      // Wait a bit more to ensure the game is fully processed on the blockchain
       console.log('Waiting before joining game to ensure game is fully processed...');
       await new Promise(resolve => setTimeout(resolve, 5000));
 
-      // Join the game automatically after creating it
       console.log('Checking conditions for auto-join:', {
         hasTokenAddresses: !!tokenAddresses,
         hasSelectedCoins: !!gameParams.selectedCoins && gameParams.selectedCoins.length > 0,
@@ -896,7 +1118,6 @@ export function ChatBox({
       if (tokenAddresses && gameId && provider && signer && factoryAddress) {
         console.log('Joining game automatically with token addresses:', tokenAddresses);
         try {
-          // Show message that we're joining the game
           const joiningMessage: Message = {
             id: `joining-${Date.now()}`,
             role: 'assistant',
@@ -908,82 +1129,72 @@ export function ChatBox({
           };
           setMessages((prev) => [...prev, joiningMessage]);
 
-          // Validate token addresses
-          if (!tokenAddresses.captainCoin || tokenAddresses.captainCoin.length !== 42 || !tokenAddresses.captainCoin.startsWith('0x')) {
-            throw new Error(`Invalid captain coin address: ${tokenAddresses.captainCoin}`);
-          }
+          const selectedCoinsArray = [
+            tokenAddresses.captainCoin,
+            ...tokenAddresses.coinFeeds
+          ];
 
-          if (!tokenAddresses.coinFeeds || tokenAddresses.coinFeeds.length === 0) {
-            throw new Error('At least one coin feed is required to join the game');
-          }
-
-          // Validate all feed addresses
-          for (const feed of tokenAddresses.coinFeeds) {
-            if (!feed || feed.length !== 42 || !feed.startsWith('0x')) {
-              throw new Error(`Invalid coin feed address: ${feed}`);
+          console.log('Validating join game data with backend service...');
+          const finalChainId = chainId || accountChainId;
+          if (!finalChainId) {
+            throw new Error('ChainId is not available');
             }
-          }
 
-          // Ensure feeds array is valid (should include all tokens except captain)
-          // If we have 2 coins total, feeds should have 1 (the second one)
-          const feedsForJoin = [...tokenAddresses.coinFeeds]; // Use coinFeeds directly
-
-          // Validate that the number of feeds matches the game configuration
-          // maxCoins includes the captain coin, so feeds should be maxCoins - 1
-          const expectedFeedsCount = gameParams.maxCoins - 1;
-          if (feedsForJoin.length !== expectedFeedsCount) {
-            throw new Error(`Number of feeds (${feedsForJoin.length}) does not match game configuration (expected ${expectedFeedsCount} feeds for ${gameParams.maxCoins} coins)`);
-          }
-
-          console.log('Calling joinGame with params:', {
-            factoryAddress,
-            feeds: feedsForJoin,
-            captainCoin: tokenAddresses.captainCoin,
+          let validatedJoinData;
+          try {
+            const joinGameResponse = await fetch('/api/join-game', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
             gameId: gameId.toNumber(),
-            gameIdString: gameId.toNumber().toString(),
-            feedsLength: feedsForJoin.length,
-            expectedFeedsCount,
+                selectedCoins: selectedCoinsArray,
+                chainId: finalChainId,
             maxCoins: gameParams.maxCoins,
-            captainCoinLength: tokenAddresses.captainCoin.length,
-            allFeedsValid: feedsForJoin.every(f => f && f.length === 42 && f.startsWith('0x')),
-            captainCoinValid: tokenAddresses.captainCoin && tokenAddresses.captainCoin.length === 42 && tokenAddresses.captainCoin.startsWith('0x'),
-          });
+              }),
+            });
 
-          // Validate that we have at least one feed
-          if (feedsForJoin.length === 0) {
-            throw new Error('At least one coin feed is required to join the game');
+            if (!joinGameResponse.ok) {
+              const errorData = await joinGameResponse.json().catch(() => ({ error: 'Backend validation failed' }));
+              throw new Error(errorData.error || 'Failed to validate join game data');
+            }
+
+            validatedJoinData = await joinGameResponse.json();
+            console.log('Join game data validated successfully:', validatedJoinData);
+          } catch (validationError: any) {
+            console.error('Error validating join game data:', validationError);
+            throw new Error(`Failed to validate join game data: ${validationError.message || 'Unknown error'}`);
           }
 
-          console.log('About to call joinGame with validated params...');
+          const checksummedCaptainCoin = validatedJoinData.captainCoin;
+          const checksummedFeeds = validatedJoinData.feeds;
+          const gameIdString = validatedJoinData.gameId;
 
-          // Convert gameId to string as expected by the smart contract
-          const gameIdString = gameId.toNumber().toString();
+          console.log('Getting game data from blockchain to obtain amount_to_play...');
+          const { getCoinLeagueGameOnChain } = await import('../services/coinleague');
+          const gameOnChain = await getCoinLeagueGameOnChain(provider, factoryAddress, gameIdString);
+          
+          if (!gameOnChain || !gameOnChain.amount_to_play) {
+            throw new Error('Could not get game data from blockchain. Please try again.');
+          }
 
-          // Ensure all addresses are checksummed (proper case) using ethers
-          const checksummedCaptainCoin = getAddress(tokenAddresses.captainCoin);
-          const checksummedFeeds = feedsForJoin.map(feed => getAddress(feed));
+          const amountToPlay = BigNumber.from(gameOnChain.amount_to_play);
+          console.log('Game amount_to_play:', amountToPlay.toString());
 
-          console.log('Final joinGame params:', {
+          console.log('Final joinGame params (from backend service):', {
             factoryAddress,
             feeds: checksummedFeeds,
             captainCoin: checksummedCaptainCoin,
             gameId: gameIdString,
-            gameIdNumber: gameId.toNumber(),
-            affiliate: undefined,
+            gameIdNumber: validatedJoinData.gameIdNumber,
             feedsCount: checksummedFeeds.length,
-            captainCoinAddress: checksummedCaptainCoin,
-            allAddressesValid: [
-              ...checksummedFeeds,
-              checksummedCaptainCoin
-            ].every(addr => addr && addr.length === 42 && addr.startsWith('0x')),
-            feedsArray: checksummedFeeds,
-            captainCoinValue: checksummedCaptainCoin,
+            maxCoins: gameParams.maxCoins,
+            amountToPlay: amountToPlay.toString(),
           });
 
-          // Use default affiliate if none provided
-          const affiliateAddress = undefined; // Will use COINLEAGUE_DEFAULT_AFFILIATE in joinGame function
+          const affiliateAddress = undefined;
 
-          // Try to call joinGame with proper error handling
           let joinTx;
           try {
             joinTx = await joinGame({
@@ -993,7 +1204,8 @@ export function ChatBox({
               provider: provider,
               signer: signer,
               id: gameIdString,
-              affiliate: affiliateAddress, // Will default to COINLEAGUE_DEFAULT_AFFILIATE
+              affiliate: affiliateAddress,
+              value: amountToPlay,
             });
           } catch (joinError: any) {
             console.error('Error calling joinGame:', joinError);
@@ -1005,7 +1217,6 @@ export function ChatBox({
               error: joinError.error,
             });
 
-            // Check if it's a revert error with more details
             if (joinError.reason || joinError.message?.includes('Panic')) {
               throw new Error(`Failed to join game: ${joinError.reason || joinError.message || 'Unknown error'}. Please check that the game exists and the token addresses are valid.`);
             }
@@ -1014,11 +1225,9 @@ export function ChatBox({
 
           console.log('Join game transaction hash:', joinTx.hash);
 
-          // Wait for transaction to be mined and confirmed
           console.log('Waiting for join transaction to be confirmed...');
           const joinReceipt = await joinTx.wait();
 
-          // Verify the join receipt is valid and the transaction succeeded
           if (!joinReceipt) {
             throw new Error('Join transaction receipt is null - transaction may have failed');
           }
@@ -1030,19 +1239,16 @@ export function ChatBox({
             confirmations: joinReceipt.confirmations,
           });
 
-          // Verify transaction status (1 = success, 0 = failure)
           if (joinReceipt.status !== 1) {
             throw new Error(`Join transaction failed with status ${joinReceipt.status}. Transaction hash: ${joinReceipt.transactionHash}`);
           }
 
-          // Verify transaction hash is valid
           if (!joinReceipt.transactionHash || joinReceipt.transactionHash.length !== 66) {
             throw new Error(`Invalid join transaction hash: ${joinReceipt.transactionHash}`);
           }
 
           console.log('Join game transaction confirmed successfully:', joinReceipt.transactionHash);
 
-          // Wait a bit more to ensure the server has processed the join
           console.log('Waiting for server to process join...');
           await new Promise(resolve => setTimeout(resolve, 8000));
 
@@ -1057,7 +1263,6 @@ export function ChatBox({
           };
           setMessages((prev) => [...prev, joinSuccessMessage]);
 
-          // Navigate to game page after successful join
           const finalChainIdForNav = chainId || accountChainId;
           const networkSlug = getNetworkSlugFromChainId(finalChainIdForNav);
 
@@ -1077,7 +1282,6 @@ export function ChatBox({
             return;
           }
 
-          // Wait a moment before redirecting to show the success message
           setTimeout(() => {
             router.push(`/game/${networkSlug}/${gameId.toNumber()}`);
           if (onClose) {
@@ -1103,12 +1307,12 @@ export function ChatBox({
           };
           setMessages((prev) => [...prev, joinErrorMessage]);
 
-          // Don't navigate if join fails - let the user know they need to join manually
           setIsCreatingGame(false);
           return;
         }
       } else {
         console.warn('Auto-join skipped due to missing conditions:', {
+          hasTokenAddresses: !!tokenAddresses,
           hasSelectedCoins: !!gameParams.selectedCoins && gameParams.selectedCoins.length > 0,
           hasGameId: !!gameId,
           hasProvider: !!provider,
@@ -1116,13 +1320,35 @@ export function ChatBox({
           hasFactoryAddress: !!factoryAddress,
         });
 
-        // If we can't join automatically, still navigate to the game page
         if (gameId) {
           const finalChainIdForNav = chainId || accountChainId;
           const networkSlug = getNetworkSlugFromChainId(finalChainIdForNav);
 
           if (networkSlug) {
-            const errorMessage: Message = {
+            let errorMessage: Message;
+            
+            if (!gameParams.selectedCoins || gameParams.selectedCoins.length === 0) {
+              errorMessage = {
+                id: `error-${Date.now()}`,
+                role: 'assistant',
+                content: formatMessage({
+                  id: 'chat.game.created.no.tokens',
+                  defaultMessage: `Game #${gameId.toNumber()} created successfully! However, no tokens were selected during game creation. Please join manually from the game page and select your tokens.`,
+                }, { gameId: gameId.toNumber() }),
+                timestamp: new Date(),
+              };
+            } else if (!tokenAddresses) {
+              errorMessage = {
+                id: `error-${Date.now()}`,
+                role: 'assistant',
+                content: formatMessage({
+                  id: 'chat.game.created.token.addresses.error',
+                  defaultMessage: `Game #${gameId.toNumber()} created successfully! However, there was an error getting token addresses. Please join manually from the game page.`,
+                }, { gameId: gameId.toNumber() }),
+                timestamp: new Date(),
+              };
+            } else {
+              errorMessage = {
               id: `error-${Date.now()}`,
               role: 'assistant',
               content: formatMessage({
@@ -1131,6 +1357,8 @@ export function ChatBox({
               }, { gameId: gameId.toNumber() }),
               timestamp: new Date(),
             };
+            }
+            
             setMessages((prev) => [...prev, errorMessage]);
 
             setTimeout(() => {
@@ -1155,14 +1383,281 @@ export function ChatBox({
         role: 'assistant',
         content: formatMessage({
           id: 'chat.error.create.game',
-          defaultMessage: `There was an error creating the game: ${error.message || 'Unknown error'}. Please try again.`,
+          defaultMessage: `Error creating game: ${error.message || 'Unknown error'}. Please try again.`,
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setIsCreatingGame(false);
+    }
+  };
+
+  const handleFindGames = async (findGamesParams: {
+    gameType?: 'bull' | 'bear';
+    maxEntry?: string;
+    minEntry?: string;
+    chainId?: number;
+    status?: 'Waiting' | 'Started' | 'Finished';
+    limit?: number;
+  }) => {
+    try {
+      setIsLoading(true);
+      
+      const searchMessage: Message = {
+        id: `searching-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.searching.games',
+          defaultMessage: 'Searching for available games...',
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, searchMessage]);
+
+      const finalChainId = findGamesParams.chainId || chainId || accountChainId;
+      
+      const response = await fetch('/api/find-games', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...findGamesParams,
+          chainId: finalChainId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Backend request failed' }));
+        console.error('Find games error response:', errorData);
+        throw new Error(errorData.error || `Failed to find games: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Find games result:', result);
+      
+      const gamesMessage: Message = {
+        id: `games-found-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.games.found',
+          defaultMessage: result.count > 0 
+            ? `Found ${result.count} available game${result.count > 1 ? 's' : ''}. Please select one from the list below:`
+            : 'No games found matching your criteria. Try adjusting your search parameters or create a new game.',
+        }, { count: result.count }),
+        timestamp: new Date(),
+        availableGames: result.games || [],
+      };
+      
+      setMessages((prev) => [...prev, gamesMessage]);
+      
+      if (result.count === 0) {
+        const suggestionMessage: Message = {
+          id: `suggestion-${Date.now()}`,
+          role: 'assistant',
+          content: formatMessage({
+            id: 'chat.no.games.suggestion',
+            defaultMessage: 'Would you like to create a new game instead? Just tell me what type of game you want to create!',
+          }),
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, suggestionMessage]);
+      }
+    } catch (error: any) {
+      console.error('Error finding games:', error);
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.error.find.games',
+          defaultMessage: `Error searching for games: ${error.message || 'Unknown error'}. Please try again.`,
         }),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsCreatingGame(false);
-      setGameCreationState({});
+      setIsLoading(false);
+    }
+  };
+
+  const handleJoinExistingGame = async (joinGameParams: {
+    gameId: number;
+    chainId: number;
+  }) => {
+    if (!provider || !factoryAddress || !signer) {
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.error.wallet',
+          defaultMessage: 'Please connect your wallet to join the game.',
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return;
+    }
+
+    setGameJoinState({
+      gameId: joinGameParams.gameId,
+      chainId: joinGameParams.chainId || chainId || accountChainId,
+      captainCoin: undefined,
+      selectedCoins: [],
+    });
+
+    const joinStartMessage: Message = {
+      id: `join-start-${Date.now()}`,
+      role: 'assistant',
+      content: formatMessage({
+        id: 'chat.join.game.start',
+        defaultMessage: `Perfect! You want to join game #${joinGameParams.gameId}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin.`,
+      }, { gameId: joinGameParams.gameId }),
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, joinStartMessage]);
+  };
+
+  const executeJoinGame = async () => {
+    if (!provider || !factoryAddress || !signer || !gameJoinState.gameId || !gameJoinState.chainId) {
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.error.wallet',
+          defaultMessage: 'Please connect your wallet to join the game.',
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return;
+    }
+
+    if (!gameJoinState.captainCoin || !gameJoinState.selectedCoins || gameJoinState.selectedCoins.length === 0) {
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.error.missing.coins',
+          defaultMessage: 'Please select your captain coin and at least one additional coin before joining the game.',
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return;
+    }
+
+    try {
+      setIsJoiningGame(true);
+
+      const joiningMessage: Message = {
+        id: `joining-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.joining.game',
+          defaultMessage: 'Joining the game... Please confirm the transaction in your wallet.',
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, joiningMessage]);
+
+      const finalChainId = gameJoinState.chainId;
+      const tokenAddresses = await getTokenAddressesFromSymbols(
+        [gameJoinState.captainCoin, ...gameJoinState.selectedCoins],
+        finalChainId
+      );
+
+      if (!tokenAddresses) {
+        throw new Error('Could not find token addresses for selected coins');
+      }
+
+      const selectedCoinsArray = [
+        tokenAddresses.captainCoin,
+        ...tokenAddresses.coinFeeds
+      ];
+
+      const joinGameResponse = await fetch('/api/join-game', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gameId: gameJoinState.gameId,
+          selectedCoins: selectedCoinsArray,
+          chainId: finalChainId,
+          maxCoins: gameJoinState.maxCoins || selectedCoinsArray.length,
+        }),
+      });
+
+      if (!joinGameResponse.ok) {
+        const errorData = await joinGameResponse.json().catch(() => ({ error: 'Backend validation failed' }));
+        throw new Error(errorData.error || 'Failed to validate join game data');
+      }
+
+      const validatedJoinData = await joinGameResponse.json();
+
+      const { getCoinLeagueGameOnChain } = await import('../services/coinleague');
+      const gameOnChain = await getCoinLeagueGameOnChain(provider, factoryAddress, validatedJoinData.gameId);
+      
+      if (!gameOnChain || !gameOnChain.amount_to_play) {
+        throw new Error('Could not get game data from blockchain. Please try again.');
+      }
+
+      const amountToPlay = BigNumber.from(gameOnChain.amount_to_play);
+
+      const joinTx = await joinGame({
+        factoryAddress,
+        feeds: validatedJoinData.feeds,
+        captainCoin: validatedJoinData.captainCoin,
+        provider: provider,
+        signer: signer,
+        id: validatedJoinData.gameId,
+        affiliate: undefined,
+        value: amountToPlay,
+      });
+
+      console.log('Join game transaction hash:', joinTx.hash);
+
+      const joinReceipt = await joinTx.wait();
+
+      if (!joinReceipt || joinReceipt.status !== 1) {
+        throw new Error(`Join transaction failed with status ${joinReceipt?.status || 'unknown'}`);
+      }
+
+      const successMessage: Message = {
+        id: `success-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.join.game.success',
+          defaultMessage: `Successfully joined game #${gameJoinState.gameId}! Redirecting to the game...`,
+        }, { gameId: gameJoinState.gameId }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+
+      const networkSlug = getNetworkSlugFromChainId(finalChainId);
+      if (networkSlug) {
+        setTimeout(() => {
+          router.push(`/game/${networkSlug}/${gameJoinState.gameId}`);
+          if (onClose) {
+            onClose({}, 'escapeKeyDown');
+          }
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error('Error joining game:', error);
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.error.join.game',
+          defaultMessage: `Error joining game: ${error.message || 'Unknown error'}. Please try again.`,
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsJoiningGame(false);
+      setGameJoinState({});
     }
   };
 
@@ -1181,8 +1676,6 @@ export function ChatBox({
     const currentInput = input;
     setInput('');
 
-    // Always let the AI handle the conversation, including game creation requests
-    // The AI will ask for missing information and create the game automatically when all data is collected
     await generateAIResponse(currentInput);
   };
 
@@ -1192,7 +1685,6 @@ export function ChatBox({
     }
   };
 
-  // Zoom in animation variants
   const zoomInVariants = {
     hidden: {
       scale: 0.8,
@@ -1273,7 +1765,13 @@ export function ChatBox({
             })}
           >
             <AnimatePresence>
-              {messages.map((message) => (
+              {messages
+                .filter((message) => 
+                  !message.id.startsWith('join-start') && 
+                  !message.id.startsWith('token-analysis') &&
+                  (!message.tokenPerformanceData || !message.tokenPerformanceData.tokens || message.tokenPerformanceData.tokens.length === 0)
+                )
+                .map((message) => (
                 <motion.div
                   key={message.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -1301,10 +1799,10 @@ export function ChatBox({
                               : theme.palette.grey[100],
                         color:
                           message.role === 'user'
-                            ? '#FFFFFF' // Siempre blanco para mensajes del usuario
+                            ? '#FFFFFF'
                             : theme.palette.mode === 'dark'
-                              ? theme.palette.text.primary // Negro o gris oscuro en modo oscuro
-                              : theme.palette.text.primary, // Color normal en modo claro
+                              ? theme.palette.text.primary
+                              : theme.palette.text.primary,
                       })}
                     >
                       <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -1327,15 +1825,14 @@ export function ChatBox({
                 </motion.div>
               ))}
             </AnimatePresence>
-          {/* Show token performance data from messages */}
           {messages.map((msg) => {
-            if (!msg.tokenPerformanceData || !msg.tokenPerformanceData.tokens || msg.tokenPerformanceData.tokens.length === 0) {
+            if (!msg.availableGames || msg.availableGames.length === 0) {
               return null;
             }
 
             return (
               <motion.div
-                key={`token-${msg.id}`}
+                key={`games-${msg.id}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
@@ -1352,20 +1849,470 @@ export function ChatBox({
                 >
                   <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                     <FormattedMessage
-                      id="available.tokens"
-                      defaultMessage="Available Tokens"
-                    />
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary" sx={{ mb: 1.5, display: 'block' }}>
-                    <FormattedMessage
-                      id="token.performance.last.period"
-                      defaultMessage="Performance in the last {timePeriod}"
-                      values={{ timePeriod: msg.tokenPerformanceData.timePeriod }}
+                      id="available.games"
+                      defaultMessage="Available Games"
                     />
                   </Typography>
                   <Box
                     sx={{
-                      maxHeight: '300px',
+                      maxHeight: '400px',
+                      overflowY: 'auto',
+                      pr: 0.5,
+                    }}
+                  >
+                    <Grid container spacing={1.5}>
+                      {msg.availableGames.map((game) => {
+                        const handleSelectGame = async () => {
+                          if (!provider || !factoryAddress || !signer) {
+                            const errorMessage: Message = {
+                              id: `error-${Date.now()}`,
+                              role: 'assistant',
+                              content: formatMessage({
+                                id: 'chat.error.wallet',
+                                defaultMessage: 'Please connect your wallet to join the game.',
+                              }),
+                              timestamp: new Date(),
+                            };
+                            setMessages((prev) => [...prev, errorMessage]);
+                            return;
+                          }
+
+                          try {
+                            const { getCoinLeagueGameOnChain } = await import('../services/coinleague');
+                            const gameOnChain = await getCoinLeagueGameOnChain(provider, factoryAddress, game.id.toString());
+                            
+                            if (!gameOnChain) {
+                              throw new Error('Game not found on blockchain');
+                            }
+
+                            const finalChainId = game.chainId || chainId || accountChainId;
+                            
+                            const maxCoinsNum = typeof game.numCoins === 'string' 
+                              ? parseInt(game.numCoins, 10) 
+                              : (game.numCoins || 2);
+                            setGameJoinState({
+                              gameId: game.id,
+                              chainId: finalChainId,
+                              maxCoins: maxCoinsNum,
+                              captainCoin: undefined,
+                              selectedCoins: [],
+                            });
+
+                            const joinStartMessage: Message = {
+                              id: `join-start-${Date.now()}`,
+                              role: 'assistant',
+                              content: formatMessage({
+                                id: 'chat.join.game.start',
+                                defaultMessage: `Perfect! You want to join game #${game.id}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin.`,
+                              }, { gameId: game.id }),
+                              timestamp: new Date(),
+                            };
+                            setMessages((prev) => [...prev, joinStartMessage]);
+
+                            if (finalChainId) {
+                              const fetchTokenAnalysis = async () => {
+                                try {
+                                  console.log('[Token Analysis] Fetching token analysis for chainId:', finalChainId);
+                                  const analysisResponse = await fetch('/api/analyze-tokens', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                      text: 'Show me all available tokens with their performance data and price analysis for the last 24 hours. I need to see all tokens with their current prices and price changes.',
+                                      chainId: finalChainId,
+                                    }),
+                                  });
+
+                                  console.log('[Token Analysis] Response status:', analysisResponse.status);
+
+                                  if (analysisResponse.ok) {
+                                    const analysisData = await analysisResponse.json();
+                                    console.log('[Token Analysis] Data received:', {
+                                      hasTokens: !!analysisData.tokens,
+                                      tokenCount: analysisData.tokens?.length || 0,
+                                      timePeriod: analysisData.timePeriod,
+                                      fullData: JSON.stringify(analysisData, null, 2),
+                                    });
+
+                                    if (analysisData && analysisData.tokens && Array.isArray(analysisData.tokens) && analysisData.tokens.length > 0) {
+                                      const tokenAnalysisMessage: Message = {
+                                        id: `token-analysis-${Date.now()}`,
+                                        role: 'assistant',
+                                        content: formatMessage({
+                                          id: 'chat.token.analysis.available',
+                                          defaultMessage: 'Here are the available tokens with their performance data to help you choose:',
+                                        }),
+                                        timestamp: new Date(),
+                                        tokenPerformanceData: {
+                                          tokens: analysisData.tokens,
+                                          timePeriod: analysisData.timePeriod || '24h',
+                                        },
+                                      };
+                                      console.log('[Token Analysis] Adding message to chat:', {
+                                        messageId: tokenAnalysisMessage.id,
+                                        tokenCount: tokenAnalysisMessage.tokenPerformanceData?.tokens?.length || 0,
+                                      });
+                                      setMessages((prev) => {
+                                        const updated = [...prev, tokenAnalysisMessage];
+                                        console.log('[Token Analysis] Messages updated, total messages:', updated.length);
+                                        return updated;
+                                      });
+                                      setTimeout(() => {
+                                        scrollToBottom();
+                                      }, 300);
+                                    } else {
+                                      console.error('[Token Analysis] No tokens in analysis data:', {
+                                        tokens: analysisData.tokens,
+                                        isArray: Array.isArray(analysisData.tokens),
+                                        length: analysisData.tokens?.length,
+                                      });
+                                    }
+                                  } else {
+                                    const errorText = await analysisResponse.text();
+                                    console.error('[Token Analysis] Response failed:', {
+                                      status: analysisResponse.status,
+                                      statusText: analysisResponse.statusText,
+                                      error: errorText,
+                                    });
+                                  }
+                                } catch (error) {
+                                  console.error('[Token Analysis] Error fetching token analysis:', error);
+                                }
+                              };
+
+                              fetchTokenAnalysis();
+                            } else {
+                              console.warn('[Token Analysis] No chainId available, skipping token analysis');
+                            }
+                          } catch (error: any) {
+                            console.error('Error starting join flow:', error);
+                            const errorMessage: Message = {
+                              id: `error-${Date.now()}`,
+                              role: 'assistant',
+                              content: formatMessage({
+                                id: 'chat.error.join.game.start',
+                                defaultMessage: `Error starting join flow: ${error.message || 'Unknown error'}. Please try again.`,
+                              }),
+                              timestamp: new Date(),
+                            };
+                            setMessages((prev) => [...prev, errorMessage]);
+                          }
+                        };
+
+                        return (
+                          <Grid item xs={12} sm={6} md={4} key={game.id}>
+                            <Paper
+                              elevation={2}
+                              sx={(theme) => ({
+                                p: 1.5,
+                                borderRadius: 1.5,
+                                backgroundColor: theme.palette.background.paper,
+                                border: `1px solid ${theme.palette.divider}`,
+                                transition: 'all 0.2s',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  borderColor: theme.palette.primary.main,
+                                  boxShadow: `0 2px 8px ${theme.palette.primary.main}20`,
+                                  transform: 'translateY(-2px)',
+                                },
+                              })}
+                              onClick={handleSelectGame}
+                            >
+                              <Stack spacing={1}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                  <Typography 
+                                    variant="subtitle2" 
+                                    fontWeight={600}
+                                    sx={{ color: theme.palette.text.primary }}
+                                  >
+                                    Sala #{game.id}
+                                  </Typography>
+                                  <Box
+                                    sx={{
+                                      px: 1,
+                                      py: 0.25,
+                                      borderRadius: 1,
+                                      backgroundColor: game.type === 'bull' 
+                                        ? theme.palette.success.main + '20'
+                                        : theme.palette.error.main + '20',
+                                      color: game.type === 'bull'
+                                        ? theme.palette.success.main
+                                        : theme.palette.error.main,
+                                    }}
+                                  >
+                                    <Typography variant="caption" fontWeight={600}>
+                                      {game.typeName}
+                                    </Typography>
+                                  </Box>
+                                </Stack>
+                                
+                                <Stack spacing={0.5}>
+                                  <Stack direction="row" justifyContent="space-between">
+                                    <Typography variant="caption" color="textSecondary">
+                                      <FormattedMessage id="entry" defaultMessage="Entry" />
+                                    </Typography>
+                                    <Typography 
+                                      variant="caption" 
+                                      fontWeight={600}
+                                      sx={{ color: theme.palette.text.primary }}
+                                    >
+                                      {game.entryFormatted}
+                                    </Typography>
+                                  </Stack>
+                                  
+                                  <Stack direction="row" justifyContent="space-between">
+                                    <Typography variant="caption" color="textSecondary">
+                                      <FormattedMessage id="duration" defaultMessage="Duration" />
+                                    </Typography>
+                                    <Typography 
+                                      variant="caption" 
+                                      fontWeight={600}
+                                      sx={{ color: theme.palette.text.primary }}
+                                    >
+                                      {game.durationFormatted}
+                                    </Typography>
+                                  </Stack>
+                                  
+                                  <Stack direction="row" justifyContent="space-between">
+                                    <Typography variant="caption" color="textSecondary">
+                                      <FormattedMessage id="players" defaultMessage="Players" />
+                                    </Typography>
+                                    <Typography 
+                                      variant="caption" 
+                                      fontWeight={600}
+                                      sx={{ color: theme.palette.text.primary }}
+                                    >
+                                      {game.currentPlayers}/{game.numPlayers}
+                                    </Typography>
+                                  </Stack>
+                                  
+                                  <Stack direction="row" justifyContent="space-between">
+                                    <Typography variant="caption" color="textSecondary">
+                                      <FormattedMessage id="coins" defaultMessage="Coins" />
+                                    </Typography>
+                                    <Typography 
+                                      variant="caption" 
+                                      fontWeight={600}
+                                      sx={{ color: theme.palette.text.primary }}
+                                    >
+                                      {game.numCoins}
+                                    </Typography>
+                                  </Stack>
+                                  
+                                  {game.availableSlots > 0 && (
+                                    <Stack direction="row" justifyContent="space-between">
+                                      <Typography variant="caption" color="textSecondary">
+                                        <FormattedMessage id="available.slots" defaultMessage="Available" />
+                                      </Typography>
+                                      <Typography variant="caption" fontWeight={600} color="success.main">
+                                        {game.availableSlots} {game.availableSlots === 1 ? 'slot' : 'slots'}
+                                      </Typography>
+                                    </Stack>
+                                  )}
+                                </Stack>
+                                
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  fullWidth
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelectGame();
+                                  }}
+                                  sx={{ mt: 1 }}
+                                >
+                                  <FormattedMessage id="join.game" defaultMessage="Join Game" />
+                                </Button>
+                              </Stack>
+                            </Paper>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                </Paper>
+              </motion.div>
+            );
+          })} 
+          {messages
+            .filter((message) => message.id.startsWith('join-start'))
+            .map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                  }}
+                >
+                  <Paper
+                    elevation={2}
+                    sx={(theme) => ({
+                      p: 2,
+                      maxWidth: '80%',
+                      borderRadius: 2,
+                      backgroundColor: theme.palette.mode === 'dark'
+                        ? theme.palette.grey[800]
+                        : theme.palette.grey[100],
+                      color: theme.palette.text.primary,
+                    })}
+                  >
+                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                      {message.content}
+                    </Typography>
+                  </Paper>
+                </Box>
+              </motion.div>
+            ))}
+          {messages
+            .filter((msg) => msg.tokenPerformanceData && msg.tokenPerformanceData.tokens && msg.tokenPerformanceData.tokens.length > 0)
+            .map((msg) => (
+              <React.Fragment key={`token-msg-${msg.id}`}>
+                {msg.content && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        mb: 1,
+                      }}
+                    >
+                      <Paper
+                        elevation={2}
+                        sx={(theme) => ({
+                          p: 2,
+                          maxWidth: '80%',
+                          borderRadius: 2,
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? theme.palette.grey[800]
+                              : theme.palette.grey[100],
+                          color: theme.palette.text.primary,
+                        })}
+                      >
+                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {msg.content}
+                        </Typography>
+                      </Paper>
+                    </Box>
+                  </motion.div>
+                )}
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Paper
+                    elevation={3}
+                    sx={(theme) => ({
+                      p: 1.5,
+                      borderRadius: 2,
+                      backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[50],
+                      border: `1px solid ${theme.palette.divider}`,
+                    })}
+                  >
+                  <Typography 
+                    variant="subtitle2" 
+                    sx={{ 
+                      mb: 1.5, 
+                      fontWeight: 600,
+                      color: theme.palette.text.primary,
+                    }}
+                  >
+                    <FormattedMessage
+                      id="available.tokens"
+                      defaultMessage="Available Tokens"
+                    />
+                  </Typography>
+                  
+                  <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+                    <Tabs
+                      value={msg.tokenPerformanceData.timePeriod || '24h'}
+                      onChange={(e, newValue) => {
+                        const fetchTimeframeData = async (timeframe: string) => {
+                          try {
+                            const finalChainId = chainId || accountChainId;
+                            if (!finalChainId) return;
+
+                            const analysisResponse = await fetch('/api/analyze-tokens', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                text: `Show me all available tokens with their performance data and price analysis for the last ${timeframe}`,
+                                chainId: finalChainId,
+                              }),
+                            });
+
+                            if (analysisResponse.ok) {
+                              const analysisData = await analysisResponse.json();
+                              if (analysisData && analysisData.tokens && Array.isArray(analysisData.tokens) && analysisData.tokens.length > 0) {
+                                setMessages((prev) =>
+                                  prev.map((m) =>
+                                    m.id === msg.id
+                                      ? {
+                                          ...m,
+                                          tokenPerformanceData: {
+                                            tokens: analysisData.tokens,
+                                            timePeriod: timeframe,
+                                          },
+                                        }
+                                      : m
+                                  )
+                                );
+                              }
+                            }
+                          } catch (error) {
+                            console.error('[Token Analysis] Error fetching timeframe data:', error);
+                          }
+                        };
+
+                        fetchTimeframeData(newValue);
+                      }}
+                      variant="scrollable"
+                      scrollButtons="auto"
+                      sx={{
+                        minHeight: 40,
+                        '& .MuiTab-root': {
+                          minHeight: 40,
+                          fontSize: '0.75rem',
+                          textTransform: 'none',
+                        },
+                      }}
+                    >
+                      <Tab label="20m" value="20m" />
+                      <Tab label="1h" value="1h" />
+                      <Tab label="24h" value="24h" />
+                      <Tab label="7d" value="7d" />
+                      <Tab label="30d" value="30d" />
+                    </Tabs>
+                  </Box>
+
+                  <Typography variant="caption" color="textSecondary" sx={{ mb: 1.5, display: 'block' }}>
+                    <FormattedMessage
+                                      id="token.performance.period"
+                      defaultMessage="Performance in the last {timePeriod}"
+                                      values={{ timePeriod: msg.tokenPerformanceData.timePeriod || '24h' }}
+                    />
+                  </Typography>
+                  
+                  <Box
+                    sx={{
+                      maxHeight: '400px',
                       overflowY: 'auto',
                       pr: 0.5,
                     }}
@@ -1394,23 +2341,139 @@ export function ChatBox({
                           return `${sign}${percent.toFixed(2)}%`;
                         };
 
+                        const isSelected = gameJoinState?.captainCoin === token.symbol ||
+                          gameJoinState?.selectedCoins?.includes(token.symbol);
+                        const isCaptainCoin = gameJoinState?.captainCoin === token.symbol;
+                        const isInJoinFlow = gameJoinState?.gameId !== undefined;
+
+                        const handleTokenClick = async () => {
+                          if (!isInJoinFlow) return;
+                          
+                          // Block clicks while processing a selection
+                          if (isSelectingToken || isLoading || isJoiningGame) {
+                            return;
+                          }
+
+                          if (isSelected) {
+                            return;
+                          }
+                          
+                          setIsSelectingToken(true);
+
+                          const userMessage: Message = {
+                            id: `user-${Date.now()}`,
+                            role: 'user',
+                            content: token.symbol,
+                            timestamp: new Date(),
+                          };
+                          setMessages((prev) => [...prev, userMessage]);
+
+                          setTimeout(() => {
+                            scrollToBottom();
+                          }, 100);
+
+                          const currentState = gameJoinState || {};
+                          let updatedState: typeof gameJoinState = { ...currentState };
+
+                          const maxCoinsNum = typeof currentState.maxCoins === 'string' 
+                            ? parseInt(currentState.maxCoins, 10) 
+                            : (currentState.maxCoins || 2);
+
+                          if (!currentState?.captainCoin) {
+                            updatedState.captainCoin = token.symbol;
+                            updatedState.selectedCoins = [];
+                            updatedState.maxCoins = maxCoinsNum;
+                          } else {
+                            const requiredCoins = maxCoinsNum - 1;
+                            const currentSelected = currentState.selectedCoins || [];
+                            
+                            if (!currentSelected.includes(token.symbol) && currentSelected.length < requiredCoins) {
+                              updatedState.selectedCoins = [...currentSelected, token.symbol];
+                              updatedState.maxCoins = maxCoinsNum;
+                            } else {
+                              return;
+                            }
+                          }
+
+                          setGameJoinState(updatedState);
+
+                          setTimeout(async () => {
+                            await generateAIResponse(token.symbol, undefined, updatedState);
+                          }, 50);
+                        };
+
                         return (
                           <Grid item xs={6} sm={4} md={3} key={token.address}>
                             <Paper
-                              elevation={1}
+                              elevation={isSelected ? 3 : 1}
+                              onClick={isInJoinFlow && !isSelectingToken && !isLoading && !isJoiningGame ? handleTokenClick : undefined}
                               sx={(theme) => ({
                                 p: 1,
                                 borderRadius: 1.5,
-                                backgroundColor: theme.palette.background.paper,
-                                border: `1px solid ${theme.palette.divider}`,
+                                backgroundColor: isSelected
+                                  ? (isCaptainCoin
+                                      ? theme.palette.primary.main + '20'
+                                      : theme.palette.secondary.main + '20')
+                                  : theme.palette.background.paper,
+                                border: isSelected
+                                  ? `2px solid ${isCaptainCoin ? theme.palette.primary.main : theme.palette.secondary.main}`
+                                  : `1px solid ${theme.palette.divider}`,
                                 transition: 'all 0.2s',
-                                '&:hover': {
+                                cursor: (isInJoinFlow && !isSelectingToken && !isLoading && !isJoiningGame) ? 'pointer' : 'default',
+                                position: 'relative',
+                                opacity: (isSelectingToken || isLoading || isJoiningGame) ? 0.6 : 1,
+                                pointerEvents: (isSelectingToken || isLoading || isJoiningGame) ? 'none' : 'auto',
+                                '&:hover': (isInJoinFlow && !isSelectingToken && !isLoading && !isJoiningGame) ? {
                                   borderColor: theme.palette.primary.main,
-                                  boxShadow: `0 2px 8px ${theme.palette.primary.main}20`,
-                                },
+                                  boxShadow: `0 2px 8px ${theme.palette.primary.main}40`,
+                                  transform: 'translateY(-2px)',
+                                } : {},
                               })}
                             >
+                              {isSelected && (
+                                <Box
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 4,
+                                    right: 4,
+                                    width: 20,
+                                    height: 20,
+                                    borderRadius: '50%',
+                                    backgroundColor: isCaptainCoin
+                                      ? theme.palette.primary.main
+                                      : theme.palette.secondary.main,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: '#fff',
+                                      fontSize: '0.7rem',
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    {isCaptainCoin ? 'C' : '✓'}
+                                  </Typography>
+                                </Box>
+                              )}
                               <Stack direction="row" spacing={1} alignItems="center">
+                                {token.logo ? (
+                                  <Avatar
+                                    src={token.logo}
+                                    alt={token.symbol}
+                                    sx={{
+                                      width: 32,
+                                      height: 32,
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {token.symbol.substring(0, 2).toUpperCase()}
+                                  </Avatar>
+                                ) : (
                                 <Box
                                   sx={{
                                     width: 32,
@@ -1424,15 +2487,40 @@ export function ChatBox({
                                     flexShrink: 0,
                                   }}
                                 >
-                                  <Typography variant="caption" fontWeight="bold" fontSize="0.65rem">
+                                    <Typography 
+                                      variant="caption" 
+                                      fontWeight="bold" 
+                                      fontSize="0.65rem"
+                                      sx={{
+                                        color: theme.palette.text.primary,
+                                      }}
+                                    >
                                     {token.symbol.substring(0, 2).toUpperCase()}
                                   </Typography>
                                 </Box>
+                                )}
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                                  <Typography variant="caption" fontWeight={600} noWrap sx={{ display: 'block' }}>
+                                  <Typography 
+                                    variant="caption" 
+                                    fontWeight={600} 
+                                    noWrap 
+                                    sx={{ 
+                                      display: 'block',
+                                      color: theme.palette.text.primary,
+                                    }}
+                                  >
                                     {token.symbol}
                                   </Typography>
-                                  <Typography variant="caption" color="textSecondary" fontSize="0.7rem" noWrap sx={{ display: 'block' }}>
+                                  <Typography 
+                                    variant="caption" 
+                                    color="textSecondary" 
+                                    fontSize="0.7rem" 
+                                    noWrap 
+                                    sx={{ 
+                                      display: 'block',
+                                      color: theme.palette.text.secondary,
+                                    }}
+                                  >
                                     {formatPrice(token.currentPrice)}
                                   </Typography>
                                   <Stack
@@ -1451,7 +2539,17 @@ export function ChatBox({
                                     ) : (
                                       <TrendingDownIcon sx={{ fontSize: 12 }} />
                                     )}
-                                    <Typography variant="caption" fontWeight={600} fontSize="0.7rem">
+                                    <Typography 
+                                      variant="caption" 
+                                      fontWeight={600} 
+                                      fontSize="0.7rem"
+                                      sx={{
+                                        color:
+                                          token.priceChangePercent >= 0
+                                            ? theme.palette.success.main
+                                            : theme.palette.error.main,
+                                      }}
+                                    >
                                       {formatPercent(token.priceChangePercent)}
                                     </Typography>
                                   </Stack>
@@ -1465,8 +2563,8 @@ export function ChatBox({
                   </Box>
                 </Paper>
               </motion.div>
-            );
-          })}
+              </React.Fragment>
+            ))}
             {isLoading && (
               <Box
                 sx={{

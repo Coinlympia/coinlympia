@@ -1635,5 +1635,21 @@
   "chat.assistant": "Asistente IA",
   "chat.thinking": "Pensando...",
   "chat.input.placeholder": "Escribe tu mensaje...",
-  "chat.error.message": "Lo siento, encontré un error. Por favor, intenta de nuevo."
+  "chat.error.message": "Lo siento, encontré un error. Por favor, intenta de nuevo.",
+  "chat.join.game.start": "¡Perfecto! Quieres unirte al juego #{gameId}. Primero, necesito que selecciones tu moneda capitana. Por favor, dime qué token quieres usar como tu moneda capitana.",
+  "chat.error.join.game.start": "Error al iniciar el flujo de unión: {error}. Por favor, inténtalo de nuevo.",
+  "chat.token.analysis.available": "Aquí están los tokens disponibles con sus datos de rendimiento para ayudarte a elegir:",
+  "chat.error.missing.coins": "Por favor, selecciona tu moneda capitana y al menos una moneda adicional antes de unirte al juego.",
+  "chat.joining.game": "Uniéndose al juego... Por favor, confirma la transacción en tu billetera.",
+  "chat.join.game.success": "¡Te has unido exitosamente al juego #{gameId}! Redirigiendo al juego...",
+  "chat.error.join.game": "Error al unirse al juego: {error}. Por favor, inténtalo de nuevo.",
+  "chat.searching.games": "Buscando juegos disponibles...",
+  "chat.games.found": "Se encontraron {count} juegos disponibles. Por favor, selecciona uno de la lista a continuación:",
+  "chat.no.games.suggestion": "No se encontraron juegos que coincidan con tus criterios. ¿Te gustaría crear un nuevo juego en su lugar?",
+  "chat.error.find.games": "Error al buscar juegos: {error}. Por favor, inténtalo de nuevo.",
+  "chat.analyzing": "Analizando datos...",
+  "chat.error.no.response": "Lo siento, pero no recibí una respuesta válida. Por favor, inténtalo de nuevo.",
+  "available.tokens": "Tokens Disponibles",
+  "available.games": "Juegos Disponibles",
+  "available.slots": "Disponible"
 }

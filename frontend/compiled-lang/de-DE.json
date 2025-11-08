@@ -1623,5 +1623,21 @@
   "5minutes": "5 Minuten",
   "token.performance.analysis": "Token-Leistungsanalyse",
   "token.performance.period": "Leistung in den letzten {timePeriod}",
-  "no.token.data.available": "Keine Tokendaten verfügbar"
+  "no.token.data.available": "Keine Tokendaten verfügbar",
+  "chat.join.game.start": "Perfekt! Sie möchten Spiel #{gameId} beitreten. Zuerst muss ich, dass Sie Ihre Kapitänsmünze auswählen. Bitte sagen Sie mir, welchen Token Sie als Ihre Kapitänsmünze verwenden möchten.",
+  "chat.error.join.game.start": "Fehler beim Starten des Beitrittsvorgangs: {error}. Bitte versuchen Sie es erneut.",
+  "chat.token.analysis.available": "Hier sind die verfügbaren Tokens mit ihren Leistungsdaten, um Ihnen bei der Auswahl zu helfen:",
+  "chat.error.missing.coins": "Bitte wählen Sie Ihre Kapitänsmünze und mindestens eine weitere Münze aus, bevor Sie dem Spiel beitreten.",
+  "chat.joining.game": "Dem Spiel beitreten... Bitte bestätigen Sie die Transaktion in Ihrer Wallet.",
+  "chat.join.game.success": "Sie sind erfolgreich Spiel #{gameId} beigetreten! Weiterleitung zum Spiel...",
+  "chat.error.join.game": "Fehler beim Beitreten zum Spiel: {error}. Bitte versuchen Sie es erneut.",
+  "chat.searching.games": "Suche nach verfügbaren Spielen...",
+  "chat.games.found": "{count} verfügbare Spiele gefunden. Bitte wählen Sie eines aus der Liste unten aus:",
+  "chat.no.games.suggestion": "Keine Spiele gefunden, die Ihren Kriterien entsprechen. Möchten Sie stattdessen ein neues Spiel erstellen?",
+  "chat.error.find.games": "Fehler beim Suchen nach Spielen: {error}. Bitte versuchen Sie es erneut.",
+  "chat.analyzing": "Daten werden analysiert...",
+  "chat.error.no.response": "Entschuldigung, aber ich habe keine gültige Antwort erhalten. Bitte versuchen Sie es erneut.",
+  "available.tokens": "Verfügbare Tokens",
+  "available.games": "Verfügbare Spiele",
+  "available.slots": "Verfügbar"
 }

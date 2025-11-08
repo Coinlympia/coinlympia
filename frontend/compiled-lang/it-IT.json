@@ -1623,5 +1623,21 @@
   "5minutes": "5 minuti",
   "token.performance.analysis": "Analisi delle prestazioni dei token",
   "token.performance.period": "Prestazioni negli ultimi {timePeriod}",
-  "no.token.data.available": "Nessun dato token disponibile"
+  "no.token.data.available": "Nessun dato token disponibile",
+  "chat.join.game.start": "Perfetto! Vuoi unirti al gioco #{gameId}. Prima, ho bisogno che tu selezioni la tua moneta capitano. Per favore, dimmi quale token vuoi usare come tua moneta capitano.",
+  "chat.error.join.game.start": "Errore nell'avvio del flusso di unione: {error}. Per favore, riprova.",
+  "chat.token.analysis.available": "Ecco i token disponibili con i loro dati di prestazione per aiutarti a scegliere:",
+  "chat.error.missing.coins": "Per favore, seleziona la tua moneta capitano e almeno una moneta aggiuntiva prima di unirti al gioco.",
+  "chat.joining.game": "Unendosi al gioco... Per favore, conferma la transazione nel tuo portafoglio.",
+  "chat.join.game.success": "Ti sei unito con successo al gioco #{gameId}! Reindirizzamento al gioco...",
+  "chat.error.join.game": "Errore nell'unirsi al gioco: {error}. Per favore, riprova.",
+  "chat.searching.games": "Ricerca di giochi disponibili...",
+  "chat.games.found": "Trovati {count} giochi disponibili. Per favore, seleziona uno dalla lista qui sotto:",
+  "chat.no.games.suggestion": "Nessun gioco trovato corrispondente ai tuoi criteri. Vorresti creare un nuovo gioco invece?",
+  "chat.error.find.games": "Errore nella ricerca di giochi: {error}. Per favore, riprova.",
+  "chat.analyzing": "Analisi dei dati...",
+  "chat.error.no.response": "Mi scuso, ma non ho ricevuto una risposta valida. Per favore, riprova.",
+  "available.tokens": "Token Disponibili",
+  "available.games": "Giochi Disponibili",
+  "available.slots": "Disponibile"
 }
