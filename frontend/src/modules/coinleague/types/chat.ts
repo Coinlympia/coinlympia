@@ -33,6 +33,14 @@ export interface AvailableGame {
   createdAtFormatted: string;
 }
 
+export interface MessageOption {
+  id: string;
+  label: string;
+  value: string | number | boolean;
+  checked?: boolean;
+  disabled?: boolean;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -44,5 +52,15 @@ export interface Message {
     timePeriod: string;
   };
   availableGames?: AvailableGame[];
+  isConfirmationMessage?: boolean;
+  gameJoinState?: {
+    gameId?: number;
+    chainId?: number;
+    maxCoins?: number;
+    captainCoin?: string;
+    selectedCoins?: string[];
+  };
+  options?: MessageOption[];
+  onOptionChange?: (optionId: string, checked: boolean) => void;
 }
 

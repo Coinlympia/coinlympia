@@ -5004,5 +5004,92 @@
   },
   "chat.game.placeholder.connect.wallet": {
     "defaultMessage": "Por favor, conecta tu wallet para usar el chat"
+  },
+  "chat.option.game.type.bull": {
+    "defaultMessage": "Bull (Alcista) - Los precios suben"
+  },
+  "chat.option.game.type.bear": {
+    "defaultMessage": "Bear (Bajista) - Los precios bajan"
+  },
+  "chat.option.duration.1h": {
+    "defaultMessage": "1 hora"
+  },
+  "chat.option.duration.4h": {
+    "defaultMessage": "4 horas"
+  },
+  "chat.option.duration.8h": {
+    "defaultMessage": "8 horas"
+  },
+  "chat.option.duration.24h": {
+    "defaultMessage": "24 horas"
+  },
+  "chat.option.duration.7d": {
+    "defaultMessage": "7 días"
+  },
+  "chat.option.level.1": {
+    "defaultMessage": "Nivel 1 (Principiante) - Entrada: 0.001 USDT"
+  },
+  "chat.option.level.2": {
+    "defaultMessage": "Nivel 2 (Intermedio) - Entrada: 1.0 USDT"
+  },
+  "chat.option.level.3": {
+    "defaultMessage": "Nivel 3 (Avanzado) - Entrada: 10.0 USDT"
+  },
+  "chat.option.level.4": {
+    "defaultMessage": "Nivel 4 (Experto) - Entrada: 25.0 USDT"
+  },
+  "chat.option.level.5": {
+    "defaultMessage": "Nivel 5 (Maestro) - Entrada: 100.0 USDT"
+  },
+  "chat.option.level.6": {
+    "defaultMessage": "Nivel 6 (Gran Maestro) - Entrada: 250.0 USDT"
+  },
+  "chat.option.max.coins.2": {
+    "defaultMessage": "2 monedas"
+  },
+  "chat.option.max.coins.3": {
+    "defaultMessage": "3 monedas"
+  },
+  "chat.option.max.coins.4": {
+    "defaultMessage": "4 monedas"
+  },
+  "chat.option.max.coins.5": {
+    "defaultMessage": "5 monedas"
+  },
+  "chat.option.max.players.2": {
+    "defaultMessage": "2 jugadores"
+  },
+  "chat.option.max.players.5": {
+    "defaultMessage": "5 jugadores"
+  },
+  "chat.option.max.players.10": {
+    "defaultMessage": "10 jugadores"
+  },
+  "chat.option.max.players.20": {
+    "defaultMessage": "20 jugadores"
+  },
+  "chat.user.message.bull": {
+    "defaultMessage": "Bull"
+  },
+  "chat.user.message.bear": {
+    "defaultMessage": "Bear"
+  },
+  "chat.user.message.duration.seconds": {
+    "defaultMessage": "{seconds} segundos"
+  },
+  "chat.user.message.level": {
+    "defaultMessage": "Nivel {level}"
+  },
+  "chat.user.message.coins": {
+    "defaultMessage": "{count} monedas"
+  },
+  "chat.user.message.players": {
+    "defaultMessage": "{count} jugadores"
+  },
+  "chat.game.room.number": {
+    "defaultMessage": "Sala #{gameId}"
+  },
+  "chat.game.available.slots.count": {
+    "defaultMessage": "{count} {count, plural, one {espacio} other {espacios}}"
   }
 }

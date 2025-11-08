@@ -140,6 +140,7 @@ export interface FindGamesRequest {
   chainId?: number;
   status?: 'Waiting' | 'Started' | 'Finished';
   limit?: number;
+  userAddress?: string;
 }
 
 export interface AvailableGame {

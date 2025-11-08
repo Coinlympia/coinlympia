@@ -4,7 +4,7 @@ import type { ChatRequest, ChatResponse } from '../../../backend/types';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<ChatResponse | { error: string; message?: string }>
+  res: NextApiResponse<ChatResponse | { error: string }>
 ) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -30,8 +30,7 @@ export default async function handler(
   } catch (error: any) {
     console.error('[Chat Response API] Error generating chat response:', error);
     return res.status(500).json({ 
-      error: 'Failed to generate chat response',
-      message: error?.message || 'Unknown error',
+      error: error?.message || 'Failed to generate chat response',
     });
   }
 }

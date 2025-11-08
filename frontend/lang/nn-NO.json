@@ -4797,5 +4797,92 @@
   },
   "chat.game.placeholder.connect.wallet": {
     "defaultMessage": "Vennligst koble til lommeboken din for å bruke chatten"
+  },
+  "chat.option.game.type.bull": {
+    "defaultMessage": "Bull (Oppgang) - Prisene stiger"
+  },
+  "chat.option.game.type.bear": {
+    "defaultMessage": "Bear (Nedgang) - Prisene faller"
+  },
+  "chat.option.duration.1h": {
+    "defaultMessage": "1 time"
+  },
+  "chat.option.duration.4h": {
+    "defaultMessage": "4 timer"
+  },
+  "chat.option.duration.8h": {
+    "defaultMessage": "8 timer"
+  },
+  "chat.option.duration.24h": {
+    "defaultMessage": "24 timer"
+  },
+  "chat.option.duration.7d": {
+    "defaultMessage": "7 dager"
+  },
+  "chat.option.level.1": {
+    "defaultMessage": "Nivå 1 (Nybegynner) - Inngang: 0.001 USDT"
+  },
+  "chat.option.level.2": {
+    "defaultMessage": "Nivå 2 (Mellomnivå) - Inngang: 1.0 USDT"
+  },
+  "chat.option.level.3": {
+    "defaultMessage": "Nivå 3 (Avansert) - Inngang: 10.0 USDT"
+  },
+  "chat.option.level.4": {
+    "defaultMessage": "Nivå 4 (Ekspert) - Inngang: 25.0 USDT"
+  },
+  "chat.option.level.5": {
+    "defaultMessage": "Nivå 5 (Mester) - Inngang: 100.0 USDT"
+  },
+  "chat.option.level.6": {
+    "defaultMessage": "Nivå 6 (Stormester) - Inngang: 250.0 USDT"
+  },
+  "chat.option.max.coins.2": {
+    "defaultMessage": "2 mynter"
+  },
+  "chat.option.max.coins.3": {
+    "defaultMessage": "3 mynter"
+  },
+  "chat.option.max.coins.4": {
+    "defaultMessage": "4 mynter"
+  },
+  "chat.option.max.coins.5": {
+    "defaultMessage": "5 mynter"
+  },
+  "chat.option.max.players.2": {
+    "defaultMessage": "2 spillere"
+  },
+  "chat.option.max.players.5": {
+    "defaultMessage": "5 spillere"
+  },
+  "chat.option.max.players.10": {
+    "defaultMessage": "10 spillere"
+  },
+  "chat.option.max.players.20": {
+    "defaultMessage": "20 spillere"
+  },
+  "chat.user.message.bull": {
+    "defaultMessage": "Bull"
+  },
+  "chat.user.message.bear": {
+    "defaultMessage": "Bear"
+  },
+  "chat.user.message.duration.seconds": {
+    "defaultMessage": "{seconds} sekunder"
+  },
+  "chat.user.message.level": {
+    "defaultMessage": "Nivå {level}"
+  },
+  "chat.user.message.coins": {
+    "defaultMessage": "{count} mynter"
+  },
+  "chat.user.message.players": {
+    "defaultMessage": "{count} spillere"
+  },
+  "chat.game.room.number": {
+    "defaultMessage": "Rom #{gameId}"
+  },
+  "chat.game.available.slots.count": {
+    "defaultMessage": "{count} {count, plural, one {plass} other {plasser}}"
   }
 }

@@ -99,7 +99,7 @@ export async function findAvailableGames(
   findGamesRequest: FindGamesRequest
 ): Promise<FindGamesResponse> {
   try {
-    const { gameType, maxEntry, minEntry, chainId, status, limit = 20 } = findGamesRequest;
+    const { gameType, maxEntry, minEntry, chainId, status, limit = 20, userAddress } = findGamesRequest;
 
     console.log('Find games request:', { gameType, maxEntry, minEntry, chainId, status, limit });
 
@@ -191,6 +191,56 @@ export async function findAvailableGames(
         }
       });
       console.log(`After filtering by entry amount: ${availableGames.length} games`);
+    }
+
+    if (userAddress) {
+      try {
+        const { prisma } = await import('../../../frontend/src/lib/prisma');
+        
+        const gameIntIds = availableGames.map(g => {
+          const intId = typeof g.intId === 'string' ? parseInt(g.intId, 10) : Number(g.intId);
+          return isNaN(intId) ? null : intId;
+        }).filter((id): id is number => id !== null);
+        
+        if (gameIntIds.length > 0) {
+          const gamesInDb = await prisma.game.findMany({
+            where: {
+              intId: { in: gameIntIds },
+              ...(chainId ? { chainId } : {}),
+            },
+            select: {
+              id: true,
+              intId: true,
+              participants: {
+                where: {
+                  userAddress: userAddress.toLowerCase(),
+                },
+                select: {
+                  id: true,
+                },
+              },
+            },
+          });
+          
+          const participatedIntIds = new Set(
+            gamesInDb
+              .filter(game => game.participants.length > 0)
+              .map(game => game.intId)
+          );
+          
+          const beforeUserFilter = availableGames.length;
+          availableGames = availableGames.filter(game => {
+            const gameIntId = typeof game.intId === 'string' ? parseInt(game.intId, 10) : Number(game.intId);
+            return !participatedIntIds.has(gameIntId);
+          });
+          
+          console.log(`After filtering user participations: ${availableGames.length} games (filtered out ${beforeUserFilter - availableGames.length} games)`);
+          console.log(`Participated intIds:`, Array.from(participatedIntIds));
+          console.log(`Available game intIds before filter:`, availableGames.map(g => ({ intId: g.intId, type: typeof g.intId })));
+        }
+      } catch (error) {
+        console.error('Error filtering user participations:', error);
+      }
     }
 
     availableGames = availableGames.slice(0, limit);
