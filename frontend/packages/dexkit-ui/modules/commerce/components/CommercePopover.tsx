@@ -35,7 +35,11 @@ export default function CommercePopover({
       }
       if (action === "profile") {
         if (user) {
-          router.push(`/u/${user?.username}`);
+          if (user?.username) {
+            router.push(`/u/${user.username}`);
+          } else {
+            router.push(`/u/edit`);
+          }
         } else {
           router.push(`/u/login`);
         }

@@ -19,7 +19,11 @@ import {
 export async function generateChatResponse(
   request: ChatRequest
 ): Promise<ChatResponse> {
-  const { message, conversationHistory, tokenData, chainId, gameCreationState, gameJoinState } = request;
+  const { message, conversationHistory, tokenData, chainId, gameCreationState, gameJoinState, language } = request;
+  
+  if (gameCreationState && Object.keys(gameCreationState).length > 0) {
+    console.log('[Chat Service] Received gameCreationState:', JSON.stringify(gameCreationState, null, 2));
+  }
 
   if (!message || typeof message !== 'string') {
     throw new Error('Message is required');
@@ -121,7 +125,8 @@ export async function generateChatResponse(
     gameLevelPrices,
     coinToPlaySymbol,
     databaseData,
-    tokenData || undefined
+    tokenData || undefined,
+    language || 'english'
   );
 
   if (gameCreationState) {
@@ -131,10 +136,80 @@ export async function generateChatResponse(
       .join(', ');
 
     if (stateInfo) {
-      systemPrompt += `\n\nCURRENT GAME CREATION STATE (information already collected):
-${stateInfo}
+      const missingParams: string[] = [];
+      if (!gameCreationState.gameType) missingParams.push('gameType (bull or bear)');
+      if (!gameCreationState.duration) missingParams.push('duration (in seconds)');
+      if (gameCreationState.gameLevel === undefined) missingParams.push('gameLevel (1-6)');
+      if (!gameCreationState.maxCoins) missingParams.push('maxCoins (2-5)');
+      if (!gameCreationState.maxPlayers) missingParams.push('maxPlayers (2-20)');
+      
+      const stateSummary = Object.entries(gameCreationState)
+        .filter(([_, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => `- ${key}: ${JSON.stringify(value)}`)
+        .join('\n');
+      
+      systemPrompt += `\n\n=== CURRENT GAME CREATION STATE ===
+The user has ALREADY provided the following information:
+${stateSummary}
 
-Use this information to avoid asking for the same data again. Only ask for missing parameters.`;
+=== MISSING PARAMETERS ===
+${missingParams.length > 0 ? missingParams.map(p => `- ${p}`).join('\n') : 'NONE - All parameters have been collected!'}
+
+CRITICAL: Check the "CURRENT GAME CREATION STATE" above. If a parameter is listed there, it means the user has ALREADY provided it. DO NOT ask for it again. ONLY ask for parameters listed in "MISSING PARAMETERS" above.
+
+=== CRITICAL INSTRUCTIONS - YOU MUST FOLLOW THESE ===
+1. DO NOT ask for ANY information that is listed above in "CURRENT GAME CREATION STATE"
+2. DO NOT repeat questions about parameters that are already set
+3. ONLY ask for parameters listed in "MISSING PARAMETERS" section
+4. If a parameter is already in the state, acknowledge it in ONE sentence and IMMEDIATELY ask for the next missing parameter
+5. CRITICAL: Before asking for ANY parameter, check the "CURRENT GAME CREATION STATE" above. If the parameter is listed there, DO NOT ask for it. It means the user has ALREADY provided it.
+6. CRITICAL: If "MISSING PARAMETERS" shows "NONE - All parameters have been collected!", you MUST NOT ask for any more parameters. Instead, proceed with creating the game.
+
+=== EXAMPLES OF CORRECT BEHAVIOR ===
+Example 1: If state shows "gameType: bull" and "duration: 14400", but gameLevel is missing:
+CORRECT: "Perfect! You've chosen a bull game. Now I need to know the difficulty level. What level would you like?"
+WRONG: "What type of game do you want?" or "How long should the game last?" or "What level would you like? (1-6)" or mentioning specific values like "3600", "14400", etc.
+
+Example 2: If state shows "gameType: bull", "duration: 14400", and "gameLevel: 1", but maxPlayers is missing:
+CORRECT: "Great! Bull game, Level 1. How many players should the game support?"
+WRONG: "What type of game?" or "How long?" or "What level?" or mentioning specific values like "2 players", "10 players", etc.
+
+=== ABSOLUTE PROHIBITIONS ===
+- If gameType is in the state, NEVER ask "What type of game?" or "Bull or Bear?"
+- If duration is in the state, NEVER ask "How long should the game last?" or "What duration?"
+- If gameLevel is in the state, NEVER ask "What level?" or "What difficulty?" and NEVER mention entry prices or list levels with prices
+- If maxCoins is in the state, NEVER ask "How many coins?" or "How many tokens?" or "How many coins should the game support?"
+- If maxPlayers is in the state, NEVER ask "How many players?" or "How many participants?" or "How many players should the game support?"
+
+CRITICAL: When asking for gameLevel, DO NOT mention entry prices or list the levels with their prices. The user will see checkboxes with these options, so mentioning them is redundant. Just ask "What difficulty level do you prefer?" or "What level would you like?" without listing the options or prices.
+
+=== FINAL REMINDER ===
+The state above shows what the user has ALREADY told you. Do NOT ask for it again. Only ask for what is in the "MISSING PARAMETERS" list. If you ask for something that is already in the state, you are making a CRITICAL ERROR.
+
+=== RESPONSE TEMPLATE ===
+When responding, follow this format:
+1. Acknowledge what is already set (if any): "Perfect! You've chosen [gameType] game..." (DO NOT mention specific values like "3600 seconds", "4 hours", "Level 1", "20 players", etc.)
+2. Ask ONLY for missing parameters: "Now I need to know [missing parameter]..." (DO NOT list specific values or options in your response)
+3. NEVER repeat questions about parameters that are already in the state.
+4. NEVER mention specific values like "3600", "14400", "28800", "86400", "604800" (durations in seconds), "Level 1", "Level 2", etc., "2 players", "10 players", etc., "2 coins", "3 coins", etc. The user will see checkboxes with these options, so mentioning them is redundant.
+
+CRITICAL: When asking for a parameter, DO NOT list the specific values or options. Just ask the question simply. For example:
+- WRONG: "How long should the game last? Options: 1 hour (3600), 4 hours (14400), 8 hours (28800), 24 hours (86400), or 1 week (604800)."
+- CORRECT: "How long should the game last?"
+
+- WRONG: "What level would you like? (1-6)"
+- CORRECT: "What level would you like?"
+
+- WRONG: "How many players? (2, 3, 5, 10, 50)"
+- CORRECT: "How many players should the game support?"
+
+- WRONG: "How many coins? (2-5)"
+- CORRECT: "How many coins should the game support?"
+
+Example response when gameType="bear", duration=604800, gameLevel=1, maxPlayers=20 are set, but maxCoins is missing:
+"Perfect! You've chosen a bear game. Now I need to know how many coins the game should support. How many coins?"
+
+DO NOT ask about gameType, duration, gameLevel, or maxPlayers in this example because they are already set.`;
     }
   }
 
@@ -168,39 +243,47 @@ CRITICAL WORKFLOW FOR JOINING A GAME:
 1. STEP 1 - Captain Coin Selection:
    - If captainCoin is NOT set, you MUST ask the user to select their captain coin first.
    - Explain that the captain coin is the main token they're betting on.
-   - Example: "First, I need you to select your captain coin. This is the main token you're betting on. Which token would you like to use as your captain coin?"
+   - CRITICAL: You MUST respond in the detected language: "${language || 'english'}". Do NOT use English if the user is speaking Spanish, Chinese, French, etc.
+   - Example in Spanish: "¡Perfecto! Quieres unirte al juego #${gameJoinState.gameId || 'X'}. Primero, necesito que selecciones tu moneda capitán. Por favor, dime qué token quieres usar como tu moneda capitán."
+   - Example in English: "Perfect! You want to join game #${gameJoinState.gameId || 'X'}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin."
 
 2. STEP 2 - Additional Coins Selection:
    - If captainCoin IS set but selectedCoins is incomplete (less than ${maxCoins - 1} coins), you MUST ask the user to select the remaining coins.
-   - Tell them exactly how many more coins they need: "You need to select ${remainingCoinsNeeded} more coin(s) to complete your selection."
-   - Example: "Great! You've selected ${captainCoin} as your captain coin. Now, please select ${remainingCoinsNeeded} more coin(s) from the available tokens."
+   - Tell them exactly how many more coins they need.
+   - CRITICAL: You MUST respond in the detected language: "${language || 'english'}".
+   - Example in Spanish: "¡Excelente! Has seleccionado ${captainCoin} como tu moneda capitán. Ahora, por favor selecciona ${remainingCoinsNeeded} moneda(s) más de los tokens disponibles."
+   - Example in English: "Great! You've selected ${captainCoin} as your captain coin. Now, please select ${remainingCoinsNeeded} more coin(s) from the available tokens."
 
 3. STEP 3 - Show Summary and Ask for Confirmation:
    - CRITICAL: If "ALL COINS SELECTED: YES - SHOW SUMMARY NOW" appears above, you MUST IMMEDIATELY show the summary and ask for confirmation in your response.
    - DO NOT wait for another message from the user. When the user selects the last required coin, you MUST respond with:
-     a) A clear summary of their selections:
-        "Perfect! Here's your selection:
-        - Captain Coin: ${captainCoin}
-        - Additional Coins: ${selectedCoins.join(', ')}
-        Total: ${maxCoins} coins"
-     b) Ask for confirmation: "Are you ready to join the game? Please confirm by saying 'yes', 'confirm', 'listo', 'ready', 'unirse', or 'join'. If you want to change your selection, just say 'no' or 'cancel' and we'll start over."
+     a) A clear summary of their selections (in the detected language):
+        - Spanish: "¡Perfecto! Aquí está tu selección:\n- Moneda Capitán: ${captainCoin}\n- Monedas Adicionales: ${selectedCoins.join(', ')}\nTotal: ${maxCoins} monedas"
+        - English: "Perfect! Here's your selection:\n- Captain Coin: ${captainCoin}\n- Additional Coins: ${selectedCoins.join(', ')}\nTotal: ${maxCoins} coins"
+     b) Ask for confirmation (in the detected language):
+        - Spanish: "¿Estás listo para unirte al juego? Por favor confirma diciendo 'sí', 'confirmar', 'listo', 'unirse', o 'listo'. Si quieres cambiar tu selección, solo di 'no' o 'cancelar' y empezaremos de nuevo."
+        - English: "Are you ready to join the game? Please confirm by saying 'yes', 'confirm', 'ready', 'join', or 'unirse'. If you want to change your selection, just say 'no' or 'cancel' and we'll start over."
    - IMPORTANT: Check the "ALL COINS SELECTED" status above. If it says "YES - SHOW SUMMARY NOW", you MUST show the summary and ask for confirmation NOW. Do not ask for more coins.
 
 4. STEP 4 - Handle Confirmation:
    - If user confirms (says "yes", "confirm", "listo", "ready", "unirse", "join", "sí", "confirmar"), proceed with joining.
-   - If user cancels (says "no", "cancel", "cancelar", "change", "cambiar"), reset the selection and start over:
-     "No problem! Let's start over. Please select your captain coin again."
+   - If user cancels (says "no", "cancel", "cancelar", "change", "cambiar"), reset the selection and start over (in the detected language):
+     - Spanish: "¡No hay problema! Empecemos de nuevo. Por favor selecciona tu moneda capitán nuevamente."
+     - English: "No problem! Let's start over. Please select your captain coin again."
 
 IMPORTANT RULES:
 - ALWAYS respond to the user's message. Never leave them without a response.
-- When the user selects a coin, acknowledge it immediately: "Great! I've noted that you selected [coin]."
+- CRITICAL: You MUST respond in the detected language: "${language || 'english'}". If the user writes in Spanish, respond in Spanish. If they write in English, respond in English. Do NOT mix languages.
+- When the user selects a coin, acknowledge it immediately in the detected language:
+  - Spanish: "¡Excelente! He notado que seleccionaste [coin]."
+  - English: "Great! I've noted that you selected [coin]."
 - Extract coin symbols/names from the user's message. Look for:
   * Token symbols (BTC, ETH, ADA, etc.)
   * Token names (Bitcoin, Ethereum, Cardano, etc.)
   * Phrases like "Bitcoin y Ethereum" = ["BTC", "ETH"]
   * Multiple tokens separated by commas, "y", "and", etc.
 - Be conversational and helpful, showing token analysis data when relevant.
-- Always respond in the same language the user writes to you.
+- CRITICAL: Always respond in the same language the user writes to you. The detected language is: "${language || 'english'}".
 
 CRITICAL: When the user is in the process of joining a game (gameJoinState is set):
 - DO NOT respond with ACTION:FIND_GAMES. The user is already in a game and selecting tokens.

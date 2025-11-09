@@ -18,6 +18,7 @@ export interface ChatRequest {
     chainId?: number;
   };
   chainId?: number;
+  language?: string;
   gameCreationState?: {
     gameType?: 'bull' | 'bear';
     duration?: number;
@@ -162,6 +163,7 @@ export interface AvailableGame {
   participants: number;
   createdAt: Date;
   createdAtFormatted: string;
+  isParticipating?: boolean;
 }
 
 export interface FindGamesResponse {

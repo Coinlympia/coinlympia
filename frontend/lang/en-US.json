@@ -4837,6 +4837,12 @@
   "please.select.your.coins": {
     "defaultMessage": "Please, select your coins"
   },
+  "edit.selections": {
+    "defaultMessage": "Edit Selections"
+  },
+  "update.selections": {
+    "defaultMessage": "Update Selections"
+  },
   "select.coin": {
     "defaultMessage": "Select coin"
   },
@@ -4963,6 +4969,12 @@
   "chat.loading.processing": {
     "defaultMessage": "Processing your request..."
   },
+  "chat.processing": {
+    "defaultMessage": "Processing..."
+  },
+  "chat.confirmed": {
+    "defaultMessage": "Confirmed"
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Fetching real-time price data..."
   },
@@ -5067,5 +5079,50 @@
   },
   "chat.game.available.slots.count": {
     "defaultMessage": "{count} {count, plural, one {slot} other {slots}}"
+  },
+  "chat.searching.games": {
+    "defaultMessage": "Searching for available games..."
+  },
+  "chat.games.found": {
+    "defaultMessage": "Found {count} {count, plural, one {available game} other {available games}}. Please select one from the list below:"
+  },
+  "chat.no.games.found": {
+    "defaultMessage": "No games found matching your criteria. Try adjusting your search parameters or create a new game."
+  },
+  "chat.all.coins.selected": {
+    "defaultMessage": "Great! You've selected all {count} coins (1 captain coin and {secondaryCount} secondary coins). Are you ready to join the game?"
+  },
+  "select.a.network.to.view.data.from": {
+    "defaultMessage": "Select a network to view data from"
+  },
+  "polygon": {
+    "defaultMessage": "Polygon"
+  },
+  "select.the.game.you.want.to.view": {
+    "defaultMessage": "Select the game you want to view"
+  },
+  "profile.statistics": {
+    "defaultMessage": "Profile statistics"
+  },
+  "statistics.description": {
+    "defaultMessage": "Statistics may change depending on the network you selected above"
+  },
+  "joined.games": {
+    "defaultMessage": "Joined Games"
+  },
+  "win.in.first": {
+    "defaultMessage": "Win in 1°"
+  },
+  "win.in.second": {
+    "defaultMessage": "Win in 2°"
+  },
+  "win.in.third": {
+    "defaultMessage": "Win in 3°"
+  },
+  "total.earned": {
+    "defaultMessage": "Total earned"
+  },
+  "total.spent": {
+    "defaultMessage": "Total spent"
   }
 }

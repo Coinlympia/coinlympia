@@ -40,7 +40,7 @@ import {
 } from '@/modules/common/utils';
 import { copyToClipboard, getWindowUrl } from '@/modules/common/utils/browser';
 import { strPad } from '@/modules/common/utils/strings';
-import { useUserQuery } from '@/modules/user/hooks';
+import { useUserByUsernameQueryDB } from '@/modules/user/hooks';
 import ShareDialogV2 from '@dexkit/ui/components/dialogs/ShareDialogV2';
 import { useWeb3React } from '@dexkit/wallet-connectors/hooks/useWeb3React';
 import { Edit } from '@mui/icons-material';
@@ -62,7 +62,7 @@ import { ethers } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { SyntheticEvent, useCallback, useMemo, useState } from 'react';
+import { SyntheticEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { generateShareLink, ShareTypes } from 'src/utils/share';
 
@@ -88,14 +88,19 @@ const CoinLeagueProfilePage: NextPage = () => {
 
   const { username } = router.query;
 
-  const userQuery = useUserQuery(username as string);
+  const userQuery = useUserByUsernameQueryDB(username as string);
 
   const user = userQuery?.data;
 
-  const address =
-    user?.accounts && user?.accounts.length ? user?.accounts[0].address : '';
+  useEffect(() => {
+    if (userQuery.isFetched && user && !user.username) {
+      router.push('/u/edit');
+    } else if (username === 'null' || username === null) {
+      router.push('/u/edit');
+    }
+  }, [user, userQuery.isFetched, username, router]);
 
-  const profileQuery = useProfileGame(address as string);
+  const address = user?.address || '';
 
   const [showShare, setShowShare] = useState(false);
 
@@ -161,7 +166,7 @@ const CoinLeagueProfilePage: NextPage = () => {
     },
     [selectedChainId],
   );
-  const userUrl = `${getWindowUrl()}/u/${username}`;
+  const userUrl = user?.username ? `${getWindowUrl()}/u/${user.username}` : `${getWindowUrl()}/u/edit`;
 
   const handleShareContentUser = (value: string) => {
     const msg = formatMessage(
@@ -228,17 +233,17 @@ const CoinLeagueProfilePage: NextPage = () => {
             spacing={2}
             alignItems="center"
           >
-            {profileQuery.data && profileQuery.data.user.profileImageURL ? (
+            {user?.profileImageURL ? (
               <ProfileImage
-                image={getNormalizedUrl(profileQuery.data.user.profileImageURL)}
+                image={getNormalizedUrl(user.profileImageURL)}
               />
             ) : (
               <Avatar />
             )}
             <Box>
               <Typography variant="body1">
-                {profileQuery.data && !profileQuery.error
-                  ? profileQuery.data.user.username
+                {user?.username
+                  ? user.username
                   : isAddress(address as string)
                     ? reduceAddress(address as string)
                     : null}

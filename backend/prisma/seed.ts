@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  const { MaticPriceFeeds } = await import('../src/modules/coinleague/constants/PriceFeeds/matic.js');
+  const { MaticPriceFeeds } = await import('../../frontend/src/modules/coinleague/constants/PriceFeeds/matic.js');
 
   const targetChainId = 137;
 

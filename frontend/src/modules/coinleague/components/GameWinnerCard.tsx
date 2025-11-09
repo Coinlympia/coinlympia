@@ -9,8 +9,9 @@ import {
   Typography,
 } from '@mui/material';
 import { BigNumber, ethers } from 'ethers';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { FormattedMessage } from 'react-intl';
+import confetti from 'canvas-confetti';
 import { useCoinToPlay } from '../hooks/coinleague';
 import { CoinLeagueGame, CoinLeagueGamePlayer } from '../types';
 
@@ -32,6 +33,43 @@ export default function GameWinnerCard({
   onClaim,
 }: Props) {
   const coinToPlay = useCoinToPlay(chainId, game?.coin_to_play);
+  const confettiTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    if (!confettiTriggeredRef.current && typeof window !== 'undefined') {
+      confettiTriggeredRef.current = true;
+      
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min: number, max: number) => {
+        return Math.random() * (max - min) + min;
+      };
+
+      const interval: NodeJS.Timeout = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+        
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+      }, 250);
+    }
+  }, []);
 
   const playerList = useMemo(() => {
     if (game?.players && account) {
@@ -108,8 +146,8 @@ export default function GameWinnerCard({
 
   return (
     <Card>
-      <Box sx={{ p: 2 }}>
-        <Stack spacing={2} justifyContent="flex-start" alignItems="flex-start">
+        <Box sx={{ p: 2 }}>
+          <Stack spacing={2} justifyContent="flex-start" alignItems="flex-start">
           <Box>
             <Typography variant="h5">
               <FormattedMessage
@@ -150,8 +188,8 @@ export default function GameWinnerCard({
               <FormattedMessage id="claim" defaultMessage="Claim" />
             )}
           </Button>
-        </Stack>
-      </Box>
-    </Card>
+          </Stack>
+        </Box>
+      </Card>
   );
 }

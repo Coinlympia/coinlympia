@@ -34,9 +34,13 @@ export default function AppProfileMenu({
       anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
     >
       <MenuItem
-        onClick={() =>
-          user ? router.push(`/u/${user.username}`) : router.push(`/u/login`)
-        }
+        onClick={() => {
+          if (user?.username) {
+            router.push(`/u/${user.username}`);
+          } else {
+            router.push(`/u/edit`);
+          }
+        }}
       >
         <ListItemIcon>
           <Person fontSize="small" />

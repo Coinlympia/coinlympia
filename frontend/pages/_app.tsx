@@ -35,6 +35,7 @@ import './customCss.css';
 
 import { AnimationProvider, pageTransitionVariants } from '@/animations';
 import { AutoConnectEthereumProvider } from '@/modules/common/components/AutoConnectEthereumProvider';
+import { AutoCreateUserAccount } from '@/modules/common/components/AutoCreateUserAccount';
 import type { AssetAPI } from '@dexkit/ui/modules/nft/types';
 import type { AppConfig } from '@dexkit/ui/modules/wizard/types/config';
 import SiteProvider from '@dexkit/ui/providers/SiteProvider';
@@ -42,7 +43,6 @@ import { AuthStateProvider } from '@dexkit/ui/providers/authStateProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AppBarANN } from 'src/components/AppBarANN';
 import { ThirdwebProvider } from 'thirdweb/react';
-// Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
 interface MyAppProps extends AppProps<{ dehydratedState: DehydratedState }> {
@@ -84,7 +84,7 @@ export default function MyApp(props: MyAppProps) {
     let tempTheme = getTheme({
       name: defaultAppConfig.theme,
     })?.theme;
-    let fontFamily = "'Sora', sans-serif"; // Default to Sora
+    let fontFamily = "'Sora', sans-serif";
     if (appConfig?.font) {
       fontFamily = `'${appConfig.font.family}', ${appConfig.font.category}`;
     }
@@ -107,7 +107,6 @@ export default function MyApp(props: MyAppProps) {
       if (appConfig?.customThemeDark) {
         customTheme.dark = JSON.parse(appConfig.customThemeDark);
       }
-      //@deprecated remove customTheme later
       if (appConfig?.customTheme) {
         const parsedCustomTheme = JSON.parse(appConfig.customTheme);
         if (parsedCustomTheme?.palette?.mode === ThemeMode.light) {
@@ -136,14 +135,12 @@ export default function MyApp(props: MyAppProps) {
     }
 
     if (!tempTheme) {
-      // Fallback al tema por defecto si no se encuentra el tema especificado
       tempTheme = getTheme({
         name: 'default-theme',
       })?.theme;
     }
 
     if (!tempTheme) {
-      // Si aún no hay tema, crear uno básico
       return extendTheme({
         typography: {
           fontFamily: fontFamily || "'Sora', sans-serif",
@@ -288,6 +285,7 @@ export default function MyApp(props: MyAppProps) {
                 <ThirdwebProvider>
                   <AutoConnectEthereumProvider />
                   <QueryClientProvider client={queryClient}>
+                    <AutoCreateUserAccount />
                     <Hydrate state={pageProps.dehydratedState}>
                       <DefaultSeo {...SEO} />
                       <LocalizationProvider dateAdapter={AdapterMoment}>

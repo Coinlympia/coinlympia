@@ -83,6 +83,7 @@ import ShareDialogV2 from '@dexkit/ui/components/dialogs/ShareDialogV2';
 import dynamic from 'next/dynamic';
 import { generateShareLink, ShareTypes } from 'src/utils/share';
 import { parseEther } from 'viem';
+import { PriceFeeds } from '@/modules/coinleague/constants';
 
 
 const CoinLeagueGame: NextPage = () => {
@@ -191,8 +192,6 @@ const CoinLeagueGame: NextPage = () => {
   ]);
 
   const handleRefetchGame = async () => {
-    // Invalidar queries de forma suave sin refresco forzado
-    // Solo invalidar sin refetch inmediato para evitar refresh
     queryClient.invalidateQueries({
       queryKey: [COIN_LEAGUE_GAME_ONCHAIN_QUERY],
       exact: false,
@@ -242,12 +241,75 @@ const CoinLeagueGame: NextPage = () => {
     }
   };
 
+  const approveTokenMutation = useApproveToken();
+
+  const playerAddresses = useMemo(() => {
+    if (gameOnChainQuery.data && gameOnChainQuery.data?.players) {
+      return gameOnChainQuery.data?.players.map((p) => p.player_address);
+    }
+  }, [gameOnChainQuery.data]);
+
+  const gameProfilesStateQuery = useGameProfilesState(playerAddresses);
+
+  const isInGame = useMemo(() => {
+    return (
+      playerAddresses?.find((address) => isAddressEqual(address, account)) !==
+      undefined
+    );
+  }, [playerAddresses, account]);
+
+  const currentPlayerCoins = useMemo(() => {
+    if (!gameOnChainQuery.data?.players || !account || !chainId) {
+      return { captainCoin: undefined, coinFeeds: [] };
+    }
+
+    const player = gameOnChainQuery.data.players.find((p) =>
+      isAddressEqual(p.player_address, account)
+    );
+
+    if (!player) {
+      return { captainCoin: undefined, coinFeeds: [] };
+    }
+
+    const availableCoins = PriceFeeds[chainId] || [];
+    
+    const captainCoin = availableCoins.find((c) =>
+      isAddressEqual(c.address, player.captain_coin)
+    );
+
+    const coinFeeds = (player.coin_feeds || [])
+      .map((feedAddress) =>
+        availableCoins.find((c) => isAddressEqual(c.address, feedAddress))
+      )
+      .filter((coin): coin is Coin => coin !== undefined);
+
+    return { captainCoin, coinFeeds };
+  }, [gameOnChainQuery.data?.players, account, chainId]);
+
+  const [editingPlayerCoins, setEditingPlayerCoins] = useState(false);
+  const [editingCaptainCoin, setEditingCaptainCoin] = useState(false);
+  const [editingCoins, setEditingCoins] = useState(false);
+  const [editedCaptainCoin, setEditedCaptainCoin] = useState<Coin>();
+  const [editedCoins, setEditedCoins] = useState<{ [key: string]: Coin }>({});
+
+  const currentCaptainCoin = useMemo(() => {
+    return editedCaptainCoin || selectedCaptain || currentPlayerCoins.captainCoin;
+  }, [editedCaptainCoin, selectedCaptain, currentPlayerCoins.captainCoin]);
+
+  const currentCoinFeeds = useMemo(() => {
+    if (Object.keys(editedCoins).length > 0) {
+      return Object.keys(editedCoins).map((key) => editedCoins[key].address);
+    }
+    if (Object.keys(selectedCoins).length > 0) {
+      return Object.keys(selectedCoins).map((key) => selectedCoins[key].address);
+    }
+    return currentPlayerCoins.coinFeeds.map((coin) => coin.address);
+  }, [editedCoins, selectedCoins, currentPlayerCoins.coinFeeds]);
+
   const joinGameMutation = useJoinGameMutation({
     affiliate: affiliate as string,
-    captainCoinFeed: selectedCaptain?.address,
-    coinFeeds: Object.keys(selectedCoins).map(
-      (key) => selectedCoins[key].address,
-    ),
+    captainCoinFeed: currentCaptainCoin?.address,
+    coinFeeds: currentCoinFeeds,
     factoryAddress,
     gameId: id as string,
     provider,
@@ -263,6 +325,11 @@ const CoinLeagueGame: NextPage = () => {
           queryKey: [COIN_LEAGUE_GAME_ONCHAIN_QUERY],
           exact: false,
         });
+        setEditedCaptainCoin(undefined);
+        setEditedCoins({});
+        setEditingPlayerCoins(false);
+        setEditingCaptainCoin(false);
+        setEditingCoins(false);
       },
     },
   });
@@ -380,23 +447,6 @@ const CoinLeagueGame: NextPage = () => {
     }
   };
 
-  const approveTokenMutation = useApproveToken();
-
-  const playerAddresses = useMemo(() => {
-    if (gameOnChainQuery.data && gameOnChainQuery.data?.players) {
-      return gameOnChainQuery.data?.players.map((p) => p.player_address);
-    }
-  }, [gameOnChainQuery.data]);
-
-  const gameProfilesStateQuery = useGameProfilesState(playerAddresses);
-
-  const isInGame = useMemo(() => {
-    return (
-      playerAddresses?.find((address) => isAddressEqual(address, account)) !==
-      undefined
-    );
-  }, [playerAddresses, account]);
-
   const isWaiting = useMemo(() => {
     return (
       gameOnChainQuery.data &&
@@ -473,12 +523,79 @@ const CoinLeagueGame: NextPage = () => {
   };
 
   const handleSave = (coins: { [key: string]: Coin }) => {
-    if (!isSelectMultiple) {
-      setSelectedCaptain(Object.keys(coins).map((k) => coins[k])[0]);
+    if (editingPlayerCoins) {
+      if (editingCaptainCoin) {
+        setEditedCaptainCoin(Object.keys(coins).map((k) => coins[k])[0]);
+      } else if (editingCoins) {
+        setEditedCoins(coins);
+      }
+      handleCloseCoinDialog();
+      setEditingPlayerCoins(false);
+      setEditingCaptainCoin(false);
+      setEditingCoins(false);
     } else {
-      setSelectedCoins(coins);
+      if (!isSelectMultiple) {
+        setSelectedCaptain(Object.keys(coins).map((k) => coins[k])[0]);
+      } else {
+        setSelectedCoins(coins);
+      }
+      handleCloseCoinDialog();
     }
-    handleCloseCoinDialog();
+  };
+
+  const handleEditCaptainCoin = () => {
+    if (currentPlayerCoins.captainCoin) {
+      if (!editedCaptainCoin) {
+        setEditedCaptainCoin(currentPlayerCoins.captainCoin);
+      }
+      setEditingPlayerCoins(true);
+      setEditingCaptainCoin(true);
+      setShowSelectCoin(true);
+      setIsSelectMultiple(false);
+    }
+  };
+
+  const handleEditCoins = () => {
+    if (Object.keys(editedCoins).length === 0) {
+      const coinsObj: { [key: string]: Coin } = {};
+      currentPlayerCoins.coinFeeds.forEach((coin) => {
+        coinsObj[coin.address] = coin;
+      });
+      setEditedCoins(coinsObj);
+    }
+    setEditingPlayerCoins(true);
+    setEditingCoins(true);
+    setShowSelectCoin(true);
+    setIsSelectMultiple(true);
+  };
+
+  const handleUpdateSelections = async () => {
+    const captainCoin = editedCaptainCoin || currentPlayerCoins.captainCoin;
+    const coins = Object.keys(editedCoins).length > 0 
+      ? editedCoins 
+      : currentPlayerCoins.coinFeeds.reduce((acc, coin) => {
+          acc[coin.address] = coin;
+          return acc;
+        }, {} as { [key: string]: Coin });
+
+    if (!captainCoin || !gameOnChainQuery.data || Object.keys(coins).length === 0) return;
+
+    try {
+      if (!hasSufficientAllowance) {
+        await approveTokenMutation.mutateAsync({
+          spender: factoryAddress,
+          tokenContract: gameOnChainQuery.data?.coin_to_play,
+          signer,
+          amount: BigNumber.from(parseEther('1000000000').toString()),
+          onSubmited: handleApproveSubmit,
+        });
+        await handleApproveSuccess();
+      }
+
+      joinGameMutation.mutate();
+    } catch (error) {
+      console.error('Error updating selections:', error);
+    }
   };
 
   const handleRemoveCoin = (coin: Coin) => {
@@ -605,21 +722,37 @@ const CoinLeagueGame: NextPage = () => {
             maxWidth: 'sm',
           }}
           maxCoins={
-            isSelectMultiple && gameOnChainQuery.data
+            editingPlayerCoins
+              ? editingCoins && gameOnChainQuery.data
+                ? gameOnChainQuery.data?.num_coins - 1
+                : 1
+              : isSelectMultiple && gameOnChainQuery.data
               ? gameOnChainQuery.data?.num_coins - 1
               : 1
           }
           chainId={chainId}
-          selectMultiple={isSelectMultiple}
+          selectMultiple={editingPlayerCoins ? editingCoins : isSelectMultiple}
           selectedCoins={
-            isSelectMultiple
+            editingPlayerCoins
+              ? editingCaptainCoin
+                ? { [editedCaptainCoin.address]: editedCaptainCoin }
+                : editingCoins
+                ? editedCoins
+                : {}
+              : isSelectMultiple
               ? selectedCoins
               : selectedCaptain
                 ? { [selectedCaptain.address]: selectedCaptain }
                 : {}
           }
           excludeTokens={
-            !isSelectMultiple
+            editingPlayerCoins
+              ? editingCaptainCoin
+                ? editedCoins
+                : editingCoins && editedCaptainCoin
+                ? { [editedCaptainCoin.address]: editedCaptainCoin }
+                : {}
+              : !isSelectMultiple
               ? selectedCoins
               : selectedCaptain
                 ? { [selectedCaptain.address]: selectedCaptain }
@@ -868,7 +1001,7 @@ const CoinLeagueGame: NextPage = () => {
             )}
         </ErrorBoundaryUI>
         <ErrorBoundaryUI>
-          {isActive && isWaiting && (
+          {isActive && isWaiting && !isInGame && (
             <Box>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -1026,6 +1159,195 @@ const CoinLeagueGame: NextPage = () => {
                   </AnimatedCard>
                 </Grid>
               </Grid>
+            </Box>
+          )}
+        </ErrorBoundaryUI>
+        <ErrorBoundaryUI>
+          {isActive && isWaiting && isInGame && (
+            <Box>
+              <AnimatedCard>
+                <Box sx={{ p: 2 }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ mb: 2 }}
+                  >
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      <FormattedMessage
+                        id="edit.selections"
+                        defaultMessage="Edit Selections"
+                      />
+                    </Typography>
+                    <AnimatedButton
+                      variant="contained"
+                      onClick={handleUpdateSelections}
+                      disabled={
+                        !currentCaptainCoin ||
+                        currentCoinFeeds.length === 0 ||
+                        joinGameMutation.isLoading ||
+                        validation.needsNetworkSwitch ||
+                        validation.needsWallet
+                      }
+                      startIcon={
+                        joinGameMutation.isLoading ? (
+                          <AnimatedCircularProgress size="1rem" color="inherit" />
+                        ) : (
+                          <Check />
+                        )
+                      }
+                      sx={{
+                        color: 'white',
+                        '&:hover': {
+                          color: 'white',
+                        },
+                        '&:disabled': {
+                          color: 'white',
+                        },
+                      }}
+                    >
+                      <FormattedMessage
+                        id="update.selections"
+                        defaultMessage="Update Selections"
+                      />
+                    </AnimatedButton>
+                  </Stack>
+                  <Divider sx={{ mb: 2 }} />
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <AnimatedCard>
+                        <Box sx={{ p: 2 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              <FormattedMessage
+                                id="captain.coin"
+                                defaultMessage="Captain Coin"
+                              />
+                            </Typography>
+                            <AnimatedButton
+                              variant="outlined"
+                              onClick={handleEditCaptainCoin}
+                              size="small"
+                              disabled={
+                                validation.needsNetworkSwitch ||
+                                validation.needsWallet
+                              }
+                            >
+                              <FormattedMessage id="edit" defaultMessage="Edit" />
+                            </AnimatedButton>
+                          </Stack>
+                        </Box>
+                        <Divider />
+                        <Box sx={{ p: 2 }}>
+                          {(editedCaptainCoin || currentPlayerCoins.captainCoin) ? (
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              justifyContent="space-between"
+                            >
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                spacing={2}
+                              >
+                                <Avatar
+                                  src={
+                                    (editedCaptainCoin || currentPlayerCoins.captainCoin)
+                                      ?.logo
+                                  }
+                                >
+                                  <Token />
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="body1">
+                                    {(editedCaptainCoin || currentPlayerCoins.captainCoin)
+                                      ?.baseName}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                  >
+                                    {(editedCaptainCoin || currentPlayerCoins.captainCoin)
+                                      ?.base}
+                                  </Typography>
+                                </Box>
+                              </Stack>
+                            </Stack>
+                          ) : (
+                            <Box>
+                              <Typography variant="h5" align="center">
+                                <FormattedMessage
+                                  id="no.captain"
+                                  defaultMessage="No Captain"
+                                />
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </AnimatedCard>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <AnimatedCard>
+                        <Box sx={{ p: 2 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              <FormattedMessage
+                                id="your.coins"
+                                defaultMessage="Your coins"
+                              />
+                            </Typography>
+                            <AnimatedButton
+                              variant="outlined"
+                              onClick={handleEditCoins}
+                              startIcon={<Edit />}
+                              size="small"
+                              disabled={
+                                validation.needsNetworkSwitch ||
+                                validation.needsWallet
+                              }
+                            >
+                              <FormattedMessage id="edit" defaultMessage="Edit" />
+                            </AnimatedButton>
+                          </Stack>
+                        </Box>
+                        <Divider />
+                        <Box sx={{ p: 2 }}>
+                          {Object.keys(editedCoins).length > 0 ||
+                          currentPlayerCoins.coinFeeds.length > 0 ? (
+                            <GameCoinList
+                              coins={
+                                Object.keys(editedCoins).length > 0
+                                  ? Object.keys(editedCoins).map(
+                                      (k) => editedCoins[k]
+                                    )
+                                  : currentPlayerCoins.coinFeeds
+                              }
+                              onRemove={() => {}}
+                            />
+                          ) : (
+                            <Box>
+                              <Typography variant="h5" align="center">
+                                <FormattedMessage
+                                  id="no.coins"
+                                  defaultMessage="No Coins"
+                                />
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </AnimatedCard>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </AnimatedCard>
             </Box>
           )}
         </ErrorBoundaryUI>

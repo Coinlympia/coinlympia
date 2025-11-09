@@ -29,8 +29,6 @@ interface Props {
   name?: string;
   profileImageURL?: string;
   backgroundImageURL?: string;
-  bio?: string;
-  shortBio?: string;
   createdBy?: string;
 }
 

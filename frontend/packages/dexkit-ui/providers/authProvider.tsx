@@ -26,24 +26,6 @@ export function AuthProvider(props: Props) {
   const { children, disableAutoLogin } = props;
 
   useEffect(() => {
-    if (
-      account &&
-      !isLoggedIn &&
-      triedLogin &&
-      setIsLoggedIn &&
-      setUser &&
-      !disableAutoLogin
-    ) {
-      loginMutation.mutateAsync().then((d) => {
-        setIsLoggedIn(true);
-        if (d?.access_token) {
-          setUser(jwt_decode(d?.access_token));
-        }
-      });
-    }
-  }, [account, isLoggedIn, triedLogin, setIsLoggedIn, setUser]);
-
-  useEffect(() => {
     if (setUser) {
       if (isLoggedIn) {
         const accessToken = getAccessToken();

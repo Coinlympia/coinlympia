@@ -8,13 +8,15 @@ import { useSiteId } from 'src/hooks/app';
 import {
   getClaimCampaign,
   getUserAddAccountMessage,
-  getUserByAccount,
   getUserByUsername,
   getUserConnectDiscord,
   getUserConnectTwitter,
   postUserAddAccount,
   postUserRemoveAccount,
   upsertUser,
+  getUserByAddressFromDB,
+  getUserByUsernameFromDB,
+  updateUserInDB,
 } from '../services';
 
 export function useClaimCampaignMutation({
@@ -39,7 +41,7 @@ export function useClaimCampaignMutation({
           onSuccess(data);
         }
 
-        queryClient.refetchQueries([GET_USER_CLAIM_CAMPAIGN_QUERY]);
+        queryClient.refetchQueries({ queryKey: [GET_USER_CLAIM_CAMPAIGN_QUERY] });
       },
     },
   );
@@ -50,9 +52,9 @@ export const GET_USER_CLAIM_CAMPAIGN_QUERY = 'GET_USER_CLAIM_CAMPAIGN_QUERY';
 export function useUserClaimCampaignQuery() {
   const { account } = useWeb3React();
   const { isLoggedIn } = useAuth();
-  return useQuery(
-    [GET_USER_CLAIM_CAMPAIGN_QUERY, account, isLoggedIn],
-    async () => {
+  return useQuery({
+    queryKey: [GET_USER_CLAIM_CAMPAIGN_QUERY, account, isLoggedIn],
+    queryFn: async () => {
       if (!account) {
         return;
       }
@@ -62,7 +64,7 @@ export function useUserClaimCampaignQuery() {
       const { data } = await getClaimCampaign();
       return data;
     },
-  );
+  });
 }
 
 export function useAddAccountUserMutation() {
@@ -81,7 +83,7 @@ export function useAddAccountUserMutation() {
       message: messageToSign.data,
     });
     const user = await postUserAddAccount({ signature, address: account });
-    queryClient.refetchQueries([GET_AUTH_USER]);
+    queryClient.refetchQueries({ queryKey: [GET_AUTH_USER] });
     return user;
   });
 }
@@ -94,7 +96,7 @@ export function useRemoveAccountUserMutation() {
       return;
     }
     const user = await postUserRemoveAccount({ address: account });
-    queryClient.refetchQueries([GET_AUTH_USER]);
+    queryClient.refetchQueries({ queryKey: [GET_AUTH_USER] });
     return user;
   });
 }
@@ -141,27 +143,109 @@ export const GET_USER_BY_USERNAME_QUERY = 'GET_USER_BY_USERNAME_QUERY';
 
 export function useUserQuery(username?: string) {
   const { isLoggedIn } = useAuth();
-  return useQuery(
-    [GET_USER_BY_USERNAME_QUERY, username, isLoggedIn],
-    async () => {
+  return useQuery({
+    queryKey: [GET_USER_BY_USERNAME_QUERY, username, isLoggedIn],
+    queryFn: async () => {
       if (username) {
         const userRequest = await getUserByUsername(username);
         return userRequest.data;
       }
       return null;
     },
-  );
+  });
 }
 
 export const GET_AUTH_USER = 'GET_AUTH_USER';
 export function useAuthUserQuery() {
   const { account } = useWeb3React();
-  const { isLoggedIn } = useAuth();
-  return useQuery([GET_AUTH_USER, account, isLoggedIn], async () => {
-    if (account && isLoggedIn) {
-      const userRequest = await getUserByAccount();
-      return userRequest.data;
-    }
-    return null;
+  return useQuery({
+    queryKey: [GET_AUTH_USER, account],
+    queryFn: async () => {
+      if (account) {
+        const response = await getUserByAddressFromDB(account);
+        if (response.data.success && response.data.user) {
+          return {
+            id: response.data.user.id,
+            username: response.data.user.username,
+            profileImageURL: response.data.user.profileImageURL,
+            backgroundImageURL: response.data.user.backgroundImageURL,
+            accounts: [{ address: response.data.user.address }],
+            credentials: [],
+          };
+        }
+        return null;
+      }
+      return null;
+    },
+    enabled: !!account,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
+}
+
+export const GET_USER_BY_ADDRESS_DB_QUERY = 'GET_USER_BY_ADDRESS_DB_QUERY';
+export function useUserByAddressQuery(address?: string) {
+  return useQuery({
+    queryKey: [GET_USER_BY_ADDRESS_DB_QUERY, address],
+    queryFn: async () => {
+      if (address) {
+        const response = await getUserByAddressFromDB(address);
+        if (response.data.success && response.data.user) {
+          return response.data.user;
+        }
+        return null;
+      }
+      return null;
+    },
+    enabled: !!address,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export const GET_USER_BY_USERNAME_DB_QUERY = 'GET_USER_BY_USERNAME_DB_QUERY';
+export function useUserByUsernameQueryDB(username?: string) {
+  return useQuery({
+    queryKey: [GET_USER_BY_USERNAME_DB_QUERY, username],
+    queryFn: async () => {
+      if (username) {
+        const response = await getUserByUsernameFromDB(username);
+        if (response.data.success && response.data.user) {
+          return response.data.user;
+        }
+        return null;
+      }
+      return null;
+    },
+    enabled: !!username,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUpdateUserMutation() {
+  const { account } = useWeb3React();
+  const queryClient = useQueryClient();
+  return useMutation(
+    async (data: { username?: string; profileImageURL?: string; backgroundImageURL?: string }) => {
+      if (!account) {
+        throw new Error('Account is required');
+      }
+      const response = await updateUserInDB({
+        address: account,
+        ...data,
+      });
+      if (response.data.success && response.data.user) {
+        return response.data.user;
+      }
+      throw new Error(response.data.error || 'Failed to update user');
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [GET_USER_BY_ADDRESS_DB_QUERY] });
+        queryClient.invalidateQueries({ queryKey: [GET_USER_BY_USERNAME_DB_QUERY] });
+        queryClient.invalidateQueries({ queryKey: [GET_AUTH_USER] });
+      },
+    }
+  );
 }

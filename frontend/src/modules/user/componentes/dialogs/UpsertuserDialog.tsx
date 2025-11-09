@@ -49,6 +49,8 @@ function UpsertUserDialog({
     }
     if (!isEdit && username) {
       router.push(`/u/${username}`);
+    } else if (!isEdit && !username) {
+      router.push('/u/edit');
     }
   };
 
@@ -144,7 +146,13 @@ function UpsertUserDialog({
           {isSuccess && !isEdit && (
             <Button
               variant="contained"
-              onClick={() => router.push(`/u/${username}`)}
+              onClick={() => {
+                if (username) {
+                  router.push(`/u/${username}`);
+                } else {
+                  router.push('/u/edit');
+                }
+              }}
             >
               <FormattedMessage
                 id="view.user.profile"

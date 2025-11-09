@@ -13,8 +13,14 @@ export const userApi = axios.create({
   headers: { 'content-type': 'application/json' },
 });
 
-export function getUsernameExists(username?: string) {
-  return myAppsApi.get(`/user/username-exists/${username}`);
+export function getUsernameExists(username?: string, currentUsername?: string) {
+  if (!username) {
+    return Promise.resolve({ data: { exists: false } });
+  }
+  return axios.post<{ exists: boolean }>(`/api/user/username-exists`, {
+    username,
+    currentUsername,
+  });
 }
 
 export function postClaimCampaign() {
@@ -89,4 +95,73 @@ export function getUserConnectTwitter() {
 
 export function getUserConnectDiscord() {
   return myAppsApi.get(`/auth/discord`);
+}
+
+export function getUserByAddressFromDB(address: string) {
+  return axios.post<{
+    success: boolean;
+    user?: {
+      id: string;
+      address: string;
+      username: string | null;
+      profileImageURL: string | null;
+      backgroundImageURL: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      totalWinnedGames: number;
+      totalJoinedGames: number;
+      totalFirstWinnedGames: number;
+      totalSecondWinnedGames: number;
+      totalThirdWinnedGames: number;
+      totalEarned: string;
+      totalSpent: string;
+      earnedMinusSpent: string;
+    };
+    error?: string;
+  }>(`/api/user/get-by-address`, { address });
+}
+
+export function getUserByUsernameFromDB(username: string) {
+  return axios.post<{
+    success: boolean;
+    user?: {
+      id: string;
+      address: string;
+      username: string | null;
+      profileImageURL: string | null;
+      backgroundImageURL: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      totalWinnedGames: number;
+      totalJoinedGames: number;
+      totalFirstWinnedGames: number;
+      totalSecondWinnedGames: number;
+      totalThirdWinnedGames: number;
+      totalEarned: string;
+      totalSpent: string;
+      earnedMinusSpent: string;
+    };
+    error?: string;
+  }>(`/api/user/get-by-username`, { username });
+}
+
+export function updateUserInDB(data: {
+  address: string;
+  username?: string;
+  profileImageURL?: string;
+  backgroundImageURL?: string;
+}) {
+  return axios.post<{
+    success: boolean;
+    user?: {
+      id: string;
+      address: string;
+      username: string | null;
+      profileImageURL: string | null;
+      backgroundImageURL: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+    error?: string;
+  }>(`/api/user/update`, data);
 }

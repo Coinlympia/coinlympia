@@ -4,7 +4,7 @@ import jwt_decode from "jwt-decode";
 import { useContext } from "react";
 import { useDexKitContext, useSignMessageDialog } from ".";
 import { AuthStateContext } from "../context/AuthContext";
-import { getUserByAccount } from "../modules/user/services";
+import axios from "axios";
 import {
   getRefreshAccessToken,
   loginApp,
@@ -52,21 +52,54 @@ export function useLogoutAccountMutation() {
 export const GET_AUTH_USER = "GET_AUTH_USER";
 export function useAuthUserQuery() {
   const { account } = useWeb3React();
-  return useQuery(
-    [GET_AUTH_USER, account],
-    async () => {
+  return useQuery({
+    queryKey: [GET_AUTH_USER, account],
+    queryFn: async () => {
       if (!account) {
         return null;
       }
-      const userRequest = await getUserByAccount();
-      return userRequest.data;
+      try {
+        const response = await axios.post<{
+          success: boolean;
+          user?: {
+            id: string;
+            address: string;
+            username: string | null;
+            profileImageURL: string | null;
+            backgroundImageURL: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            totalWinnedGames: number;
+            totalJoinedGames: number;
+            totalFirstWinnedGames: number;
+            totalSecondWinnedGames: number;
+            totalThirdWinnedGames: number;
+            totalEarned: string;
+            totalSpent: string;
+            earnedMinusSpent: string;
+          };
+          error?: string;
+        }>(`/api/user/get-by-address`, { address: account });
+        
+        if (response.data.success && response.data.user) {
+          return {
+            id: response.data.user.id,
+            username: response.data.user.username,
+            profileImageURL: response.data.user.profileImageURL,
+            backgroundImageURL: response.data.user.backgroundImageURL,
+            accounts: [{ address: response.data.user.address }],
+          };
+        }
+        return null;
+      } catch (error) {
+        console.error('[useAuthUserQuery] Error getting user:', error);
+        return null;
+      }
     },
-    {
-      enabled: !!account,
-      retry: false,
-      staleTime: 5 * 60 * 1000,
-    }
-  );
+    enabled: !!account,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 }
 
 export function useLoginAccountMutation() {

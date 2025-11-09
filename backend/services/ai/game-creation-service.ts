@@ -23,11 +23,16 @@ The user wants to create a game with the following possible parameters:
   * 24 hours = 86400
   * 1 day = 86400
   * 1 week = 604800
+  IMPORTANT: If you see numbers like 3600, 14400, 28800, 86400, or 604800 in the conversation, these are likely durations in seconds. Extract them as duration.
 - gameLevel: number representing game level. Levels: 1 = Beginner, 2 = Intermediate, 3 = Advanced, 4 = Expert, 5 = Master, 6 = GrandMaster
 - maxCoins: number of coins including captain coin (minimum: 2)
-- maxPlayers: number of players (common values: 2, 3, 5, 10, 25, 50)
+- maxPlayers: number of players (valid values: 2, 3, 5, 10, 50 - these are the only values supported by the contract)
 
 Extract ALL parameters mentioned in the conversation, even if they appear in different messages. Look through the entire conversation to find all mentioned parameters.
+
+CRITICAL: When the user says "crea un juego bull" or "create a bull game", extract gameType: "bull" immediately.
+CRITICAL: When the user provides a number like 3600, 14400, 28800, 86400, or 604800, extract it as duration.
+CRITICAL: When the user says "3600 segundos" or "3600 seconds", extract duration: 3600.
 
 IMPORTANT: When extracting maxPlayers, look for:
 - Numbers followed by "jugadores", "players", "personas", "people"

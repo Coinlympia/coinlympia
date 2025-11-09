@@ -4781,6 +4781,12 @@
   "please.select.your.coins": {
     "defaultMessage": "Prosím, vyberte své mince"
   },
+  "edit.selections": {
+    "defaultMessage": "Upravit Výběry"
+  },
+  "update.selections": {
+    "defaultMessage": "Aktualizovat Výběry"
+  },
   "select.coin": {
     "defaultMessage": "Vybrat minci"
   },
@@ -4907,6 +4913,12 @@
   "chat.loading.processing": {
     "defaultMessage": "Zpracovávám vaši žádost..."
   },
+  "chat.processing": {
+    "defaultMessage": "Zpracovávání..."
+  },
+  "chat.confirmed": {
+    "defaultMessage": "Potvrzeno"
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Načítám data cen v reálném čase..."
   },
@@ -5011,5 +5023,50 @@
   },
   "chat.game.available.slots.count": {
     "defaultMessage": "{count} {count, plural, one {místo} other {místa}}"
+  },
+  "chat.searching.games": {
+    "defaultMessage": "Vyhledávání dostupných her..."
+  },
+  "chat.games.found": {
+    "defaultMessage": "Nalezeno {count} {count, plural, one {dostupná hra} other {dostupné hry}}. Prosím, vyberte jednu ze seznamu níže:"
+  },
+  "chat.no.games.found": {
+    "defaultMessage": "Nebyly nalezeny žádné hry odpovídající vašim kritériím. Zkuste upravit parametry vyhledávání nebo vytvořit novou hru."
+  },
+  "chat.all.coins.selected": {
+    "defaultMessage": "Skvělé! Vybrali jste všechny {count} mince (1 kapitánskou minci a {secondaryCount} sekundárních mincí). Jste připraveni připojit se ke hře?"
+  },
+  "select.a.network.to.view.data.from": {
+    "defaultMessage": "Vyberte síť pro zobrazení dat"
+  },
+  "polygon": {
+    "defaultMessage": "Polygon"
+  },
+  "select.the.game.you.want.to.view": {
+    "defaultMessage": "Vyberte hru, kterou chcete zobrazit"
+  },
+  "profile.statistics": {
+    "defaultMessage": "Statistiky profilu"
+  },
+  "statistics.description": {
+    "defaultMessage": "Statistiky se mohou změnit v závislosti na síti vybrané výše"
+  },
+  "joined.games": {
+    "defaultMessage": "Připojené hry"
+  },
+  "win.in.first": {
+    "defaultMessage": "Výhra na 1°"
+  },
+  "win.in.second": {
+    "defaultMessage": "Výhra na 2°"
+  },
+  "win.in.third": {
+    "defaultMessage": "Výhra na 3°"
+  },
+  "total.earned": {
+    "defaultMessage": "Celkem vyděláno"
+  },
+  "total.spent": {
+    "defaultMessage": "Celkem utraceno"
   }
 }

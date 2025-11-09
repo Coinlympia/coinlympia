@@ -4654,6 +4654,12 @@
   "please.select.your.coins": {
     "defaultMessage": "Veuillez sélectionner vos pièces"
   },
+  "edit.selections": {
+    "defaultMessage": "Modifier les Sélections"
+  },
+  "update.selections": {
+    "defaultMessage": "Mettre à jour les Sélections"
+  },
   "select.coin": {
     "defaultMessage": "Sélectionner une pièce"
   },
@@ -4780,6 +4786,12 @@
   "chat.loading.processing": {
     "defaultMessage": "Traitement de votre demande..."
   },
+  "chat.processing": {
+    "defaultMessage": "Traitement en cours..."
+  },
+  "chat.confirmed": {
+    "defaultMessage": "Confirmé"
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Récupération des données de prix en temps réel..."
   },
@@ -4884,5 +4896,50 @@
   },
   "chat.game.available.slots.count": {
     "defaultMessage": "{count} {count, plural, one {place} other {places}}"
+  },
+  "chat.searching.games": {
+    "defaultMessage": "Recherche de jeux disponibles..."
+  },
+  "chat.games.found": {
+    "defaultMessage": "Trouvé {count} {count, plural, one {jeu disponible} other {jeux disponibles}}. Veuillez en sélectionner un dans la liste ci-dessous:"
+  },
+  "chat.no.games.found": {
+    "defaultMessage": "Aucun jeu trouvé correspondant à vos critères. Essayez d'ajuster vos paramètres de recherche ou créez un nouveau jeu."
+  },
+  "chat.all.coins.selected": {
+    "defaultMessage": "Excellent ! Vous avez sélectionné toutes les {count} pièces (1 pièce capitaine et {secondaryCount} pièces secondaires). Êtes-vous prêt à rejoindre le jeu ?"
+  },
+  "select.a.network.to.view.data.from": {
+    "defaultMessage": "Sélectionnez un réseau pour afficher les données"
+  },
+  "polygon": {
+    "defaultMessage": "Polygon"
+  },
+  "select.the.game.you.want.to.view": {
+    "defaultMessage": "Sélectionnez le jeu que vous souhaitez afficher"
+  },
+  "profile.statistics": {
+    "defaultMessage": "Statistiques du profil"
+  },
+  "statistics.description": {
+    "defaultMessage": "Les statistiques peuvent changer en fonction du réseau sélectionné ci-dessus"
+  },
+  "joined.games": {
+    "defaultMessage": "Jeux rejoints"
+  },
+  "win.in.first": {
+    "defaultMessage": "Gagner en 1°"
+  },
+  "win.in.second": {
+    "defaultMessage": "Gagner en 2°"
+  },
+  "win.in.third": {
+    "defaultMessage": "Gagner en 3°"
+  },
+  "total.earned": {
+    "defaultMessage": "Total gagné"
+  },
+  "total.spent": {
+    "defaultMessage": "Total dépensé"
   }
 }

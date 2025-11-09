@@ -21,46 +21,81 @@ export interface UserForm {
   username?: string;
   profileImageURL?: string;
   backgroundImageURL?: string;
-  bio?: string;
-  shortBio?: string;
 }
 
 const FormSchema: Yup.SchemaOf<UserForm> = Yup.object().shape({
   username: Yup.string()
     .required()
     .test(
-      'username-backend-validation', // Name
-      'Username already taken', // Msg
+      'username-backend-validation',
+      'Username already taken',
       async (username) => {
-        // Res from backend will be flag at res.data.success, true for
-        // username good, false otherwise
         if (username) {
-          const { data } = await getUsernameExists(username);
-          return !data;
+          try {
+            const { data } = await getUsernameExists(username);
+            return !data.exists;
+          } catch (error) {
+            console.warn('Error checking username availability:', error);
+            return true;
+          }
         }
         return false;
       },
     ),
-  profileImageURL: Yup.string().url(),
-  backgroundImageURL: Yup.string().url(),
-  bio: Yup.string(),
-  shortBio: Yup.string(),
+  profileImageURL: Yup.string().test(
+    'url-validation',
+    'Must be a valid URL',
+    (value) => !value || Yup.string().url().isValidSync(value)
+  ),
+  backgroundImageURL: Yup.string().test(
+    'url-validation',
+    'Must be a valid URL',
+    (value) => !value || Yup.string().url().isValidSync(value)
+  ),
 });
 
-const EditFormSchema: Yup.SchemaOf<UserForm> = Yup.object().shape({
-  username: Yup.string().required(),
-
-  profileImageURL: Yup.string().url(),
-  backgroundImageURL: Yup.string().url(),
-  bio: Yup.string(),
-  shortBio: Yup.string(),
-});
+const createEditFormSchema = (currentUsername?: string): Yup.SchemaOf<UserForm> => {
+  return Yup.object().shape({
+    username: Yup.string()
+      .required()
+      .test(
+        'username-backend-validation',
+        'Username already taken',
+        async (username) => {
+          if (username && currentUsername && username.toLowerCase() === currentUsername.toLowerCase()) {
+            return true;
+          }
+          if (username) {
+            try {
+              const { data } = await getUsernameExists(username, currentUsername);
+              return !data.exists;
+            } catch (error) {
+              console.warn('Error checking username availability:', error);
+              return true;
+            }
+          }
+          return false;
+        },
+      ),
+    profileImageURL: Yup.string().test(
+      'url-validation',
+      'Must be a valid URL',
+      (value) => !value || Yup.string().url().isValidSync(value)
+    ),
+    backgroundImageURL: Yup.string().test(
+      'url-validation',
+      'Must be a valid URL',
+      (value) => !value || Yup.string().url().isValidSync(value)
+    ),
+  });
+};
 
 interface Props {
   isEdit?: boolean;
   initialValues?: UserForm | null;
   onSubmit?: (form: UserForm) => void;
   onChange?: (form: UserForm) => void;
+  currentUsername?: string;
 }
 
 const EmptyImageBackground = styled(ImageIcon)(({ theme }) => ({
@@ -82,6 +117,7 @@ export default function UserGeneralForm({
   onSubmit,
   onChange,
   initialValues,
+  currentUsername,
 }: Props) {
   const [openMediaDialog, setOpenMediaDialog] = useState(false);
   const [mediaFieldToEdit, setMediaFieldToEdit] = useState<string>();
@@ -94,8 +130,6 @@ export default function UserGeneralForm({
               username: '',
               profileImageURL: '',
               backgroundImageURL: '',
-              bio: '',
-              shortBio: '',
             }
           }
           onSubmit={(values, helpers) => {
@@ -104,7 +138,7 @@ export default function UserGeneralForm({
               helpers.resetForm({ values });
             }
           }}
-          validationSchema={initialValues ? EditFormSchema : FormSchema}
+          validationSchema={initialValues ? createEditFormSchema(currentUsername) : FormSchema}
         >
           {({ submitForm, isSubmitting, isValid, setFieldValue, values }) => (
             <form>
@@ -144,7 +178,7 @@ export default function UserGeneralForm({
                         defaultMessage="Username"
                       />
                     }
-                    InputProps={{ disabled: initialValues ? true : false }}
+                    InputProps={{ disabled: false }}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -186,27 +220,6 @@ export default function UserGeneralForm({
                       <EmptyImageBackground />
                     )}
                   </Button>
-                </Grid>
-                <Grid size={12}>
-                  <Field
-                    component={TextField}
-                    fullWidth
-                    name="shortBio"
-                    label={
-                      <FormattedMessage
-                        id="shortbio"
-                        defaultMessage="Short Bio"
-                      />
-                    }
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <Field
-                    component={TextField}
-                    fullWidth
-                    name="bio"
-                    label={<FormattedMessage id="bio" defaultMessage="Bio" />}
-                  />
                 </Grid>
 
                 <Grid size={12}>

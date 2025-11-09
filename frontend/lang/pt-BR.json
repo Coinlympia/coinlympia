@@ -4851,6 +4851,12 @@
   "please.select.your.coins": {
     "defaultMessage": "Por favor, selecione suas moedas"
   },
+  "edit.selections": {
+    "defaultMessage": "Editar Seleções"
+  },
+  "update.selections": {
+    "defaultMessage": "Atualizar Seleções"
+  },
   "select.coin": {
     "defaultMessage": "Selecionar moeda"
   },
@@ -4977,6 +4983,12 @@
   "chat.loading.processing": {
     "defaultMessage": "Processando sua solicitação..."
   },
+  "chat.processing": {
+    "defaultMessage": "Processando..."
+  },
+  "chat.confirmed": {
+    "defaultMessage": "Confirmado"
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Buscando dados de preços em tempo real..."
   },
@@ -5081,5 +5093,50 @@
   },
   "chat.game.available.slots.count": {
     "defaultMessage": "{count} {count, plural, one {vaga} other {vagas}}"
+  },
+  "chat.searching.games": {
+    "defaultMessage": "Buscando jogos disponíveis..."
+  },
+  "chat.games.found": {
+    "defaultMessage": "Encontrados {count} {count, plural, one {jogo disponível} other {jogos disponíveis}}. Por favor, selecione um da lista abaixo:"
+  },
+  "chat.no.games.found": {
+    "defaultMessage": "Nenhum jogo encontrado correspondente aos seus critérios. Tente ajustar os parâmetros de pesquisa ou crie um novo jogo."
+  },
+  "chat.all.coins.selected": {
+    "defaultMessage": "Ótimo! Você selecionou todas as {count} moedas (1 moeda capitão e {secondaryCount} moedas secundárias). Você está pronto para entrar no jogo?"
+  },
+  "select.a.network.to.view.data.from": {
+    "defaultMessage": "Selecione uma rede para visualizar os dados"
+  },
+  "polygon": {
+    "defaultMessage": "Polygon"
+  },
+  "select.the.game.you.want.to.view": {
+    "defaultMessage": "Selecione o jogo que deseja visualizar"
+  },
+  "profile.statistics": {
+    "defaultMessage": "Estatísticas do perfil"
+  },
+  "statistics.description": {
+    "defaultMessage": "As estatísticas podem mudar dependendo da rede selecionada acima"
+  },
+  "joined.games": {
+    "defaultMessage": "Jogos Participados"
+  },
+  "win.in.first": {
+    "defaultMessage": "Ganhar em 1°"
+  },
+  "win.in.second": {
+    "defaultMessage": "Ganhar em 2°"
+  },
+  "win.in.third": {
+    "defaultMessage": "Ganhar em 3°"
+  },
+  "total.earned": {
+    "defaultMessage": "Total ganho"
+  },
+  "total.spent": {
+    "defaultMessage": "Total gasto"
   }
 }

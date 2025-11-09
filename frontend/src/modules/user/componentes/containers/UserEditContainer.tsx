@@ -28,7 +28,7 @@ import { useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 
 import { PageHeader } from '@dexkit/ui/components/PageHeader';
-import { useAuthUserQuery, useUpsertUserMutation } from '../../hooks';
+import { useAuthUserQuery, useUpdateUserMutation } from '../../hooks';
 import UpsertUserDialog from '../dialogs/UpsertuserDialog';
 import UserGeneralForm from '../forms/UserGeneralForm';
 import { UserAccounts } from '../UserAccounts';
@@ -75,7 +75,7 @@ export function UserEditContainer({
     });
   };
 
-  const upsertUserMutation = useUpsertUserMutation();
+  const updateUserMutation = useUpdateUserMutation();
   const [showUpsertUser, setShowUpsertUser] = useState(false);
 
   const [showConfirmUpsertUser, setShowConfirmUpsertUser] = useState(false);
@@ -86,7 +86,42 @@ export function UserEditContainer({
   const handleConfirmSendConfig = async () => {
     setShowConfirmUpsertUser(false);
     setShowUpsertUser(true);
-    upsertUserMutation.mutate(userForm);
+    if (userForm) {
+      const oldUsername = user?.username;
+      console.log('[UserEditContainer] Updating user with data:', {
+        username: userForm.username,
+        profileImageURL: userForm.profileImageURL,
+        backgroundImageURL: userForm.backgroundImageURL,
+      });
+      updateUserMutation.mutate(
+        {
+          username: userForm.username?.trim() || undefined,
+          profileImageURL: userForm.profileImageURL?.trim() || undefined,
+          backgroundImageURL: userForm.backgroundImageURL?.trim() || undefined,
+        },
+        {
+          onSuccess: (updatedUser) => {
+            console.log('[UserEditContainer] User updated successfully:', updatedUser);
+            setTimeout(() => {
+              setShowUpsertUser(false);
+            }, 1500);
+            
+            if (updatedUser.username && oldUsername && updatedUser.username !== oldUsername) {
+              setTimeout(() => {
+                router.push(`/u/${updatedUser.username}/edit`);
+              }, 1500);
+            } else if (updatedUser.username && !oldUsername) {
+              setTimeout(() => {
+                router.push(`/u/${updatedUser.username}/edit`);
+              }, 1500);
+            }
+          },
+          onError: (error) => {
+            console.error('[UserEditContainer] Error updating user:', error);
+          },
+        }
+      );
+    }
   };
 
   const renderMenu = () => (
@@ -196,9 +231,9 @@ export function UserEditContainer({
           fullWidth: true,
           onClose: () => setShowUpsertUser(false),
         }}
-        isLoading={upsertUserMutation.isLoading}
-        isSuccess={upsertUserMutation.isSuccess}
-        error={upsertUserMutation.error}
+        isLoading={updateUserMutation.isLoading}
+        isSuccess={updateUserMutation.isSuccess}
+        error={updateUserMutation.error}
         isEdit={user !== undefined}
       />
       <Container maxWidth={'xl'}>
@@ -225,11 +260,11 @@ export function UserEditContainer({
                             id="user.name.variable"
                             defaultMessage="User: {username}"
                             values={{
-                              username: user.username,
+                              username: user.username || 'Edit',
                             }}
                           />
                         ),
-                        uri: `/u/${user.username}`,
+                        uri: user.username ? `/u/${user.username}` : '/u/edit',
                       },
                       {
                         caption: (
@@ -238,7 +273,7 @@ export function UserEditContainer({
                             defaultMessage="Edit profile"
                           />
                         ),
-                        uri: `/u/${user.username}/edit`,
+                        uri: user.username ? `/u/${user.username}/edit` : '/u/edit',
                         active: true,
                       },
                     ]}
@@ -258,23 +293,25 @@ export function UserEditContainer({
                         id="edit.user.profile"
                         defaultMessage="Edit user profile: {username}"
                         values={{
-                          username: user.username,
+                          username: user.username || 'Create Profile',
                         }}
                       />
                     )}
                   </Typography>
-                  <Tooltip
-                    title={
-                      <FormattedMessage
-                        id="view.public.profile"
-                        defaultMessage="View public profile"
-                      />
-                    }
-                  >
-                    <IconButton href={`/u/${user?.username}`}>
-                      <Visibility />
-                    </IconButton>
-                  </Tooltip>
+                  {user?.username && (
+                    <Tooltip
+                      title={
+                        <FormattedMessage
+                          id="view.public.profile"
+                          defaultMessage="View public profile"
+                        />
+                      }
+                    >
+                      <IconButton href={`/u/${user.username}`}>
+                        <Visibility />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </Box>
 
                 {isMobile && hideSideBar !== true && (
@@ -305,7 +342,12 @@ export function UserEditContainer({
                     />
                   </Typography>
                   <UserGeneralForm
-                    initialValues={user}
+                    initialValues={{
+                      username: user.username || '',
+                      profileImageURL: user.profileImageURL || '',
+                      backgroundImageURL: user.backgroundImageURL || '',
+                    }}
+                    currentUsername={user.username || undefined}
                     onSubmit={(val) => {
                       setUserForm(val);
                       setShowConfirmUpsertUser(true);
@@ -314,10 +356,10 @@ export function UserEditContainer({
                 </>
               )}
               {activeMenu === ActiveMenu.Accounts && user && (
-                <UserAccounts accounts={user.accounts} />
+                <UserAccounts accounts={user.accounts || []} />
               )}
               {activeMenu === ActiveMenu.Socials && user && (
-                <UserSocials credentials={user.credentials} />
+                <UserSocials credentials={user.credentials || []} />
               )}
             </Stack>
           </Grid>

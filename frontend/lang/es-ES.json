@@ -4861,6 +4861,12 @@
   "please.select.your.coins": {
     "defaultMessage": "Por favor, selecciona tus monedas"
   },
+  "edit.selections": {
+    "defaultMessage": "Editar Selecciones"
+  },
+  "update.selections": {
+    "defaultMessage": "Actualizar Selecciones"
+  },
   "select.coin": {
     "defaultMessage": "Seleccionar moneda"
   },
@@ -4987,6 +4993,12 @@
   "chat.loading.processing": {
     "defaultMessage": "Procesando tu solicitud..."
   },
+  "chat.processing": {
+    "defaultMessage": "Procesando..."
+  },
+  "chat.confirmed": {
+    "defaultMessage": "Confirmado"
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Obteniendo datos de precios en tiempo real..."
   },
@@ -5091,5 +5103,50 @@
   },
   "chat.game.available.slots.count": {
     "defaultMessage": "{count} {count, plural, one {espacio} other {espacios}}"
+  },
+  "chat.searching.games": {
+    "defaultMessage": "Buscando juegos disponibles..."
+  },
+  "chat.games.found": {
+    "defaultMessage": "Se encontraron {count} {count, plural, one {juego disponible} other {juegos disponibles}}. Por favor, selecciona uno de la lista a continuación:"
+  },
+  "chat.no.games.found": {
+    "defaultMessage": "No se encontraron juegos que coincidan con tus criterios. Intenta ajustar los parámetros de búsqueda o crea un nuevo juego."
+  },
+  "chat.all.coins.selected": {
+    "defaultMessage": "¡Excelente! Has seleccionado todas las {count} monedas (1 moneda capitán y {secondaryCount} monedas secundarias). ¿Estás listo para unirte al juego?"
+  },
+  "select.a.network.to.view.data.from": {
+    "defaultMessage": "Selecciona una red para ver los datos"
+  },
+  "polygon": {
+    "defaultMessage": "Polygon"
+  },
+  "select.the.game.you.want.to.view": {
+    "defaultMessage": "Selecciona el juego que deseas ver"
+  },
+  "profile.statistics": {
+    "defaultMessage": "Estadísticas del perfil"
+  },
+  "statistics.description": {
+    "defaultMessage": "Las estadísticas pueden cambiar según la red que hayas seleccionado arriba"
+  },
+  "joined.games": {
+    "defaultMessage": "Juegos unidos"
+  },
+  "win.in.first": {
+    "defaultMessage": "Ganar en 1°"
+  },
+  "win.in.second": {
+    "defaultMessage": "Ganar en 2°"
+  },
+  "win.in.third": {
+    "defaultMessage": "Ganar en 3°"
+  },
+  "total.earned": {
+    "defaultMessage": "Total ganado"
+  },
+  "total.spent": {
+    "defaultMessage": "Total gastado"
   }
 }

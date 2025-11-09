@@ -136,6 +136,7 @@ function AppDrawer({ open, onClose, appConfig }: Props) {
       if (isMobile) {
         router.push(`/wallet/send/${encodeURIComponent(result)}`);
       } else {
+        // @ts-ignore - window is available in browser environment
         window.open(`/wallet/send/${encodeURIComponent(result)}`, "_blank");
       }
     } catch (err) { }
@@ -262,9 +263,15 @@ function AppDrawer({ open, onClose, appConfig }: Props) {
                       {user ? (
                         <Stack direction="row" alignItems="center" spacing={2}>
                           <Avatar src={user?.profileImageURL} />
-                          <Link href={`/u/${user.username}`} variant="body1">
-                            {user?.username}
-                          </Link>
+                          {user?.username ? (
+                            <Link href={`/u/${user.username}`} variant="body1">
+                              {user.username}
+                            </Link>
+                          ) : (
+                            <Link href="/u/edit" variant="body1">
+                              <FormattedMessage id="edit.profile" defaultMessage="Edit profile" />
+                            </Link>
+                          )}
                         </Stack>
                       ) : (
                         <Stack direction="row" alignItems="center" spacing={2}>

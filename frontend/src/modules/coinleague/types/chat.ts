@@ -31,6 +31,7 @@ export interface AvailableGame {
   participants: number;
   createdAt: Date;
   createdAtFormatted: string;
+  isParticipating?: boolean;
 }
 
 export interface MessageOption {

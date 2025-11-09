@@ -4654,6 +4654,12 @@
   "please.select.your.coins": {
     "defaultMessage": "Ver så snill, velg myntene dine"
   },
+  "edit.selections": {
+    "defaultMessage": "Rediger Valg"
+  },
+  "update.selections": {
+    "defaultMessage": "Oppdater Valg"
+  },
   "select.coin": {
     "defaultMessage": "Velg mynt"
   },
@@ -4780,6 +4786,12 @@
   "chat.loading.processing": {
     "defaultMessage": "Behandler din forespørsel..."
   },
+  "chat.processing": {
+    "defaultMessage": "Behandler..."
+  },
+  "chat.confirmed": {
+    "defaultMessage": "Bekreftet"
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Henter sanntidsprisdata..."
   },
@@ -4884,5 +4896,50 @@
   },
   "chat.game.available.slots.count": {
     "defaultMessage": "{count} {count, plural, one {plass} other {plasser}}"
+  },
+  "chat.searching.games": {
+    "defaultMessage": "Søker etter tilgjengelige spill..."
+  },
+  "chat.games.found": {
+    "defaultMessage": "Fant {count} {count, plural, one {tilgjengelig spill} other {tilgjengelige spill}}. Vennligst velg ett fra listen nedenfor:"
+  },
+  "chat.no.games.found": {
+    "defaultMessage": "Ingen spill funnet som matcher kriteriene dine. Prøv å justere søkeparametrene eller opprett et nytt spill."
+  },
+  "chat.all.coins.selected": {
+    "defaultMessage": "Flott! Du har valgt alle {count} mynter (1 kapteinmynter og {secondaryCount} sekundære mynter). Er du klar til å bli med i spillet?"
+  },
+  "select.a.network.to.view.data.from": {
+    "defaultMessage": "Velg et nettverk for å vise data fra"
+  },
+  "polygon": {
+    "defaultMessage": "Polygon"
+  },
+  "select.the.game.you.want.to.view": {
+    "defaultMessage": "Velg spillet du vil se"
+  },
+  "profile.statistics": {
+    "defaultMessage": "Profilstatistikk"
+  },
+  "statistics.description": {
+    "defaultMessage": "Statistikk kan endre seg avhengig av nettverket du valgte over"
+  },
+  "joined.games": {
+    "defaultMessage": "Deltatte spill"
+  },
+  "win.in.first": {
+    "defaultMessage": "Vinn på 1°"
+  },
+  "win.in.second": {
+    "defaultMessage": "Vinn på 2°"
+  },
+  "win.in.third": {
+    "defaultMessage": "Vinn på 3°"
+  },
+  "total.earned": {
+    "defaultMessage": "Totalt opptjent"
+  },
+  "total.spent": {
+    "defaultMessage": "Totalt brukt"
   }
 }

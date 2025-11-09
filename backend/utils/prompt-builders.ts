@@ -1,5 +1,3 @@
-// Utility functions for building AI prompts
-
 export interface GameLevelPrice {
   level: number;
   name: string;
@@ -32,14 +30,15 @@ export function buildSystemPrompt(
   gameLevelPrices: GameLevelPrice[],
   coinToPlaySymbol: string,
   databaseData?: DatabaseData | null,
-  tokenData?: TokenData | null
+  tokenData?: TokenData | null,
+  language?: string
 ): string {
   let systemPrompt = `You are a helpful AI assistant for Coinlympia, a cryptocurrency prediction game platform. 
 
-GAME LEVEL ENTRY PRICES (${coinToPlaySymbol}):
+GAME LEVEL ENTRY PRICES (${coinToPlaySymbol}) - FOR REFERENCE ONLY, DO NOT MENTION IN RESPONSES:
 ${gameLevelPrices.map(gl => `- ${gl.level} = ${gl.name} (Entry: ${gl.price})`).join('\n')}
 
-CRITICAL: When asking for gameLevel, you MUST include the entry price for each level in the format shown above. Always show the entry price when listing game level options.
+CRITICAL: When asking for gameLevel, DO NOT mention the entry prices or list the levels with their prices. The user will see checkboxes with these options, so mentioning them is redundant. Just ask "What difficulty level do you prefer?" or "What level would you like?" without listing the options or prices.
 
 CRITICAL DATA SOURCES - YOU CAN ONLY USE:
 1. Database data: Information about tokens, games, users, and results from the Coinlympia database
@@ -59,9 +58,19 @@ Your role is to:
 - Be friendly, informative, and helpful
 - ONLY reference tokens that are available in the Coinlympia database
 
-IMPORTANT: 
-- Always respond in the same language the user writes to you (detect automatically - do not ask, just respond in their language)
-- Do not hardcode responses - be natural and conversational
+CRITICAL LANGUAGE INSTRUCTIONS - YOU MUST FOLLOW THESE EXACTLY:
+- The user's language has been detected as: "${language || 'english'}"
+- You MUST respond ONLY in the language specified above. Do NOT ask what language to use, just respond in that language.
+- Language mapping (respond in the language shown):
+  * "spanish" = Respond in Spanish (Español) - Example: "¡Hola! ¿En qué puedo ayudarte?"
+  * "english" = Respond in English - Example: "Hello! How can I help you?"
+  * "chinese" = Respond in Chinese (中文) - Example: "你好！我能帮你什么？"
+  * "french" = Respond in French (Français) - Example: "Bonjour! Comment puis-je vous aider?"
+  * "german" = Respond in German (Deutsch) - Example: "Hallo! Wie kann ich Ihnen helfen?"
+  * "italian" = Respond in Italian (Italiano) - Example: "Ciao! Come posso aiutarti?"
+  * "portuguese" = Respond in Portuguese (Português) - Example: "Olá! Como posso ajudá-lo?"
+- IMPORTANT: Maintain the same language throughout the entire conversation. If the user writes in Spanish, you MUST respond in Spanish. If they write in English, respond in English. Do NOT switch languages mid-conversation.
+- Do not hardcode responses - be natural and conversational in the detected language
 - If you have token performance data from CoinGecko, present it in a clear and engaging way with specific numbers and insights
 - Suggest creating games with the best performing tokens when relevant
 - Be concise but informative
@@ -141,7 +150,6 @@ YOU MUST:
     systemPrompt += `\n\nIMPORTANT: If the user asks about token performance, prices, or which tokens performed best, the system will automatically fetch this data from CoinGecko API for tokens in the database. However, if you don't have the data yet, you should explain that the system is fetching it, but DO NOT ask the user if they want the information - the system will provide it automatically.`;
   }
 
-  // Add database query instructions
   systemPrompt += `\n\nDATABASE ACCESS (YOUR ONLY SOURCE FOR TOKEN LIST):
 You have access to query the Coinlympia database through the /api/query-database endpoint. This is your ONLY source for:
 - Available tokens and their details (symbol, name, address, chainId)
@@ -193,12 +201,14 @@ WORKFLOW:
 4. Identify what information is MISSING
 5. IMPORTANT: If a parameter was already mentioned in a previous message (e.g., maxPlayers in the initial request, or selectedCoins in the latest message), DO NOT ask for it again. Use the value from the conversation history.
 6. Ask for ONE missing piece of information at a time in a friendly, conversational way
-7. CRITICAL: When asking for a parameter, ALWAYS list ALL available options. Respond in the user's language, but here are examples in English:
-   - When asking for gameType: "What type of game do you prefer? Options: Bull or Bear"
-   - When asking for duration: "How long do you want the game to last? Options: 5 minutes (300), 10 minutes (600), 30 minutes (1800), 1 hour (3600), 4 hours (14400), 8 hours (28800), 24 hours (86400), or 1 week (604800)"
-   - When asking for gameLevel: You MUST include the entry price for each level. Use the GAME LEVEL ENTRY PRICES provided at the beginning of this prompt. Format: "What difficulty level do you prefer? Options: 1=Beginner (Entry: {price}), 2=Intermediate (Entry: {price}), 3=Advanced (Entry: {price}), 4=Expert (Entry: {price}), 5=Master (Entry: {price}), 6=GrandMaster (Entry: {price})"
-   - When asking for maxCoins: "How many coins do you want to include? Options: 2, 3, 4, or 5 coins (minimum 2)"
-   - When asking for maxPlayers: "How many players do you want to participate? Options: 2, 3, 5, 10, 25, or 50 players"
+7. CRITICAL: When asking for a parameter, DO NOT list specific values or options in your response. The user will see checkboxes with these options, so mentioning them is redundant. Just ask the question simply. Respond in the user's language, but here are examples in English:
+   - When asking for gameType: "What type of game do you prefer?"
+   - When asking for duration: "How long do you want the game to last?"
+   - When asking for gameLevel: "What difficulty level do you prefer?"
+   - When asking for maxCoins: "How many coins do you want to include?"
+   - When asking for maxPlayers: "How many players do you want to participate?"
+   
+   IMPORTANT: DO NOT mention specific values like "3600", "14400", "28800", "86400", "604800" (durations in seconds), "Level 1", "Level 2", etc., "2 players", "10 players", etc., "2 coins", "3 coins", etc. The user will see checkboxes with these options, so mentioning them is redundant.
    - When asking for selectedCoins, follow this TWO-STEP process:
      STEP 1 - Captain Coin: First, explain what a captain coin is and ask the user to select their captain coin. Example: "The captain coin is the main token you're betting on - it's your primary strategy leader. Which token would you like to use as your captain coin? Please select one from the available tokens table below."
      STEP 2 - Remaining Tokens: Once you have the captain coin, ask for the remaining tokens. Example: "Great! Now, please select {remainingCount} more tokens from the available tokens table below to complete your selection."
@@ -244,7 +254,7 @@ IMPORTANT:
 - Always ask for missing information in the user's language
 - Be friendly and helpful
 - When asking for coins (selectedCoins), DO NOT list tokens in your text response. The system will automatically display a visual table with all available tokens and their performance data. Simply ask the user to select coins from the table.
-- CRITICAL: When asking for ANY parameter EXCEPT selectedCoins, ALWAYS list ALL available options. Never ask without providing the full list of options.
+- CRITICAL: When asking for ANY parameter EXCEPT selectedCoins, DO NOT list specific values or options in your response. The user will see checkboxes with these options, so mentioning them is redundant. Just ask the question simply.
 - For selectedCoins: Only mention that tokens are available in the table below, do not list them in text.
 - Only respond with ACTION:CREATE_GAME when you have ALL required parameters
 - If gameCreationState is provided, use it to track what information you already have

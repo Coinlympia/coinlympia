@@ -26,7 +26,6 @@ import {
   useTheme
 } from '@mui/material';
 import { BigNumber } from 'ethers';
-import { getAddress } from 'ethers/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -88,6 +87,10 @@ export function ChatBox({
     startDate?: number;
     selectedCoins?: string[];
   }>({});
+  const gameCreationStateRef = useRef(gameCreationState);
+  useEffect(() => {
+    gameCreationStateRef.current = gameCreationState;
+  }, [gameCreationState]);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [gameJoinState, setGameJoinState] = useState<{
     gameId?: number;
@@ -97,12 +100,15 @@ export function ChatBox({
     selectedCoins?: string[];
   }>({});
   const [isJoiningGame, setIsJoiningGame] = useState(false);
-  const [isSelectingToken, setIsSelectingToken] = useState(false); // Block token selection while processing
-  const [isSelectingGame, setIsSelectingGame] = useState(false); // Block game selection while processing
+  const [isJoinConfirmed, setIsJoinConfirmed] = useState(false);
+  const [isSelectingToken, setIsSelectingToken] = useState(false);
+  const [isSelectingGame, setIsSelectingGame] = useState(false);
+  const isSelectingGameRef = useRef(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('24h');
   const [tokenAnalysisData, setTokenAnalysisData] = useState<{
     [timeframe: string]: { tokens: TokenPerformance[]; timePeriod: string };
   }>({});
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const router = useRouter();
   const { provider, chainId: accountChainId, signer, account } = useWeb3React();
   const factoryAddress = useFactoryAddress();
@@ -283,9 +289,76 @@ export function ChatBox({
     }
   }, [initialData, initialMessage, hasGeneratedInitialResponse, messages]);
 
+  const detectLanguage = (text: string): string => {
+    const lowerText = text.toLowerCase();
+    
+    const spanishPatterns = [
+      /\b(uneme|únete|unirse|unir|crear|juego|juegos|moneda|monedas|capitán|seleccionar|elegir|disponible|disponibles|bajo|baja|valor|alto|alta|bear|bull|alcista|bajista|duracion|duración|jugadores|nivel|principiante|intermedio|avanzado|expert|maestro|grandmaster|confirmar|listo|sí|no|cancelar|cambiar|editar|empezar|de nuevo|restante|más|adicional|completar|tabla|disponibles|selecciona|elige|cuántas|cuántos|cuánto|tiempo|días|semana|hora|horas|minutos|segundos|personas|entrada|sala|espacios|espacio|poco|mucho|medio|barato|caro|ingresemos|muéstrame|quiero|unirme|a|un|una|el|la|los|las|de|del|en|con|por|para|que|es|son|está|están|tiene|tienen|hacer|hacerlo|hacerla|hacerlos|hacerlas|quiero|quieres|quiere|queremos|quieren|puedo|puedes|puede|podemos|pueden|necesito|necesitas|necesita|necesitamos|necesitan|deseo|deseas|desea|deseamos|desean|prefiero|prefieres|prefiere|preferimos|prefieren)\b/i,
+      /\b(el|la|los|las|un|una|unos|unas|de|del|en|con|por|para|que|es|son|está|están|tiene|tienen|hacer|hacerlo|hacerla|hacerlos|hacerlas|quiero|quieres|quiere|queremos|quieren|puedo|puedes|puede|podemos|pueden|necesito|necesitas|necesita|necesitamos|necesitan|deseo|deseas|desea|deseamos|desean|prefiero|prefieres|prefiere|preferimos|prefieren)\b/i,
+    ];
+    
+    const chinesePatterns = [
+      /[\u4e00-\u9fff]/,
+      /\b(加入|创建|游戏|硬币|选择|可用|低|高|熊|牛|持续时间|玩家|级别|初学者|中级|高级|专家|大师|确认|准备|是|否|取消|更改|编辑|重新开始|剩余|更多|额外|完成|表格|可用|选择|选择|多少|多少|多少|时间|天|周|小时|小时|分钟|秒|人|入口|房间|空间|空间)\b/i,
+    ];
+    
+    const frenchPatterns = [
+      /\b(rejoindre|créer|jeu|pièce|sélectionner|choisir|disponible|bas|valeur|haut|ours|taureau|durée|joueurs|niveau|débutant|intermédiaire|avancé|expert|maître|grand maître|confirmer|prêt|oui|non|annuler|changer|modifier|recommencer|restant|plus|supplémentaire|compléter|tableau|disponibles|sélectionne|choisir|combien|combien|combien|temps|jours|semaine|heure|heures|minutes|secondes|personnes|entrée|salle|espaces|espace)\b/i,
+      /\b(le|la|les|un|une|des|de|du|en|avec|par|pour|que|est|sont|est|sont|a|ont|faire|faire|veux|veux|veut|voulons|veulent|peux|peux|peut|pouvons|peuvent|besoin|besoin|besoin|besoin|besoin|souhaite|souhaite|souhaite|souhaitons|souhaitent|préfère|préfère|préfère|préférons|préfèrent)\b/i,
+    ];
+    
+    const germanPatterns = [
+      /\b(beitreten|erstellen|spiel|münze|auswählen|wählen|verfügbar|niedrig|wert|hoch|bär|stier|dauer|spieler|niveau|anfänger|mittelstufe|fortgeschritten|experte|meister|großmeister|bestätigen|bereit|ja|nein|abbrechen|ändern|bearbeiten|neu starten|verbleibend|mehr|zusätzlich|abschließen|tabelle|verfügbar|auswählen|wählen|wie viele|wie viele|wie viele|zeit|tage|woche|stunde|stunden|minuten|sekunden|personen|eintritt|raum|räume|raum)\b/i,
+      /\b(der|die|das|ein|eine|eines|von|dem|im|mit|durch|für|dass|ist|sind|ist|sind|hat|haben|machen|machen|will|will|will|wollen|wollen|kann|kann|kann|können|können|brauche|brauchst|braucht|brauchen|brauchen|möchte|möchtest|möchte|möchten|möchten|bevorzuge|bevorzugst|bevorzugt|bevorzugen|bevorzugen)\b/i,
+    ];
+    
+    const italianPatterns = [
+      /\b(unisciti|creare|gioco|moneta|selezionare|scegliere|disponibile|basso|valore|alto|orso|toro|durata|giocatori|livello|principiante|intermedio|avanzato|esperto|maestro|grande maestro|confermare|pronto|sì|no|annullare|cambiare|modificare|ricominciare|rimanente|più|aggiuntivo|completare|tabella|disponibili|seleziona|scegli|quante|quanti|quanto|tempo|giorni|settimana|ora|ore|minuti|secondi|persone|entrata|sala|spazi|spazio)\b/i,
+      /\b(il|la|lo|gli|le|un|una|uno|dei|degli|delle|di|del|dello|della|dei|degli|delle|in|con|per|che|è|sono|è|sono|ha|hanno|fare|fare|voglio|vuoi|vuole|vogliamo|vogliono|posso|puoi|può|possiamo|possono|ho bisogno|hai bisogno|ha bisogno|abbiamo bisogno|hanno bisogno|desidero|desideri|desidera|desideriamo|desiderano|preferisco|preferisci|preferisce|preferiamo|preferiscono)\b/i,
+    ];
+    
+    const portuguesePatterns = [
+      /\b(unir|juntar|criar|juego|moeda|selecionar|escolher|disponível|baixo|valor|alto|urso|touro|duração|jogadores|nível|principiante|intermediário|avançado|especialista|mestre|grande mestre|confirmar|pronto|sim|não|cancelar|alterar|editar|começar de novo|restante|mais|adicional|completar|tabela|disponíveis|seleciona|escolhe|quantas|quantos|quanto|tempo|dias|semana|hora|horas|minutos|segundos|pessoas|entrada|sala|espaços|espaço)\b/i,
+      /\b(o|a|os|as|um|uma|uns|umas|de|do|da|dos|das|em|com|por|para|que|é|são|está|estão|tem|têm|fazer|fazer|quero|queres|quer|queremos|querem|posso|podes|pode|podemos|podem|preciso|precisas|precisa|precisamos|precisam|desejo|desejas|deseja|desejamos|desejam|prefiro|preferes|prefere|preferimos|preferem)\b/i,
+    ];
+    
+    if (chinesePatterns.some(pattern => pattern.test(text))) {
+      return 'chinese';
+    }
+    
+    if (spanishPatterns.some(pattern => pattern.test(text))) {
+      return 'spanish';
+    }
+    
+    if (frenchPatterns.some(pattern => pattern.test(text))) {
+      return 'french';
+    }
+    
+    if (germanPatterns.some(pattern => pattern.test(text))) {
+      return 'german';
+    }
+    
+    if (italianPatterns.some(pattern => pattern.test(text))) {
+      return 'italian';
+    }
+    
+    if (portuguesePatterns.some(pattern => pattern.test(text))) {
+      return 'portuguese';
+    }
+    
+    return 'english';
+  };
+
   const generateAIResponse = async (userMessage: string, tokenData?: { tokens: TokenPerformance[]; timePeriod: string }, overrideGameJoinState?: typeof gameJoinState) => {
     setIsLoading(true);
     try {
+      if (!detectedLanguage || messages.length === 0) {
+        const lang = detectLanguage(userMessage);
+        setDetectedLanguage(lang);
+        console.log('[ChatBox] Detected language:', lang);
+      }
+      
+      const currentGameCreationState = gameCreationStateRef.current;
       const currentGameJoinState = overrideGameJoinState !== undefined ? overrideGameJoinState : gameJoinState;
       
       if (chainId) {
@@ -379,7 +452,7 @@ export function ChatBox({
 
       const hasGameJoinContext = currentGameJoinState?.gameId !== undefined;
 
-      let updatedGameCreationState = { ...gameCreationState };
+      let updatedGameCreationState = { ...currentGameCreationState };
       let updatedGameJoinState = { ...currentGameJoinState };
 
       if (hasGameJoinContext) {
@@ -466,6 +539,104 @@ export function ChatBox({
           }
         }
       } else {
+      const userMessageLower = userMessage.toLowerCase();
+      const allMessagesText = messages.map(m => m.content).join(' ').toLowerCase() + ' ' + userMessageLower;
+      
+      if (!updatedGameCreationState.gameType) {
+        if (userMessageLower.includes('bull') && !userMessageLower.includes('bear')) {
+          updatedGameCreationState.gameType = 'bull';
+        } else if (userMessageLower.includes('bear') && !userMessageLower.includes('bull')) {
+          updatedGameCreationState.gameType = 'bear';
+        } else if (allMessagesText.includes('crear') || allMessagesText.includes('create') || 
+                   allMessagesText.includes('juego') || allMessagesText.includes('game')) {
+          if (allMessagesText.includes('bull') && !allMessagesText.includes('bear')) {
+            updatedGameCreationState.gameType = 'bull';
+          } else if (allMessagesText.includes('bear') && !allMessagesText.includes('bull')) {
+            updatedGameCreationState.gameType = 'bear';
+          }
+        }
+      }
+      
+      if (!updatedGameCreationState.duration) {
+        const durationPatterns = [
+          { pattern: /\b3600\b/, value: 3600 },
+          { pattern: /\b14400\b/, value: 14400 },
+          { pattern: /\b28800\b/, value: 28800 },
+          { pattern: /\b86400\b/, value: 86400 },
+          { pattern: /\b604800\b/, value: 604800 },
+        ];
+        
+        for (const { pattern, value } of durationPatterns) {
+          if (pattern.test(userMessage)) {
+            updatedGameCreationState.duration = value;
+            break;
+          }
+        }
+        
+        if (!updatedGameCreationState.duration) {
+          if (userMessageLower.includes('1 hora') || userMessageLower.includes('1 hour') || 
+              (userMessageLower.includes('una hora') && !userMessageLower.includes('4') && !userMessageLower.includes('8') && !userMessageLower.includes('24'))) {
+            updatedGameCreationState.duration = 3600;
+          } else if (userMessageLower.includes('4 horas') || userMessageLower.includes('4 hours')) {
+            updatedGameCreationState.duration = 14400;
+          } else if (userMessageLower.includes('8 horas') || userMessageLower.includes('8 hours')) {
+            updatedGameCreationState.duration = 28800;
+          } else if (userMessageLower.includes('24 horas') || userMessageLower.includes('24 hours') || 
+                    userMessageLower.includes('un día') || userMessageLower.includes('one day')) {
+            updatedGameCreationState.duration = 86400;
+          } else if (userMessageLower.includes('7 días') || userMessageLower.includes('7 days') || 
+                    userMessageLower.includes('una semana') || userMessageLower.includes('one week') || 
+                    userMessageLower.includes('1 semana') || userMessageLower.includes('1 week')) {
+            updatedGameCreationState.duration = 604800;
+          }
+        }
+      }
+      
+      if (!updatedGameCreationState.maxPlayers) {
+        const playerPatterns = [
+          { pattern: /(?:para|for)\s+(\d+)\s+(?:jugadores|players|personas|people)/i, group: 1 },
+          { pattern: /(\d+)\s+(?:jugadores|players|personas|people)/i, group: 1 },
+          { pattern: /^(\d+)\s+(?:jugadores|players|personas|people)$/i, group: 1 },
+        ];
+        
+        const validPlayerCounts = [2, 3, 5, 10, 50];
+        
+        for (const { pattern, group } of playerPatterns) {
+          const match = userMessage.match(pattern);
+          if (match && match[group]) {
+            const numPlayers = parseInt(match[group], 10);
+            if (validPlayerCounts.includes(numPlayers)) {
+              updatedGameCreationState.maxPlayers = numPlayers;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (!updatedGameCreationState.maxCoins) {
+        const coinPatterns = [
+          { pattern: /(?:con|with)\s+(\d+)\s+(?:monedas|coins|tokens)/i, group: 1 },
+          { pattern: /(\d+)\s+(?:monedas|coins|tokens)/i, group: 1 },
+        ];
+        
+        for (const { pattern, group } of coinPatterns) {
+          const match = userMessage.match(pattern);
+          if (match && match[group]) {
+            const numCoins = parseInt(match[group], 10);
+            if (numCoins >= 2 && numCoins <= 5) {
+              updatedGameCreationState.maxCoins = numCoins;
+              break;
+            }
+          }
+        }
+      }
+      
+      setGameCreationState(prevState => {
+        const newState = { ...prevState, ...updatedGameCreationState };
+        gameCreationStateRef.current = newState;
+        return newState;
+      });
+      
       try {
         const conversationText = messages
           .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
@@ -482,28 +653,27 @@ export function ChatBox({
         if (parseResponse.ok) {
           const parsedParams = await parseResponse.json();
           
-          const userMessageLower = userMessage.toLowerCase();
-          if (!parsedParams.gameType && !updatedGameCreationState.gameType) {
-            if (userMessageLower.includes('bull') && (userMessageLower.includes('juego') || userMessageLower.includes('game') || userMessageLower.includes('crea') || userMessageLower.includes('create'))) {
-              parsedParams.gameType = 'bull';
-            } else if (userMessageLower.includes('bear') && (userMessageLower.includes('juego') || userMessageLower.includes('game') || userMessageLower.includes('crea') || userMessageLower.includes('create'))) {
-              parsedParams.gameType = 'bear';
-            }
-          }
-          
           const finalGameType = updatedGameCreationState.gameType || parsedParams.gameType;
+          const finalDuration = updatedGameCreationState.duration || parsedParams.duration;
+          const finalGameLevel = updatedGameCreationState.gameLevel !== undefined ? updatedGameCreationState.gameLevel : parsedParams.gameLevel;
+          const finalMaxCoins = updatedGameCreationState.maxCoins || parsedParams.maxCoins;
+          const finalMaxPlayers = updatedGameCreationState.maxPlayers || parsedParams.maxPlayers;
           
           updatedGameCreationState = {
             ...updatedGameCreationState,
             ...(finalGameType && { gameType: finalGameType }),
-            ...(parsedParams.duration && { duration: parsedParams.duration }),
-            ...(parsedParams.gameLevel !== undefined && { gameLevel: parsedParams.gameLevel }),
-            ...(parsedParams.maxCoins && { maxCoins: parsedParams.maxCoins }),
-            ...(parsedParams.maxPlayers && { maxPlayers: parsedParams.maxPlayers }),
+            ...(finalDuration && { duration: finalDuration }),
+            ...(finalGameLevel !== undefined && { gameLevel: finalGameLevel }),
+            ...(finalMaxCoins && { maxCoins: finalMaxCoins }),
+            ...(finalMaxPlayers && { maxPlayers: finalMaxPlayers }),
             ...(updatedGameCreationState.startDate === undefined && { startDate: Date.now() }),
           };
 
-          setGameCreationState(updatedGameCreationState);
+          setGameCreationState(prevState => {
+            const newState = { ...prevState, ...updatedGameCreationState };
+            gameCreationStateRef.current = newState;
+            return newState;
+          });
         }
       } catch (error) {
       }
@@ -513,6 +683,33 @@ export function ChatBox({
         setGameJoinState(updatedGameJoinState);
       }
 
+      if (!updatedGameCreationState.gameLevel) {
+        const userMessageLower = userMessage.toLowerCase();
+        const levelPatterns = [
+          { pattern: /nivel\s*(\d+)/i, group: 1 },
+          { pattern: /level\s*(\d+)/i, group: 1 },
+          { pattern: /(\d+)\s*(?:principiante|beginner|intermedio|intermediate|avanzado|advanced|expert|master|grandmaster)/i, group: 1 },
+        ];
+        
+        for (const { pattern, group } of levelPatterns) {
+          const match = userMessage.match(pattern);
+          if (match && match[group]) {
+            const level = parseInt(match[group], 10);
+            if (level >= 1 && level <= 6) {
+              updatedGameCreationState.gameLevel = level;
+              break;
+            }
+          }
+        }
+      }
+
+      setGameCreationState(prevState => {
+        const newState = { ...prevState, ...updatedGameCreationState };
+        gameCreationStateRef.current = newState;
+        return newState;
+      });
+      
+      updatedGameCreationState = gameCreationStateRef.current;
 
       const response = await fetch('/api/chat-response', {
         method: 'POST',
@@ -529,6 +726,7 @@ export function ChatBox({
           chainId: chainId,
           gameCreationState: updatedGameCreationState,
           gameJoinState: hasGameJoinContext ? updatedGameJoinState : undefined,
+          language: detectedLanguage || 'english',
         }),
       });
 
@@ -552,15 +750,33 @@ export function ChatBox({
         ? data.tokenPerformanceData
         : undefined;
 
-      if (hasGameJoinContext && updatedGameJoinState.captainCoin && !tokenDataForMessage) {
+      if (hasGameJoinContext && !tokenDataForMessage) {
         const maxCoinsNum = typeof updatedGameJoinState.maxCoins === 'string' 
           ? parseInt(updatedGameJoinState.maxCoins, 10) 
           : (updatedGameJoinState.maxCoins || 2);
-          const requiredCoins = maxCoinsNum - 1;
+        const requiredCoins = maxCoinsNum - 1;
         const selectedCoinsCount = updatedGameJoinState.selectedCoins?.length || 0;
         const needsMoreCoins = selectedCoinsCount < requiredCoins;
         
-        const isAskingForRemainingCoins = fullContent.toLowerCase().includes('restante') ||
+        const isAskingForCaptainCoin = !updatedGameJoinState.captainCoin && (
+          fullContent.toLowerCase().includes('capitán') ||
+          fullContent.toLowerCase().includes('captain') ||
+          fullContent.toLowerCase().includes('moneda capitán') ||
+          fullContent.toLowerCase().includes('captain coin') ||
+          fullContent.toLowerCase().includes('selecciona') ||
+          fullContent.toLowerCase().includes('select') ||
+          fullContent.toLowerCase().includes('elige') ||
+          fullContent.toLowerCase().includes('choose') ||
+          fullContent.toLowerCase().includes('dime') ||
+          fullContent.toLowerCase().includes('tell me') ||
+          fullContent.toLowerCase().includes('qué token') ||
+          fullContent.toLowerCase().includes('what token') ||
+          fullContent.toLowerCase().includes('token') ||
+          fullContent.toLowerCase().includes('moneda')
+        );
+        
+        const isAskingForRemainingCoins = updatedGameJoinState.captainCoin && (
+          fullContent.toLowerCase().includes('restante') ||
           fullContent.toLowerCase().includes('remaining') ||
           fullContent.toLowerCase().includes('más') ||
           fullContent.toLowerCase().includes('more') ||
@@ -569,9 +785,18 @@ export function ChatBox({
           fullContent.toLowerCase().includes('selecciona') ||
           fullContent.toLowerCase().includes('select') ||
           fullContent.toLowerCase().includes('elige') ||
-          fullContent.toLowerCase().includes('choose');
+          fullContent.toLowerCase().includes('choose') ||
+          fullContent.toLowerCase().includes('completar') ||
+          fullContent.toLowerCase().includes('complete') ||
+          fullContent.toLowerCase().includes('tabla') ||
+          fullContent.toLowerCase().includes('table') ||
+          fullContent.toLowerCase().includes('disponibles') ||
+          fullContent.toLowerCase().includes('available') ||
+          fullContent.toLowerCase().includes('all coins selected') ||
+          userMessage.toLowerCase().includes('all coins selected')
+        );
         
-        if (needsMoreCoins && isAskingForRemainingCoins && chainId) {
+        if (isAskingForCaptainCoin || (needsMoreCoins && (isAskingForRemainingCoins || updatedGameJoinState.captainCoin))) {
           try {
             const finalChainId = chainId || accountChainId;
             if (finalChainId) {
@@ -597,9 +822,9 @@ export function ChatBox({
               }
             }
           } catch (error) {
-            }
           }
         }
+      }
 
         const isConfirmationMessage = hasGameJoinContext && 
           updatedGameJoinState.captainCoin && 
@@ -623,8 +848,21 @@ export function ChatBox({
           fullContent.toLowerCase().includes('yes') ||
           fullContent.toLowerCase().includes('sí') ||
           fullContent.toLowerCase().includes('unirse') ||
-          fullContent.toLowerCase().includes('join')
+          fullContent.toLowerCase().includes('join') ||
+          userMessage.toLowerCase().includes('all coins selected')
         );
+        
+        let finalContent = fullContent;
+        if (hasAllCoins && !isAskingForConfirmation && !fullContent.toLowerCase().includes('ready') && 
+            !fullContent.toLowerCase().includes('listo') && !fullContent.toLowerCase().includes('confirm')) {
+          finalContent = formatMessage({
+            id: 'chat.all.coins.selected',
+            defaultMessage: `Great! You've selected all {count} coins (1 captain coin and {secondaryCount} secondary coins). Are you ready to join the game?`,
+          }, { 
+            count: maxCoinsNum,
+            secondaryCount: requiredCoins
+          });
+        }
 
       let messageOptions: Message['options'] = undefined;
       const contentLower = fullContent.toLowerCase();
@@ -700,13 +938,14 @@ export function ChatBox({
           { id: 'level-5', label: formatMessage({ id: 'chat.option.level.5', defaultMessage: 'Level 5 (Master) - Entry: 100.0 USDT' }), value: 5, checked: false },
           { id: 'level-6', label: formatMessage({ id: 'chat.option.level.6', defaultMessage: 'Level 6 (GrandMaster) - Entry: 250.0 USDT' }), value: 6, checked: false },
         ];
-      }
+          }
       else if ((contentLower.includes('monedas') || contentLower.includes('coins') || 
           contentLower.includes('tokens') ||
           (contentLower.includes('cuántas') && contentLower.includes('monedas')) ||
           (contentLower.includes('how many') && contentLower.includes('coins')) ||
           (contentLower.includes('cuántos') && contentLower.includes('tokens'))) && 
-          !updatedGameCreationState.maxCoins) {
+          !updatedGameCreationState.maxCoins &&
+          !hasGameJoinContext) {
         messageOptions = [
           { id: 'max-coins-2', label: formatMessage({ id: 'chat.option.max.coins.2', defaultMessage: '2 coins' }), value: 2, checked: false },
           { id: 'max-coins-3', label: formatMessage({ id: 'chat.option.max.coins.3', defaultMessage: '3 coins' }), value: 3, checked: false },
@@ -721,20 +960,21 @@ export function ChatBox({
           !updatedGameCreationState.maxPlayers) {
         messageOptions = [
           { id: 'max-players-2', label: formatMessage({ id: 'chat.option.max.players.2', defaultMessage: '2 players' }), value: 2, checked: false },
+          { id: 'max-players-3', label: formatMessage({ id: 'chat.option.max.players.3', defaultMessage: '3 players' }), value: 3, checked: false },
           { id: 'max-players-5', label: formatMessage({ id: 'chat.option.max.players.5', defaultMessage: '5 players' }), value: 5, checked: false },
           { id: 'max-players-10', label: formatMessage({ id: 'chat.option.max.players.10', defaultMessage: '10 players' }), value: 10, checked: false },
-          { id: 'max-players-20', label: formatMessage({ id: 'chat.option.max.players.20', defaultMessage: '20 players' }), value: 20, checked: false },
+          { id: 'max-players-50', label: formatMessage({ id: 'chat.option.max.players.50', defaultMessage: '50 players' }), value: 50, checked: false },
         ];
       }
 
       const assistantMessage: Message = {
         id: messageId,
         role: 'assistant',
-        content: fullContent,
+        content: finalContent,
         timestamp: new Date(),
         isTyping: false,
         tokenPerformanceData: tokenDataForMessage,
-        isConfirmationMessage: isConfirmationMessage && hasAllCoins && isAskingForConfirmation,
+        isConfirmationMessage: isConfirmationMessage && hasAllCoins && (isAskingForConfirmation || hasAllCoins),
         gameJoinState: isConfirmationMessage && hasAllCoins ? updatedGameJoinState : undefined,
         options: messageOptions,
         onOptionChange: messageOptions ? (optionId: string, checked: boolean) => {
@@ -744,9 +984,16 @@ export function ChatBox({
               
               const option = msg.options.find(opt => opt.id === optionId);
               if (!option) return msg;
+
+              const hasCheckedOption = msg.options.some(opt => opt.checked);
+              if (hasCheckedOption && !option.checked) {
+                return msg;
+              }
               
               const updatedOptions = msg.options.map(opt => 
-                opt.id === optionId ? { ...opt, checked } : { ...opt, checked: false }
+                opt.id === optionId 
+                  ? { ...opt, checked, disabled: checked }
+                  : { ...opt, checked: false, disabled: checked }
               );
               
               if (checked) {
@@ -810,10 +1057,14 @@ export function ChatBox({
                     ));
                   }, 300);
                 } else if (optionId.startsWith('max-coins-')) {
-                  setGameCreationState(prev => ({
-                    ...prev,
-                    maxCoins: option.value as number,
-                  }));
+                  setGameCreationState(prev => {
+                    const newState = {
+                      ...prev,
+                      maxCoins: option.value as number,
+                    };
+                    gameCreationStateRef.current = newState;
+                    return newState;
+                  });
                   const userMessage: Message = {
                     id: `user-${Date.now()}`,
                     role: 'user',
@@ -866,15 +1117,15 @@ export function ChatBox({
         return updated;
       });
       
+      if (tokenDataForMessage) {
       setTimeout(() => {
         scrollToBottom();
-      }, 100);
-      
-      if (tokenDataForMessage) {
+        }, 500);
+      } else {
         setTimeout(() => {
           scrollToBottom();
-        }, 300);
-        }
+        }, 100);
+      }
       } else if (!data.response || typeof data.response !== 'string' || data.response.trim().length === 0) {
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
@@ -1138,8 +1389,13 @@ export function ChatBox({
       if (gameParams.maxCoins < 2) {
         throw new Error('Number of coins must be at least 2');
       }
+      
+      const validPlayerCounts = [2, 3, 5, 10, 50];
       if (gameParams.maxPlayers < 2) {
         throw new Error('Number of players must be at least 2');
+      }
+      if (!validPlayerCounts.includes(gameParams.maxPlayers)) {
+        throw new Error(`Number of players ${gameParams.maxPlayers} is not supported. Valid values are: ${validPlayerCounts.join(', ')}`);
       }
 
       const creatingMessage: Message = {
@@ -1354,11 +1610,25 @@ export function ChatBox({
               value: amountToPlay,
             });
           } catch (joinError: any) {
-
-            if (joinError.reason || joinError.message?.includes('Panic')) {
-              throw new Error(`Failed to join game: ${joinError.reason || joinError.message || 'Unknown error'}. Please check that the game exists and the token addresses are valid.`);
+            let errorMessage = 'Unknown error';
+            if (joinError?.message) {
+              errorMessage = joinError.message;
+            } else if (joinError?.reason) {
+              errorMessage = joinError.reason;
+            } else if (typeof joinError === 'string') {
+              errorMessage = joinError;
+            } else if (joinError?.error?.message) {
+              errorMessage = joinError.error.message;
+            } else if (joinError?.error?.reason) {
+              errorMessage = joinError.error.reason;
+            } else if (joinError?.toString) {
+              errorMessage = joinError.toString();
             }
-            throw joinError;
+
+            if (joinError.reason || joinError.message?.includes('Panic') || joinError.message?.includes('revert')) {
+              throw new Error(`Failed to join game: ${errorMessage}. Please check that the game exists and the token addresses are valid.`);
+            }
+            throw new Error(`Failed to join game: ${errorMessage}`);
           }
 
 
@@ -1377,6 +1647,48 @@ export function ChatBox({
             throw new Error(`Invalid join transaction hash: ${joinReceipt.transactionHash}`);
           }
 
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          
+          try {
+            const finalChainId = chainId || accountChainId;
+            if (finalChainId && account) {
+              const registerResponse = await fetch('/api/register-participant', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  gameId: gameId.toNumber(),
+                  userAddress: account,
+                  captainCoin: checksummedCaptainCoin,
+                  chainId: finalChainId,
+                  coinFeeds: checksummedFeeds,
+                  affiliate: undefined,
+                }),
+              });
+
+              if (registerResponse.ok) {
+                const registerResult = await registerResponse.json();
+                if (!registerResult.success) {
+                  console.error('Failed to register participant in database:', registerResult.error);
+                  console.error('Game ID:', gameId.toNumber(), 'Chain ID:', finalChainId, 'User:', account);
+                } else {
+                  console.log('Participant registered successfully:', registerResult.participantId);
+                }
+              } else {
+                const errorData = await registerResponse.json().catch(() => ({ error: registerResponse.statusText }));
+                console.error('Failed to register participant in database:', registerResponse.status, errorData);
+                console.error('Game ID:', gameId.toNumber(), 'Chain ID:', finalChainId, 'User:', account);
+              }
+            } else {
+              console.warn('Cannot register participant: missing chainId or account', { chainId: finalChainId, account });
+            }
+          } catch (registerError) {
+            console.error('Error registering participant in database:', registerError);
+            if (registerError instanceof Error) {
+              console.error('Error stack:', registerError.stack);
+            }
+          }
 
           await new Promise(resolve => setTimeout(resolve, 8000));
 
@@ -1416,12 +1728,27 @@ export function ChatBox({
           }
           }, 2000);
         } catch (joinError: any) {
+          let errorMessage = 'Unknown error';
+          if (joinError?.message) {
+            errorMessage = joinError.message;
+          } else if (joinError?.reason) {
+            errorMessage = joinError.reason;
+          } else if (typeof joinError === 'string') {
+            errorMessage = joinError;
+          } else if (joinError?.error?.message) {
+            errorMessage = joinError.error.message;
+          } else if (joinError?.error?.reason) {
+            errorMessage = joinError.error.reason;
+          } else if (joinError?.toString) {
+            errorMessage = joinError.toString();
+          }
+
           const joinErrorMessage: Message = {
             id: `join-error-${Date.now()}`,
             role: 'assistant',
             content: formatMessage({
               id: 'chat.error.join.game',
-              defaultMessage: `Game created successfully, but there was an error joining the game: ${joinError.message || 'Unknown error'}. Please join manually from the game page.`,
+              defaultMessage: `Game created successfully, but there was an error joining the game: ${errorMessage}. Please join manually from the game page.`,
             }),
             timestamp: new Date(),
           };
@@ -1540,7 +1867,7 @@ export function ChatBox({
         body: JSON.stringify({
           ...findGamesParams,
           chainId: finalChainId,
-          userAddress: account ? account.toLowerCase() : undefined, // Exclude games where user is already participating
+          userAddress: account ? account.toLowerCase() : undefined,
         }),
       });
 
@@ -1554,12 +1881,15 @@ export function ChatBox({
       const gamesMessage: Message = {
         id: `games-found-${Date.now()}`,
         role: 'assistant',
-        content: formatMessage({
-          id: 'chat.games.found',
-          defaultMessage: result.count > 0 
-            ? `Found ${result.count} available game${result.count > 1 ? 's' : ''}. Please select one from the list below:`
-            : 'No games found matching your criteria. Try adjusting your search parameters or create a new game.',
-        }, { count: result.count }),
+        content: result.count > 0 
+          ? formatMessage({
+              id: 'chat.games.found',
+              defaultMessage: 'Found {count} {count, plural, one {available game} other {available games}}. Please select one from the list below:',
+            }, { count: result.count })
+          : formatMessage({
+              id: 'chat.no.games.found',
+              defaultMessage: 'No games found matching your criteria. Try adjusting your search parameters or create a new game.',
+            }),
         timestamp: new Date(),
         availableGames: result.games || [],
       };
@@ -1612,23 +1942,39 @@ export function ChatBox({
       return;
     }
 
-    setGameJoinState({
+    const updatedGameJoinState = {
       gameId: joinGameParams.gameId,
       chainId: joinGameParams.chainId || chainId || accountChainId,
       captainCoin: undefined,
       selectedCoins: [],
-    });
+    };
+    setGameJoinState(updatedGameJoinState);
 
-    const joinStartMessage: Message = {
-      id: `join-start-${Date.now()}`,
-      role: 'assistant',
-      content: formatMessage({
-        id: 'chat.join.game.start',
-        defaultMessage: `Perfect! You want to join game #${joinGameParams.gameId}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin.`,
-      }, { gameId: joinGameParams.gameId }),
+    const userMessage = detectedLanguage === 'spanish' 
+      ? `Quiero unirme al juego #${joinGameParams.gameId}`
+      : detectedLanguage === 'french'
+      ? `Je veux rejoindre le jeu #${joinGameParams.gameId}`
+      : detectedLanguage === 'german'
+      ? `Ich möchte Spiel #${joinGameParams.gameId} beitreten`
+      : detectedLanguage === 'italian'
+      ? `Voglio unirmi al gioco #${joinGameParams.gameId}`
+      : detectedLanguage === 'portuguese'
+      ? `Quero me juntar ao jogo #${joinGameParams.gameId}`
+      : detectedLanguage === 'chinese'
+      ? `我想加入游戏 #${joinGameParams.gameId}`
+      : `I want to join game #${joinGameParams.gameId}`;
+    
+    const userMessageObj: Message = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: userMessage,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, joinStartMessage]);
+    setMessages((prev) => [...prev, userMessageObj]);
+
+    setTimeout(async () => {
+      await generateAIResponse(userMessage, undefined, updatedGameJoinState);
+    }, 50);
   };
 
   const executeJoinGame = async () => {
@@ -1736,6 +2082,8 @@ export function ChatBox({
         throw new Error(`Join transaction failed with status ${joinReceipt?.status || 'unknown'}`);
       }
 
+      setIsJoinConfirmed(true);
+
       const successMessage: Message = {
         id: `success-${Date.now()}`,
         role: 'assistant',
@@ -1768,8 +2116,12 @@ export function ChatBox({
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsJoiningGame(false);
-      setGameJoinState({});
+      if (!isJoinConfirmed) {
+        setIsJoiningGame(false);
+        setGameJoinState({});
+        isSelectingGameRef.current = false;
+        setIsSelectingGame(false);
+      }
     }
   };
 
@@ -1879,16 +2231,20 @@ export function ChatBox({
             <AnimatePresence>
               {(() => {
                 const filteredMessages = messages.filter((message) => 
-                  !message.id.startsWith('join-start') && 
-                  !message.id.startsWith('token-analysis')
+                  !message.isConfirmationMessage
                 );
-                const regularMessages = filteredMessages.filter(m => !m.isConfirmationMessage);
-                const confirmationMessages = filteredMessages.filter(m => m.isConfirmationMessage);
-                return regularMessages;
+                
+                const sortedMessages = [...filteredMessages].sort((a, b) => {
+                  const timeA = a.timestamp?.getTime() || 0;
+                  const timeB = b.timestamp?.getTime() || 0;
+                  return timeA - timeB;
+                });
+                
+                return sortedMessages;
               })()
                 .map((message) => (
+                  <React.Fragment key={message.id}>
                 <motion.div
-                  key={message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
@@ -1935,445 +2291,67 @@ export function ChatBox({
                           </motion.span>
                         )}
                       </Typography>
-                      {message.options && message.options.length > 0 && (
-                        <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-                          <Stack spacing={1}>
-                            {message.options.map((option) => (
-                              <FormControlLabel
-                                key={option.id}
-                                control={
-                                  <Checkbox
-                                    checked={option.checked || false}
-                                    disabled={option.disabled || isLoading}
-                                    onChange={(e) => {
-                                      if (message.onOptionChange) {
-                                        message.onOptionChange(option.id, e.target.checked);
-                                      }
-                                    }}
+                          {message.options && message.options.length > 0 && (
+                            <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                              <Stack spacing={1}>
+                                {message.options.map((option) => (
+                                  <FormControlLabel
+                                    key={option.id}
+                                    control={
+                                      <Checkbox
+                                        checked={option.checked || false}
+                                        disabled={option.disabled || isLoading || message.options?.some(opt => opt.checked && opt.id !== option.id)}
+                                        onChange={(e) => {
+                                          const hasOtherChecked = message.options?.some(opt => opt.checked && opt.id !== option.id);
+                                          if (hasOtherChecked) {
+                            return;
+                          }
+                                          if (message.onOptionChange) {
+                                            message.onOptionChange(option.id, e.target.checked);
+                                          }
+                                        }}
+                                        sx={{
+                                          color: theme.palette.primary.main,
+                                          '&.Mui-checked': {
+                                            color: theme.palette.primary.main,
+                                          },
+                                        }}
+                                      />
+                                    }
+                                    label={
+                                  <Typography 
+                                        variant="body2"
+                                        sx={{
+                                          color: theme.palette.text.primary,
+                                          userSelect: 'none',
+                                        }}
+                                  >
+                                        {option.label}
+                                  </Typography>
+                                    }
                                     sx={{
-                                      color: theme.palette.primary.main,
-                                      '&.Mui-checked': {
-                                        color: theme.palette.primary.main,
+                                      m: 0,
+                                      '&:hover': {
+                                        backgroundColor: theme.palette.action.hover,
+                                        borderRadius: 1,
                                       },
+                                      px: 1,
+                                      py: 0.5,
+                                      borderRadius: 1,
+                                      transition: 'background-color 0.2s',
                                     }}
                                   />
-                                }
-                                label={
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      color: theme.palette.text.primary,
-                                      userSelect: 'none',
-                                    }}
-                                  >
-                                    {option.label}
-                                  </Typography>
-                                }
-                                sx={{
-                                  m: 0,
-                                  '&:hover': {
-                                    backgroundColor: theme.palette.action.hover,
-                                    borderRadius: 1,
-                                  },
-                                  px: 1,
-                                  py: 0.5,
-                                  borderRadius: 1,
-                                  transition: 'background-color 0.2s',
-                                }}
-                              />
-                            ))}
-                          </Stack>
-                        </Box>
-                      )}
-                    </Paper>
-                  </Box>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          {messages.map((msg) => {
-            if (!msg.availableGames || msg.availableGames.length === 0) {
-              return null;
-            }
-
-            return (
-              <motion.div
-                key={`games-${msg.id}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Paper
-                  elevation={3}
-                  sx={(theme) => ({
-                    p: 1.5,
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[50],
-                    border: `1px solid ${theme.palette.divider}`,
-                  })}
-                >
-                  <Typography 
-                    variant="subtitle2" 
-                    sx={(theme) => ({ 
-                      mb: 1, 
-                      fontWeight: 600,
-                      color: theme.palette.text.primary,
-                    })}
-                  >
-                    <FormattedMessage
-                      id="available.games"
-                      defaultMessage="Available Games"
-                    />
-                  </Typography>
-                  <Box
-                    sx={{
-                      maxHeight: '400px',
-                      overflowY: 'auto',
-                      pr: 0.5,
-                    }}
-                  >
-                    <Grid container spacing={1.5}>
-                      {msg.availableGames.map((game) => {
-                        const handleSelectGame = async () => {
-                          // Block multiple clicks
-                          if (isSelectingGame || isLoading || isJoiningGame) {
-                            return;
-                          }
-
-                          if (!provider || !factoryAddress || !signer) {
-                            const errorMessage: Message = {
-                              id: `error-${Date.now()}`,
-                              role: 'assistant',
-                              content: formatMessage({
-                                id: 'chat.error.wallet',
-                                defaultMessage: 'Please connect your wallet to join the game.',
-                              }),
-                              timestamp: new Date(),
-                            };
-                            setMessages((prev) => [...prev, errorMessage]);
-                            return;
-                          }
-
-                          setIsSelectingGame(true);
-                          try {
-                            const { getCoinLeagueGameOnChain } = await import('../services/coinleague');
-                            const gameOnChain = await getCoinLeagueGameOnChain(provider, factoryAddress, game.id.toString());
-                            
-                            if (!gameOnChain) {
-                              throw new Error('Game not found on blockchain');
-                            }
-
-                            const finalChainId = game.chainId || chainId || accountChainId;
-                            
-                            const maxCoinsNum = typeof game.numCoins === 'string' 
-                              ? parseInt(game.numCoins, 10) 
-                              : (game.numCoins || 2);
-                            setGameJoinState({
-                              gameId: game.id,
-                              chainId: finalChainId,
-                              maxCoins: maxCoinsNum,
-                              captainCoin: undefined,
-                              selectedCoins: [],
-                            });
-
-                            const joinStartMessage: Message = {
-                              id: `join-start-${Date.now()}`,
-                              role: 'assistant',
-                              content: formatMessage({
-                                id: 'chat.join.game.start',
-                                defaultMessage: `Perfect! You want to join game #${game.id}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin.`,
-                              }, { gameId: game.id }),
-                              timestamp: new Date(),
-                            };
-                            setMessages((prev) => [...prev, joinStartMessage]);
-
-                            if (finalChainId) {
-                              const fetchTokenAnalysis = async () => {
-                                try {
-                                  const analysisResponse = await fetch('/api/analyze-tokens', {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                      text: 'Show me all available tokens with their performance data and price analysis for the last 24 hours. I need to see all tokens with their current prices and price changes.',
-                                      chainId: finalChainId,
-                                    }),
-                                  });
-
-                                  if (analysisResponse.ok) {
-                                    const analysisData = await analysisResponse.json();
-
-                                    if (analysisData && analysisData.tokens && Array.isArray(analysisData.tokens) && analysisData.tokens.length > 0) {
-                                      const tokenAnalysisMessage: Message = {
-                                        id: `token-analysis-${Date.now()}`,
-                                        role: 'assistant',
-                                        content: formatMessage({
-                                          id: 'chat.token.analysis.available',
-                                          defaultMessage: 'Here are the available tokens with their performance data to help you choose:',
-                                        }),
-                                        timestamp: new Date(),
-                                        tokenPerformanceData: {
-                                          tokens: analysisData.tokens,
-                                          timePeriod: analysisData.timePeriod || '24h',
-                                        },
-                                      };
-                                      setMessages((prev) => {
-                                        const updated = [...prev, tokenAnalysisMessage];
-                                        return updated;
-                                      });
-                                      setTimeout(() => {
-                                        scrollToBottom();
-                                      }, 300);
-                                    } else {
-                                    }
-                                  } else {
-                                    const errorText = await analysisResponse.text();
-                                  }
-                                } catch (error) {
-                                }
-                              };
-
-                              fetchTokenAnalysis();
-                            } else {
-                            }
-                          } catch (error: any) {
-                            const errorMessage: Message = {
-                              id: `error-${Date.now()}`,
-                              role: 'assistant',
-                              content: formatMessage({
-                                id: 'chat.error.join.game.start',
-                                defaultMessage: `Error starting join flow: ${error.message || 'Unknown error'}. Please try again.`,
-                              }),
-                              timestamp: new Date(),
-                            };
-                            setMessages((prev) => [...prev, errorMessage]);
-                          } finally {
-                            setIsSelectingGame(false);
-                          }
-                        };
-
-                        return (
-                          <Grid item xs={12} sm={6} md={4} key={game.id}>
-                            <Paper
-                              elevation={2}
-                              sx={(theme) => ({
-                                p: 1.5,
-                                borderRadius: 1.5,
-                                backgroundColor: theme.palette.background.paper,
-                                border: `1px solid ${theme.palette.divider}`,
-                                transition: 'all 0.2s',
-                                cursor: (isSelectingGame || isLoading || isJoiningGame) ? 'not-allowed' : 'pointer',
-                                opacity: (isSelectingGame || isLoading || isJoiningGame) ? 0.6 : 1,
-                                pointerEvents: (isSelectingGame || isLoading || isJoiningGame) ? 'none' : 'auto',
-                                '&:hover': (isSelectingGame || isLoading || isJoiningGame) ? {} : {
-                                  borderColor: theme.palette.primary.main,
-                                  boxShadow: `0 2px 8px ${theme.palette.primary.main}20`,
-                                  transform: 'translateY(-2px)',
-                                },
-                              })}
-                              onClick={handleSelectGame}
-                            >
-                              <Stack spacing={1}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                  <Typography 
-                                    variant="subtitle2" 
-                                    fontWeight={600}
-                                    sx={{ color: theme.palette.text.primary }}
-                                  >
-                                    <FormattedMessage
-                                      id="chat.game.room.number"
-                                      defaultMessage="Room #{gameId}"
-                                      values={{ gameId: game.id }}
-                                    />
-                                  </Typography>
-                                  <Box
-                                    sx={{
-                                      px: 1,
-                                      py: 0.25,
-                                      borderRadius: 1,
-                                      backgroundColor: game.type === 'bull' 
-                                        ? theme.palette.success.main + '20'
-                                        : theme.palette.error.main + '20',
-                                      color: game.type === 'bull'
-                                        ? theme.palette.success.main
-                                        : theme.palette.error.main,
-                                    }}
-                                  >
-                                    <Typography variant="caption" fontWeight={600}>
-                                      {game.typeName}
-                                    </Typography>
-                                  </Box>
+                                ))}
                                 </Stack>
-                                
-                                <Stack spacing={0.5}>
-                                  <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="caption" color="textSecondary">
-                                      <FormattedMessage id="entry" defaultMessage="Entry" />
-                                    </Typography>
-                                    <Typography 
-                                      variant="caption" 
-                                      fontWeight={600}
-                                      sx={{ color: theme.palette.text.primary }}
-                                    >
-                                      {game.entryFormatted}
-                                    </Typography>
-                                  </Stack>
-                                  
-                                  <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="caption" color="textSecondary">
-                                      <FormattedMessage id="duration" defaultMessage="Duration" />
-                                    </Typography>
-                                    <Typography 
-                                      variant="caption" 
-                                      fontWeight={600}
-                                      sx={{ color: theme.palette.text.primary }}
-                                    >
-                                      {game.durationFormatted}
-                                    </Typography>
-                                  </Stack>
-                                  
-                                  <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="caption" color="textSecondary">
-                                      <FormattedMessage id="players" defaultMessage="Players" />
-                                    </Typography>
-                                    <Typography 
-                                      variant="caption" 
-                                      fontWeight={600}
-                                      sx={{ color: theme.palette.text.primary }}
-                                    >
-                                      {game.currentPlayers}/{game.numPlayers}
-                                    </Typography>
-                                  </Stack>
-                                  
-                                  <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="caption" color="textSecondary">
-                                      <FormattedMessage id="coins" defaultMessage="Coins" />
-                                    </Typography>
-                                    <Typography 
-                                      variant="caption" 
-                                      fontWeight={600}
-                                      sx={{ color: theme.palette.text.primary }}
-                                    >
-                                      {game.numCoins}
-                                    </Typography>
-                                  </Stack>
-                                  
-                                  {game.availableSlots > 0 && (
-                                    <Stack direction="row" justifyContent="space-between">
-                                      <Typography variant="caption" color="textSecondary">
-                                        <FormattedMessage id="available.slots" defaultMessage="Available" />
-                                      </Typography>
-                                      <Typography variant="caption" fontWeight={600} color="success.main">
-                                        <FormattedMessage
-                                          id="chat.game.available.slots.count"
-                                          defaultMessage="{count} {count, plural, one {slot} other {slots}}"
-                                          values={{ count: game.availableSlots }}
-                                        />
-                                      </Typography>
-                                    </Stack>
+                            </Box>
                                   )}
-                                </Stack>
-                                
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  fullWidth
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSelectGame();
-                                  }}
-                                  disabled={isSelectingGame || isLoading || isJoiningGame}
-                                  sx={{ mt: 1 }}
-                                >
-                                  <FormattedMessage id="join.game" defaultMessage="Join Game" />
-                                </Button>
-                              </Stack>
                             </Paper>
-                          </Grid>
-                        );
-                      })}
-                    </Grid>
                   </Box>
-                </Paper>
               </motion.div>
-            );
-          })} 
-          {messages
-            .filter((message) => message.id.startsWith('join-start'))
-            .map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                  }}
-                >
-                  <Paper
-                    elevation={2}
-                    sx={(theme) => ({
-                      p: 2,
-                      maxWidth: '80%',
-                      borderRadius: 2,
-                      backgroundColor: theme.palette.mode === 'dark'
-                        ? theme.palette.grey[800]
-                        : theme.palette.grey[100],
-                      color: theme.palette.text.primary,
-                    })}
-                  >
-                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {message.content}
-                    </Typography>
-                  </Paper>
-                </Box>
-              </motion.div>
-            ))}
-          {messages
-            .filter((msg) => msg.tokenPerformanceData && msg.tokenPerformanceData.tokens && msg.tokenPerformanceData.tokens.length > 0)
-            .map((msg) => (
-              <React.Fragment key={`token-msg-${msg.id}`}>
-                {msg.content && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'flex-start',
-                        mb: 1,
-                      }}
-                    >
-                      <Paper
-                        elevation={2}
-                        sx={(theme) => ({
-                          p: 2,
-                          maxWidth: '80%',
-                          borderRadius: 2,
-                          backgroundColor:
-                            theme.palette.mode === 'dark'
-                              ? theme.palette.grey[800]
-                              : theme.palette.grey[100],
-                          color: theme.palette.text.primary,
-                        })}
-                      >
-                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                          {msg.content}
-                        </Typography>
-                      </Paper>
-                    </Box>
-                  </motion.div>
-                )}
-                
+                    
+                    {message.tokenPerformanceData && message.tokenPerformanceData.tokens && message.tokenPerformanceData.tokens.length > 0 && (
                 <motion.div
+                        key={`token-table-${message.id}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
@@ -2404,7 +2382,7 @@ export function ChatBox({
                   
                   <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs
-                      value={msg.tokenPerformanceData.timePeriod || '24h'}
+                              value={message.tokenPerformanceData.timePeriod || '24h'}
                       onChange={(e, newValue) => {
                         const fetchTimeframeData = async (timeframe: string) => {
                           try {
@@ -2427,7 +2405,7 @@ export function ChatBox({
                               if (analysisData && analysisData.tokens && Array.isArray(analysisData.tokens) && analysisData.tokens.length > 0) {
                                 setMessages((prev) =>
                                   prev.map((m) =>
-                                    m.id === msg.id
+                                            m.id === message.id
                                       ? {
                                           ...m,
                                           tokenPerformanceData: {
@@ -2469,7 +2447,7 @@ export function ChatBox({
                     <FormattedMessage
                                       id="token.performance.period"
                       defaultMessage="Performance in the last {timePeriod}"
-                                      values={{ timePeriod: msg.tokenPerformanceData.timePeriod || '24h' }}
+                              values={{ timePeriod: message.tokenPerformanceData.timePeriod || '24h' }}
                     />
                   </Typography>
                   
@@ -2481,7 +2459,7 @@ export function ChatBox({
                     }}
                   >
                     <Grid container spacing={1}>
-                      {msg.tokenPerformanceData.tokens.map((token) => {
+                              {message.tokenPerformanceData.tokens.map((token) => {
                         const formatPrice = (price: number) => {
                           if (price >= 1000) {
                             return new Intl.NumberFormat('en-US', {
@@ -2504,49 +2482,49 @@ export function ChatBox({
                           return `${sign}${percent.toFixed(2)}%`;
                         };
 
-                        const hasGameCreationContext = 
-                          gameCreationState?.gameType ||
-                          gameCreationState?.duration ||
-                          gameCreationState?.gameLevel !== undefined ||
-                          messages.some(m => 
-                            m.role === 'assistant' && (
-                              m.content.toLowerCase().includes('crear') ||
-                              m.content.toLowerCase().includes('create') ||
-                              m.content.toLowerCase().includes('juego') ||
-                              m.content.toLowerCase().includes('game') ||
-                              m.content.toLowerCase().includes('duración') ||
-                              m.content.toLowerCase().includes('duration') ||
-                              m.content.toLowerCase().includes('nivel') ||
-                              m.content.toLowerCase().includes('level') ||
-                              m.content.toLowerCase().includes('dificultad') ||
-                              m.content.toLowerCase().includes('difficulty')
-                            )
-                          ) ||
-                          messages.some(m => 
-                            m.role === 'user' && (
-                              m.content.toLowerCase().includes('crea') ||
-                              m.content.toLowerCase().includes('create') ||
-                              (m.content.toLowerCase().includes('bear') && m.content.toLowerCase().includes('juego')) ||
-                              (m.content.toLowerCase().includes('bull') && m.content.toLowerCase().includes('juego'))
-                            )
-                          );
-                        
+                                const hasGameCreationContext = 
+                                  gameCreationState?.gameType ||
+                                  gameCreationState?.duration ||
+                                  gameCreationState?.gameLevel !== undefined ||
+                                  messages.some(m => 
+                                    m.role === 'assistant' && (
+                                      m.content.toLowerCase().includes('crear') ||
+                                      m.content.toLowerCase().includes('create') ||
+                                      m.content.toLowerCase().includes('juego') ||
+                                      m.content.toLowerCase().includes('game') ||
+                                      m.content.toLowerCase().includes('duración') ||
+                                      m.content.toLowerCase().includes('duration') ||
+                                      m.content.toLowerCase().includes('nivel') ||
+                                      m.content.toLowerCase().includes('level') ||
+                                      m.content.toLowerCase().includes('dificultad') ||
+                                      m.content.toLowerCase().includes('difficulty')
+                                    )
+                                  ) ||
+                                  messages.some(m => 
+                                    m.role === 'user' && (
+                                      m.content.toLowerCase().includes('crea') ||
+                                      m.content.toLowerCase().includes('create') ||
+                                      (m.content.toLowerCase().includes('bear') && m.content.toLowerCase().includes('juego')) ||
+                                      (m.content.toLowerCase().includes('bull') && m.content.toLowerCase().includes('juego'))
+                                    )
+                                  );
+                                
                         const isInJoinFlow = gameJoinState?.gameId !== undefined;
-                        
-                        const selectedCoinsInFlow = isInJoinFlow 
-                          ? (gameJoinState?.selectedCoins || [])
-                          : (gameCreationState?.selectedCoins || []);
-                        const captainCoinInFlow = isInJoinFlow
-                          ? gameJoinState?.captainCoin
-                          : (gameCreationState?.selectedCoins?.[0] || undefined);
-                        
-                        const isSelected = captainCoinInFlow === token.symbol ||
-                          selectedCoinsInFlow.includes(token.symbol);
-                        const isCaptainCoin = captainCoinInFlow === token.symbol;
-                        const isInActiveFlow = isInJoinFlow || hasGameCreationContext;
+                                
+                                const selectedCoinsInFlow = isInJoinFlow 
+                                  ? (gameJoinState?.selectedCoins || [])
+                                  : (gameCreationState?.selectedCoins || []);
+                                const captainCoinInFlow = isInJoinFlow
+                                  ? gameJoinState?.captainCoin
+                                  : (gameCreationState?.selectedCoins?.[0] || undefined);
+                                
+                                const isSelected = captainCoinInFlow === token.symbol ||
+                                  selectedCoinsInFlow.includes(token.symbol);
+                                const isCaptainCoin = captainCoinInFlow === token.symbol;
+                                const isInActiveFlow = isInJoinFlow || hasGameCreationContext;
 
                         const handleTokenClick = async () => {
-                          if (!isInActiveFlow) return;
+                                  if (!isInActiveFlow) return;
                           
                           if (isSelectingToken || isLoading || isJoiningGame) {
                             return;
@@ -2558,19 +2536,7 @@ export function ChatBox({
                           
                           setIsSelectingToken(true);
 
-                          const userMessage: Message = {
-                            id: `user-${Date.now()}`,
-                            role: 'user',
-                            content: token.symbol,
-                            timestamp: new Date(),
-                          };
-                          setMessages((prev) => [...prev, userMessage]);
-
-                          setTimeout(() => {
-                            scrollToBottom();
-                          }, 100);
-
-                          if (isInJoinFlow) {
+                                  if (isInJoinFlow) {
                           const currentState = gameJoinState || {};
                           let updatedState: typeof gameJoinState = { ...currentState };
 
@@ -2582,6 +2548,24 @@ export function ChatBox({
                             updatedState.captainCoin = token.symbol;
                             updatedState.selectedCoins = [];
                             updatedState.maxCoins = maxCoinsNum;
+                            
+                            setGameJoinState(updatedState);
+                            
+                            const userMessage: Message = {
+                              id: `user-${Date.now()}`,
+                              role: 'user',
+                              content: token.symbol,
+                              timestamp: new Date(),
+                            };
+                            setMessages((prev) => [...prev, userMessage]);
+
+                            setTimeout(() => {
+                              scrollToBottom();
+                            }, 100);
+
+                            setTimeout(async () => {
+                              await generateAIResponse(token.symbol, undefined, updatedState);
+                            }, 50);
                           } else {
                             const requiredCoins = maxCoinsNum - 1;
                             const currentSelected = currentState.selectedCoins || [];
@@ -2589,51 +2573,56 @@ export function ChatBox({
                             if (!currentSelected.includes(token.symbol) && currentSelected.length < requiredCoins) {
                               updatedState.selectedCoins = [...currentSelected, token.symbol];
                               updatedState.maxCoins = maxCoinsNum;
+                              
+                              setGameJoinState(updatedState);
+                              setIsSelectingToken(false);
+                              
+                              const allCoinsSelected = updatedState.selectedCoins.length >= requiredCoins;
+                              
+                              if (allCoinsSelected) {
+                                setTimeout(async () => {
+                                  await generateAIResponse('All coins selected', undefined, updatedState);
+                                }, 50);
+                              }
                             } else {
-                                setIsSelectingToken(false);
+                              setIsSelectingToken(false);
                               return;
                             }
                           }
+                                  } else if (hasGameCreationContext) {
+                                    const currentSelectedCoins = gameCreationState?.selectedCoins || [];
+                                    const maxCoinsNum = gameCreationState?.maxCoins || 2;
+                                    
+                                    let updatedSelectedCoins: string[] = [];
+                                    
+                                    if (currentSelectedCoins.length === 0) {
+                                      updatedSelectedCoins = [token.symbol];
+                                    } else {
+                                      const requiredCoins = maxCoinsNum - 1;
+                                      if (!currentSelectedCoins.includes(token.symbol) && currentSelectedCoins.length < maxCoinsNum) {
+                                        updatedSelectedCoins = [...currentSelectedCoins, token.symbol];
+                                      } else {
+                                        setIsSelectingToken(false);
+                                        return;
+                                      }
+                                    }
 
-                          setGameJoinState(updatedState);
+                                    setGameCreationState((prev) => ({
+                                      ...prev,
+                                      selectedCoins: updatedSelectedCoins,
+                                    }));
 
-                          setTimeout(async () => {
-                            await generateAIResponse(token.symbol, undefined, updatedState);
-                          }, 50);
-                          } else if (hasGameCreationContext) {
-                            const currentSelectedCoins = gameCreationState?.selectedCoins || [];
-                            const maxCoinsNum = gameCreationState?.maxCoins || 2;
-                            
-                            let updatedSelectedCoins: string[] = [];
-                            
-                            if (currentSelectedCoins.length === 0) {
-                              updatedSelectedCoins = [token.symbol];
-                            } else {
-                              const requiredCoins = maxCoinsNum - 1;
-                              if (!currentSelectedCoins.includes(token.symbol) && currentSelectedCoins.length < maxCoinsNum) {
-                                updatedSelectedCoins = [...currentSelectedCoins, token.symbol];
-                              } else {
-                                setIsSelectingToken(false);
-                                return;
-                              }
-                            }
-
-                            setGameCreationState((prev) => ({
-                              ...prev,
-                              selectedCoins: updatedSelectedCoins,
-                            }));
-
-                            setTimeout(async () => {
-                              await generateAIResponse(token.symbol);
-                            }, 50);
-                          }
+                                    setTimeout(async () => {
+                                      await generateAIResponse(token.symbol);
+                                    }, 50);
+                                  }
                         };
 
                         return (
                           <Grid item xs={6} sm={4} md={3} key={token.address}>
                             <Paper
                               elevation={isSelected ? 3 : 1}
-                              onClick={isInActiveFlow && !isSelectingToken && !isLoading && !isJoiningGame && !isCreatingGame ? handleTokenClick : undefined}
+                                      onClick={isInActiveFlow && !isSelectingToken && !isLoading && !isJoiningGame && !isCreatingGame && !isSelected ? handleTokenClick : undefined}
                               sx={(theme) => ({
                                 p: 1,
                                 borderRadius: 1.5,
@@ -2646,11 +2635,11 @@ export function ChatBox({
                                   ? `2px solid ${isCaptainCoin ? theme.palette.primary.main : theme.palette.secondary.main}`
                                   : `1px solid ${theme.palette.divider}`,
                                 transition: 'all 0.2s',
-                                cursor: (isInActiveFlow && !isSelectingToken && !isLoading && !isJoiningGame && !isCreatingGame) ? 'pointer' : 'default',
+                                        cursor: (isInActiveFlow && !isSelectingToken && !isLoading && !isJoiningGame && !isCreatingGame && !isSelected) ? 'pointer' : 'default',
                                 position: 'relative',
-                                opacity: (isSelectingToken || isLoading || isJoiningGame || isCreatingGame) ? 0.6 : 1,
-                                pointerEvents: (isSelectingToken || isLoading || isJoiningGame || isCreatingGame) ? 'none' : 'auto',
-                                '&:hover': (isInActiveFlow && !isSelectingToken && !isLoading && !isJoiningGame && !isCreatingGame) ? {
+                                        opacity: (isSelectingToken || isLoading || isJoiningGame || isCreatingGame || isSelected) ? 0.6 : 1,
+                                        pointerEvents: (isSelectingToken || isLoading || isJoiningGame || isCreatingGame || isSelected) ? 'none' : 'auto',
+                                        '&:hover': (isInActiveFlow && !isSelectingToken && !isLoading && !isJoiningGame && !isCreatingGame && !isSelected) ? {
                                   borderColor: theme.palette.primary.main,
                                   boxShadow: `0 2px 8px ${theme.palette.primary.main}40`,
                                   transform: 'translateY(-2px)',
@@ -2790,183 +2779,512 @@ export function ChatBox({
                   </Box>
                 </Paper>
               </motion.div>
+                    )}
+                    
+                    {message.availableGames && message.availableGames.length > 0 && (
+                      <motion.div
+                        key={`games-${message.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Paper
+                          elevation={3}
+                          sx={(theme) => ({
+                            p: 1.5,
+                            borderRadius: 2,
+                            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[50],
+                            border: `1px solid ${theme.palette.divider}`,
+                          })}
+                        >
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={(theme) => ({ 
+                              mb: 1, 
+                              fontWeight: 600,
+                              color: theme.palette.text.primary,
+                            })}
+                          >
+                            <FormattedMessage
+                              id="available.games"
+                              defaultMessage="Available Games"
+                            />
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 1.5,
+                              pr: 0.5,
+                            }}
+                          >
+                            {message.availableGames.map((game) => {
+                                const handleSelectGame = async () => {
+                                  if (isSelectingGameRef.current || isSelectingGame || isLoading || isJoiningGame) {
+                                    return;
+                                  }
+
+                                  isSelectingGameRef.current = true;
+                                  setIsSelectingGame(true);
+
+                                  if (!provider || !factoryAddress || !signer) {
+                                    const errorMessage: Message = {
+                                      id: `error-${Date.now()}`,
+                                      role: 'assistant',
+                                      content: formatMessage({
+                                        id: 'chat.error.wallet',
+                                        defaultMessage: 'Please connect your wallet to join the game.',
+                                      }),
+                                      timestamp: new Date(),
+                                    };
+                                    setMessages((prev) => [...prev, errorMessage]);
+                                    isSelectingGameRef.current = false;
+                                    setIsSelectingGame(false);
+                                    return;
+                                  }
+                                  try {
+                                    const { getCoinLeagueGameOnChain } = await import('../services/coinleague');
+                                    const gameOnChain = await getCoinLeagueGameOnChain(provider, factoryAddress, game.id.toString());
+                                    
+                                    if (!gameOnChain) {
+                                      throw new Error('Game not found on blockchain');
+                                    }
+
+                                    const finalChainId = game.chainId || chainId || accountChainId;
+                                    
+                                    const maxCoinsNum = typeof game.numCoins === 'string' 
+                                      ? parseInt(game.numCoins, 10) 
+                                      : (game.numCoins || 2);
+                                    const updatedGameJoinState = {
+                                      gameId: game.id,
+                                      chainId: finalChainId,
+                                      maxCoins: maxCoinsNum,
+                                      captainCoin: undefined,
+                                      selectedCoins: [],
+                                    };
+                                    setGameJoinState(updatedGameJoinState);
+                                    setIsJoinConfirmed(false);
+
+                                    const userMessage = detectedLanguage === 'spanish' 
+                                      ? `Quiero unirme al juego #${game.id}`
+                                      : detectedLanguage === 'french'
+                                      ? `Je veux rejoindre le jeu #${game.id}`
+                                      : detectedLanguage === 'german'
+                                      ? `Ich möchte Spiel #${game.id} beitreten`
+                                      : detectedLanguage === 'italian'
+                                      ? `Voglio unirmi al gioco #${game.id}`
+                                      : detectedLanguage === 'portuguese'
+                                      ? `Quero me juntar ao jogo #${game.id}`
+                                      : detectedLanguage === 'chinese'
+                                      ? `我想加入游戏 #${game.id}`
+                                      : `I want to join game #${game.id}`;
+                                    
+                                    const userMessageObj: Message = {
+                                      id: `user-${Date.now()}`,
+                                      role: 'user',
+                                      content: userMessage,
+                                      timestamp: new Date(),
+                                    };
+                                    setMessages((prev) => [...prev, userMessageObj]);
+
+                                    setTimeout(async () => {
+                                      await generateAIResponse(userMessage, undefined, updatedGameJoinState);
+                                    }, 50);
+                                  } catch (error: any) {
+                                    const errorMessage: Message = {
+                                      id: `error-${Date.now()}`,
+                                      role: 'assistant',
+                                      content: formatMessage({
+                                        id: 'chat.error.join.game.start',
+                                        defaultMessage: `Error starting join flow: ${error.message || 'Unknown error'}. Please try again.`,
+                                      }),
+                                      timestamp: new Date(),
+                                    };
+                                    setMessages((prev) => [...prev, errorMessage]);
+                                    isSelectingGameRef.current = false;
+                                    setIsSelectingGame(false);
+                                  }
+                                };
+
+                                return (
+                                  <Paper
+                                    key={game.id}
+                                    elevation={2}
+                                    sx={(theme) => ({
+                                      p: 1,
+                                      borderRadius: 1.5,
+                                      backgroundColor: theme.palette.background.paper,
+                                      border: `1px solid ${theme.palette.divider}`,
+                                      transition: 'all 0.2s',
+                                      cursor: (isSelectingGame || isLoading || isJoiningGame) ? 'not-allowed' : 'pointer',
+                                      opacity: (isSelectingGame || isLoading || isJoiningGame) ? 0.6 : 1,
+                                      pointerEvents: (isSelectingGame || isLoading || isJoiningGame) ? 'none' : 'auto',
+                                      flex: '1 1 auto',
+                                      minWidth: { xs: '100%', sm: 'calc(50% - 0.75rem)', md: 'calc(33.333% - 1rem)', lg: 'calc(25% - 1.125rem)' },
+                                      maxWidth: { xs: '100%', sm: 'calc(50% - 0.75rem)', md: 'calc(33.333% - 1rem)', lg: 'calc(25% - 1.125rem)' },
+                                      '&:hover': (isSelectingGame || isLoading || isJoiningGame) ? {} : {
+                                        borderColor: theme.palette.primary.main,
+                                        boxShadow: `0 2px 8px ${theme.palette.primary.main}20`,
+                                        transform: 'translateY(-2px)',
+                                      },
+                                    })}
+                                    onClick={handleSelectGame}
+                                  >
+                                      <Stack spacing={0.75}>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                          <Typography 
+                                            variant="subtitle2" 
+                                            fontWeight={600}
+                                            sx={{ color: theme.palette.text.primary }}
+                                          >
+                                            <FormattedMessage
+                                              id="chat.game.room.number"
+                                              defaultMessage="Room #{gameId}"
+                                              values={{ gameId: game.id }}
+                                            />
+                                          </Typography>
+                                          <Box
+                                            sx={{
+                                              px: 1,
+                                              py: 0.25,
+                                              borderRadius: 1,
+                                              backgroundColor: game.type === 'bull' 
+                                                ? theme.palette.success.main + '20'
+                                                : theme.palette.error.main + '20',
+                                              color: game.type === 'bull'
+                                                ? theme.palette.success.main
+                                                : theme.palette.error.main,
+                                            }}
+                                          >
+                                            <Typography variant="caption" fontWeight={600}>
+                                              {game.typeName}
+                                            </Typography>
+                                          </Box>
+                                        </Stack>
+                                        
+                                        <Stack spacing={0.4}>
+                                          <Stack direction="row" justifyContent="space-between">
+                                            <Typography variant="caption" color="textSecondary">
+                                              <FormattedMessage id="entry" defaultMessage="Entry" />
+                                            </Typography>
+                                            <Typography 
+                                              variant="caption" 
+                                              fontWeight={600}
+                                              sx={{ color: theme.palette.text.primary }}
+                                            >
+                                              {game.entryFormatted}
+                                            </Typography>
+                                          </Stack>
+                                          
+                                          <Stack direction="row" justifyContent="space-between">
+                                            <Typography variant="caption" color="textSecondary">
+                                              <FormattedMessage id="duration" defaultMessage="Duration" />
+                                            </Typography>
+                                            <Typography 
+                                              variant="caption" 
+                                              fontWeight={600}
+                                              sx={{ color: theme.palette.text.primary }}
+                                            >
+                                              {game.durationFormatted}
+                                            </Typography>
+                                          </Stack>
+                                          
+                                          <Stack direction="row" justifyContent="space-between">
+                                            <Typography variant="caption" color="textSecondary">
+                                              <FormattedMessage id="players" defaultMessage="Players" />
+                                            </Typography>
+                                            <Typography 
+                                              variant="caption" 
+                                              fontWeight={600}
+                                              sx={{ color: theme.palette.text.primary }}
+                                            >
+                                              {game.currentPlayers}/{game.numPlayers}
+                                            </Typography>
+                                          </Stack>
+                                          
+                                          <Stack direction="row" justifyContent="space-between">
+                                            <Typography variant="caption" color="textSecondary">
+                                              <FormattedMessage id="coins" defaultMessage="Coins" />
+                                            </Typography>
+                                            <Typography 
+                                              variant="caption" 
+                                              fontWeight={600}
+                                              sx={{ color: theme.palette.text.primary }}
+                                            >
+                                              {game.numCoins}
+                                            </Typography>
+                                          </Stack>
+                                          
+                                          {game.availableSlots > 0 && (
+                                            <Stack direction="row" justifyContent="space-between">
+                                              <Typography variant="caption" color="textSecondary">
+                                                <FormattedMessage id="available.slots" defaultMessage="Available" />
+                                              </Typography>
+                                              <Typography variant="caption" fontWeight={600} color="success.main">
+                                                <FormattedMessage
+                                                  id="chat.game.available.slots.count"
+                                                  defaultMessage="{count} {count, plural, one {slot} other {slots}}"
+                                                  values={{ count: game.availableSlots }}
+                                                />
+                                              </Typography>
+                                            </Stack>
+                                          )}
+                                        </Stack>
+                                        
+                                        <Button
+                                          variant="contained"
+                                          size="small"
+                                          fullWidth
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleSelectGame();
+                                          }}
+                                          disabled={isSelectingGame || isLoading || isJoiningGame || game.isParticipating}
+                                          sx={{
+                                            mt: 1,
+                                            color: 'white',
+                                            '&:hover': {
+                                              color: 'white',
+                                            },
+                                            '&:disabled': {
+                                              color: 'white',
+                                            },
+                                          }}
+                                        >
+                                          {game.isParticipating ? (
+                                            <FormattedMessage id="chat.game.already.participating" defaultMessage="Already Participating" />
+                                          ) : (
+                                            <FormattedMessage id="join.game" defaultMessage="Join Game" />
+                                          )}
+                                        </Button>
+                                      </Stack>
+                                    </Paper>
+                                  );
+                              })}
+                          </Box>
+                        </Paper>
+                      </motion.div>
+                    )}
               </React.Fragment>
             ))}
-            {/* Render confirmation messages after all analysis tables */}
-            <AnimatePresence>
-              {(() => {
-                const confirmationMessages = messages.filter((message) => 
-                  message.isConfirmationMessage && 
-                  message.gameJoinState &&
-                  !message.id.startsWith('join-start') && 
-                  !message.id.startsWith('token-analysis')
-                );
-                return confirmationMessages;
-              })()
-                .map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
+            </AnimatePresence>
+          <AnimatePresence>
+            {(() => {
+              const confirmationMessages = messages.filter((message) => 
+                message.isConfirmationMessage && 
+                message.gameJoinState &&
+                !message.id.startsWith('join-start') && 
+                !message.id.startsWith('token-analysis')
+              );
+              return confirmationMessages;
+            })()
+              .map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-start',
+                    }}
                   >
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-                      <Paper
-                        elevation={3}
-                        sx={(theme) => ({
-                          p: 3,
-                          maxWidth: '90%',
-                          borderRadius: 2,
-                          backgroundColor: theme.palette.mode === 'dark'
-                            ? theme.palette.grey[800]
-                            : theme.palette.grey[50],
-                          border: `2px solid ${theme.palette.primary.main}`,
+                    <Paper
+                      elevation={3}
+                      sx={(theme) => ({
+                        p: 3,
+                        maxWidth: '80%',
+                        borderRadius: 2,
+                        backgroundColor: theme.palette.mode === 'dark'
+                          ? theme.palette.grey[800]
+                          : theme.palette.grey[100],
+                        border: `2px solid ${theme.palette.primary.main}`,
+                        color: theme.palette.text.primary,
+                      })}
+                    >
+                      <Typography 
+                        variant="body1" 
+                        sx={(theme) => ({ 
+                          whiteSpace: 'pre-wrap', 
+                          mb: 2,
                           color: theme.palette.text.primary,
                         })}
                       >
-                        <Typography 
-                          variant="body1" 
-                          sx={(theme) => ({ 
-                            whiteSpace: 'pre-wrap', 
-                            mb: 2,
-                            color: theme.palette.text.primary,
-                          })}
-                        >
-                          {message.content}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={async () => {
-                              if (message.gameJoinState) {
-                                const resetState = {
-                                  gameId: message.gameJoinState.gameId,
-                                  chainId: message.gameJoinState.chainId,
-                                  maxCoins: message.gameJoinState.maxCoins,
-                                  captainCoin: undefined,
-                                  selectedCoins: [],
-                                };
-                                setGameJoinState(resetState);
+                        {message.content}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="outlined"
+                          color="secondary"
+                          onClick={async () => {
+                            if (message.gameJoinState) {
+                              setIsJoinConfirmed(false);
+                              
+                              isSelectingGameRef.current = false;
+                              setIsSelectingGame(false);
+                              
+                              setGameJoinState({
+                                captainCoin: undefined,
+                                selectedCoins: [],
+                              });
+                              
+                              // Filter out all previous confirmation messages
+                              setMessages((prev) => prev.filter((m) => !m.isConfirmationMessage));
+                              
+                              const editMessage: Message = {
+                                id: `assistant-${Date.now()}`,
+                                role: 'assistant',
+                                content: formatMessage({
+                                  id: 'chat.edit.selection',
+                                  defaultMessage: 'Let\'s start over. Please select your captain coin from the available tokens.',
+                                }),
+                                timestamp: new Date(),
+                              };
+                              setMessages((prev) => [...prev, editMessage]);
+                              
+                              const finalChainId = chainId || accountChainId;
+                              if (finalChainId) {
+                                try {
+                                  const analysisResponse = await fetch('/api/analyze-tokens', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                      text: 'Show me all available tokens with their performance data and price analysis for the last 24 hours. I need to see all tokens with their current prices and price changes.',
+                                      chainId: finalChainId,
+                                    }),
+                                  });
 
-                                const editMessage: Message = {
-                                  id: `edit-${Date.now()}`,
-                                  role: 'assistant',
-                                  content: formatMessage({
-                                    id: 'chat.edit.selection',
-                                    defaultMessage: 'No problem! Let\'s start over. Please select your captain coin again.',
-                                  }),
-                                  timestamp: new Date(),
-                                };
-                                setMessages((prev) => {
-                                  const filtered = prev.filter((msg) => !msg.isConfirmationMessage);
-                                  return [...filtered, editMessage];
-                                });
+                                  if (analysisResponse.ok) {
+                                    const analysisData = await analysisResponse.json();
 
-                                const finalChainId = chainId || accountChainId;
-                                if (finalChainId) {
-                                  const fetchTokenAnalysis = async () => {
-                                    try {
-                                      const analysisResponse = await fetch('/api/analyze-tokens', {
-                                        method: 'POST',
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                          text: 'Show me all available tokens with their performance data and price analysis for the last 24 hours. I need to see all tokens with their current prices and price changes.',
-                                          chainId: finalChainId,
+                                    if (analysisData && analysisData.tokens && Array.isArray(analysisData.tokens) && analysisData.tokens.length > 0) {
+                                      const tokenAnalysisMessage: Message = {
+                                        id: `token-analysis-${Date.now()}`,
+                                        role: 'assistant',
+                                        content: formatMessage({
+                                          id: 'chat.token.analysis.available',
+                                          defaultMessage: 'Here are the available tokens with their performance data to help you choose:',
                                         }),
+                                        timestamp: new Date(),
+                                        tokenPerformanceData: {
+                                          tokens: analysisData.tokens,
+                                          timePeriod: analysisData.timePeriod || '24h',
+                                        },
+                                      };
+                                      setMessages((prev) => {
+                                        const updated = [...prev, tokenAnalysisMessage];
+                                        return updated;
                                       });
-
-
-                                      if (analysisResponse.ok) {
-                                        const analysisData = await analysisResponse.json();
-
-                                        if (analysisData && analysisData.tokens && Array.isArray(analysisData.tokens) && analysisData.tokens.length > 0) {
-                                          const tokenAnalysisMessage: Message = {
-                                            id: `token-analysis-${Date.now()}`,
-                                            role: 'assistant',
-                                            content: formatMessage({
-                                              id: 'chat.token.analysis.available',
-                                              defaultMessage: 'Here are the available tokens with their performance data to help you choose:',
-                                            }),
-                                            timestamp: new Date(),
-                                            tokenPerformanceData: {
-                                              tokens: analysisData.tokens,
-                                              timePeriod: analysisData.timePeriod || '24h',
-                                            },
-                                          };
-                                          setMessages((prev) => {
-                                            const updated = [...prev, tokenAnalysisMessage];
-                                            return updated;
-                                          });
-                                          setTimeout(() => {
-                                            scrollToBottom();
-                                          }, 300);
-                                        } else {
-                                        }
-                                      } else {
-                                        const errorText = await analysisResponse.text();
-                                      }
-                                    } catch (error) {
+                                      setTimeout(() => {
+                                        scrollToBottom();
+                                      }, 300);
                                     }
-                                  };
-
-                                  fetchTokenAnalysis();
-                                } else {
+                                  }
+                                } catch (error) {
                                 }
                               }
-                            }}
-                          >
-                            <FormattedMessage
-                              id="chat.button.edit"
-                              defaultMessage="Edit"
-                            />
-                          </Button>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={async () => {
-                              if (message.gameJoinState) {
-                                setGameJoinState(message.gameJoinState);
-                                await executeJoinGame();
-                              }
-                            }}
-                            disabled={isJoiningGame || isLoading}
-                          >
-                            <FormattedMessage
-                              id="chat.button.confirm"
-                              defaultMessage="Confirm"
-                            />
-                          </Button>
-                        </Box>
-                      </Paper>
-                    </Box>
-                  </motion.div>
-                ))}
+                            }
+                          }}
+                        >
+                          <FormattedMessage id="edit" defaultMessage="Edit" />
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={async () => {
+                            if (message.gameJoinState && !isJoinConfirmed) {
+                              setGameJoinState(message.gameJoinState);
+                              setIsJoinConfirmed(false);
+                              await executeJoinGame();
+                            }
+                          }}
+                          disabled={isJoiningGame || isLoading || isJoinConfirmed}
+                          sx={(theme) => ({
+                            color: 'white !important',
+                            minWidth: 120,
+                            backgroundColor: isJoinConfirmed 
+                              ? theme.palette.success.main 
+                              : theme.palette.primary.main,
+                            '&:hover': {
+                              color: 'white !important',
+                              backgroundColor: isJoinConfirmed 
+                                ? theme.palette.success.dark 
+                                : theme.palette.primary.dark,
+                            },
+                            '&:disabled': {
+                              color: 'white !important',
+                              backgroundColor: isJoinConfirmed 
+                                ? theme.palette.success.main 
+                                : theme.palette.primary.main,
+                              opacity: isJoinConfirmed ? 1 : 0.7,
+                            },
+                          })}
+                        >
+                          {isJoinConfirmed ? (
+                            <FormattedMessage id="chat.confirmed" defaultMessage="Confirmed" />
+                          ) : isJoiningGame || isLoading ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box
+                                sx={{
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: '50%',
+                                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                                  borderTopColor: 'white',
+                                  animation: 'spin 1s linear infinite',
+                                  '@keyframes spin': {
+                                    '0%': { transform: 'rotate(0deg)' },
+                                    '100%': { transform: 'rotate(360deg)' },
+                                  },
+                                }}
+                              />
+                              <Typography 
+                                component="span" 
+                                sx={{ 
+                                  color: 'white !important',
+                                  fontSize: '0.875rem',
+                                }}
+                              >
+                                <FormattedMessage id="chat.processing" defaultMessage="Processing..." />
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <FormattedMessage id="confirm" defaultMessage="Confirm" />
+                          )}
+                        </Button>
+                      </Box>
+                    </Paper>
+                  </Box>
+                </motion.div>
+              ))}
             </AnimatePresence>
             {isLoading && (
               <Box
                 sx={{
                   display: 'flex',
                   justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  gap: 1.5,
+                  p: 2,
                 }}
               >
                 <Paper
                   elevation={2}
                   sx={(theme) => ({
                     p: 2,
+                    maxWidth: '80%',
                     borderRadius: 2,
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
+                    backgroundColor: theme.palette.mode === 'dark'
                         ? theme.palette.grey[800]
                         : theme.palette.grey[100],
+                    color: theme.palette.text.primary,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1.5,
+                    gap: 2,
                   })}
                 >
                   <Box
@@ -3052,4 +3370,3 @@ export function ChatBox({
     </Dialog>
   );
 }
-

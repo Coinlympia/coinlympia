@@ -181,6 +181,11 @@ function PlayersListItem({
               anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
               color="primary"
               variant="standard"
+              sx={{
+                '& .MuiBadge-badge': {
+                  color: 'white',
+                },
+              }}
             >
               <Avatar src={getIconByCoin(player.captain_coin, chainId)}>
                 <Token />
@@ -232,6 +237,11 @@ function PlayersListItem({
                   anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
                   color="primary"
                   variant="standard"
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      color: 'white',
+                    },
+                  }}
                 >
                   <Avatar
                     src={getIconByCoin(player.captain_coin, chainId)}

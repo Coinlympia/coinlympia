@@ -5,7 +5,6 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 import { ShareButton } from '@dexkit/ui/components/ShareButton';
-import TwitterIcon from '@mui/icons-material/Twitter';
 import Verified from '@mui/icons-material/Verified';
 import { IconButton, Stack, Tooltip, useTheme } from '@mui/material';
 import Image from 'next/image';
@@ -18,8 +17,6 @@ interface Props {
   discordVerified?: boolean;
   profileImageURL?: string;
   backgroundImageURL?: string;
-  bio?: string;
-  shortBio?: string;
   createdBy?: string;
   twitterUsername?: string;
 }
@@ -28,8 +25,6 @@ export function UserHeader(props: Props) {
   const {
     profileImageURL,
     backgroundImageURL,
-    bio,
-    shortBio,
     username,
     twitterVerified,
     discordVerified,
@@ -56,7 +51,7 @@ export function UserHeader(props: Props) {
           >
             <Image
               src={profileImageURL}
-              alt={bio || ' '}
+              alt={username || ' '}
               width={14 * 8}
               height={14 * 8}
             />
@@ -112,57 +107,6 @@ export function UserHeader(props: Props) {
           <ShareButton />
         </Stack>
       </Grid>
-      {shortBio && (
-        <Grid size={12}>
-          <Typography
-            sx={{
-              display: 'block',
-              textOverflow: 'ellipsis',
-              overflow: 'hidden',
-              textAlign: { xs: 'center', sm: 'left' },
-            }}
-            variant="body1"
-            component="p"
-          >
-            {shortBio}
-          </Typography>
-        </Grid>
-      )}
-
-      {bio && (
-        <Grid size={12}>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography
-              sx={{
-                display: 'block',
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                textAlign: { xs: 'center', sm: 'left' },
-              }}
-              variant="caption"
-              component="p"
-            >
-              {bio || ''}
-            </Typography>
-            {false && (
-              <Box>
-                <IconButton aria-label="twitter">
-                  <TwitterIcon />
-                </IconButton>
-                <IconButton aria-label="discord">
-                  <Image
-                    priority
-                    src="/assets/icons/discord.svg"
-                    height={24}
-                    width={24}
-                    alt="Discord"
-                  />
-                </IconButton>
-              </Box>
-            )}
-          </Stack>
-        </Grid>
-      )}
     </Grid>
   );
 }

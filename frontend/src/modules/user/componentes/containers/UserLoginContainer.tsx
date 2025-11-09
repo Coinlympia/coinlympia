@@ -6,29 +6,25 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { FormattedMessage } from 'react-intl';
 
-import { useAuth, useLoginAccountMutation } from '@dexkit/ui/hooks/auth';
 import { useAuthUserQuery } from '../../hooks';
+import { useWeb3React } from '@dexkit/wallet-connectors/hooks/useWeb3React';
 export function UserLoginContainer() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { account } = useWeb3React();
   const userQuery = useAuthUserQuery();
   const user = userQuery.data;
 
-  const loginMutation = useLoginAccountMutation();
   useEffect(() => {
-    if (isLoggedIn && user?.username && userQuery.isFetched) {
-      router.push('/u/edit');
+    if (account && userQuery.isFetched) {
+      if (user?.username) {
+        router.push(`/u/${user.username}`);
+      } else {
+        router.push('/u/edit');
+      }
+    } else if (!account) {
+      router.push('/');
     }
-
-    if (isLoggedIn && !user?.username && userQuery.isFetched) {
-      router.push('/u/create-profile');
-    }
-  }, [isLoggedIn, user, userQuery.isFetched]);
-
-  const handleLogin = async () => {
-    await loginMutation.mutateAsync();
-    userQuery.refetch();
-  };
+  }, [account, user, userQuery.isFetched, router]);
 
   return (
     <>
@@ -68,38 +64,19 @@ export function UserLoginContainer() {
           <Grid size={12}>
             <Stack spacing={2} alignItems={'center'}>
               <Typography variant="h5">
-                <FormattedMessage id="login.app" defaultMessage="Login app" />
+                <FormattedMessage id="loading.profile" defaultMessage="Loading profile..." />
               </Typography>
-              <Typography variant="body1">
-                <FormattedMessage
-                  id="login.app.to.edit.your.user.profile.you.just.need.to.sign.a.message.with.your.wallet"
-                  defaultMessage="Login to app to edit your user profile. You just need to sign a message with your wallet"
-                />
-              </Typography>
-              <Box
-                justifyContent={'center'}
-                alignItems={'center'}
-              >
-                <Button
-                  variant={'contained'}
-                  disabled={loginMutation.isLoading}
-                  startIcon={
-                    loginMutation.isLoading && (
-                      <CircularProgress></CircularProgress>
-                    )
-                  }
-                  onClick={handleLogin}
-                >
-                  {loginMutation.isLoading ? (
-                    <FormattedMessage
-                      id={'sign.message'}
-                      defaultMessage={'sign.message'}
-                    />
-                  ) : (
-                    <FormattedMessage id={'login'} defaultMessage={'Login'} />
-                  )}
-                </Button>
-              </Box>
+              {!account && (
+                <Typography variant="body1">
+                  <FormattedMessage
+                    id="please.connect.wallet"
+                    defaultMessage="Please connect your wallet to view your profile"
+                  />
+                </Typography>
+              )}
+              {account && userQuery.isLoading && (
+                <CircularProgress />
+              )}
             </Stack>
           </Grid>
         </Grid>
