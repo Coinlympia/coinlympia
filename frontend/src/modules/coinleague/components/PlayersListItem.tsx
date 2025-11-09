@@ -63,10 +63,13 @@ function PlayersListItem({
   coinFeeds,
 }: Props) {
   const profile = useMemo(() => {
-    return profiles?.find((p) =>
+    if (!profiles || profiles.length === 0) {
+      return undefined;
+    }
+    return profiles.find((p) =>
       isAddressEqual(p.address, player.player_address),
     );
-  }, [profiles, player, chainId]);
+  }, [profiles, player.player_address]);
 
   const score = useMemo(() => {
     return Number(player.score);
@@ -147,11 +150,18 @@ function PlayersListItem({
         )}
         <ListItemText
           primary={
-            <Link color="inherit" href={`/profile/${player.player_address}`}>
+            <Link 
+              color="inherit" 
+              href={
+                profile && profile?.user && profile?.user?.username && profile.user.username.trim() !== ''
+                  ? `/u/${profile.user.username}`
+                  : `/profile/${player.player_address}`
+              }
+            >
               {isAddressEqual(account, player.player_address) ? (
                 <FormattedMessage id="you" defaultMessage="You" />
-              ) : profile && profile?.user && profile?.user?.username ? (
-                profile?.user?.username
+              ) : profile && profile?.user && profile?.user?.username && profile.user.username.trim() !== '' ? (
+                profile.user.username
               ) : (
                 truncateAddress(player.player_address)
               )}

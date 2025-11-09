@@ -4975,6 +4975,9 @@
   "chat.confirmed": {
     "defaultMessage": "Bestätigt"
   },
+  "chat.game.ask.join": {
+    "defaultMessage": "Möchten Sie sich jetzt dem Spiel #{gameId} anschließen? Wenn Sie 'ja', 'beitreten', 'eingeben' oder 'bestätigen' sagen, helfe ich Ihnen bei der Auswahl Ihrer Münzen (Kapitän und andere), um dem Spiel beizutreten."
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Lade Echtzeit-Preisdaten..."
   },

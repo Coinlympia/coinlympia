@@ -4999,6 +4999,9 @@
   "chat.confirmed": {
     "defaultMessage": "Confirmado"
   },
+  "chat.game.ask.join": {
+    "defaultMessage": "¿Te gustaría unirte al juego #{gameId} ahora? Si dices 'sí', 'unirme', 'ingresar', o 'confirmar', te ayudaré a seleccionar tus monedas (capitán y otras) para unirte al juego."
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Obteniendo datos de precios en tiempo real..."
   },

@@ -39,6 +39,22 @@ IMPORTANT: When extracting maxPlayers, look for:
 - Phrases like "para dos jugadores" = 2, "for 10 players" = 10, "para 5 personas" = 5
 - Numbers in the context of player count: "2 jugadores" = 2, "ten players" = 10
 
+IMPORTANT: When extracting gameLevel, look for:
+- Level numbers: "nivel 1", "level 2", "nivel 3", etc. = 1, 2, 3, etc.
+- Level names in Spanish: "principiantes" = 1, "intermedio" = 2, "avanzado" = 3, "experto" = 4, "maestro" = 5, "gran maestro" = 6
+- Level names in English: "beginner" = 1, "intermediate" = 2, "advanced" = 3, "expert" = 4, "master" = 5, "grandmaster" = 6
+- Phrases like "de principiantes" = 1, "for beginners" = 1, "nivel principiante" = 1
+
+IMPORTANT: When extracting maxCoins, look for:
+- Numbers followed by "monedas", "coins", "tokens"
+- Phrases like "con 3 monedas" = 3, "with 3 coins" = 3, "3 monedas" = 3
+- Numbers in the context of coin count: "2 monedas" = 2, "five coins" = 5
+
+IMPORTANT: When extracting duration, look for:
+- Time units: "1 hora" = 3600, "4 horas" = 14400, "8 horas" = 28800, "24 horas" = 86400, "una semana" = 604800
+- Time units in English: "1 hour" = 3600, "4 hours" = 14400, "8 hours" = 28800, "24 hours" = 86400, "1 week" = 604800
+- Direct numbers: 3600, 14400, 28800, 86400, 604800
+
 Conversation: "${text}"
 
 Return a JSON object with all parameters that were mentioned in the conversation. Use this exact format:
@@ -72,6 +88,9 @@ Example responses:
 - "10 player game lasting 4 hours" -> {"maxPlayers": 10, "duration": 14400}
 - "Bull game for 2 players of 5 minutes" -> {"gameType": "bull", "maxPlayers": 2, "duration": 300}
 - "crea un juego bear para dos jugadores" -> {"gameType": "bear", "maxPlayers": 2}
+- "create a bull game for 10 players with 3 coins" -> {"gameType": "bull", "maxPlayers": 10, "maxCoins": 3}
+- "create a beginner bull game with 3 coins, five players, and a one-week duration" -> {"gameType": "bull", "gameLevel": 1, "maxCoins": 3, "maxPlayers": 5, "duration": 604800}
+- "create bull game" -> {"gameType": "bull"}
 - "Bull game" -> {"gameType": "bull"}
 
 IMPORTANT: Convert time units to seconds. If user says "5 minutes", return 300. If user says "1 hour", return 3600.

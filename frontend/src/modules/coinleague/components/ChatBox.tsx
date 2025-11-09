@@ -1515,300 +1515,33 @@ export function ChatBox({
         role: 'assistant',
         content: formatMessage({
           id: 'chat.game.created.onchain',
-          defaultMessage: `Game #${gameId.toNumber()} created successfully! Now joining the game...`,
+          defaultMessage: `Game #${gameId.toNumber()} created successfully!`,
         }, { gameId: gameId.toNumber() }),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, gameCreatedMessage]);
 
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      setGameCreationState({});
+      
+      setGameJoinState({
+        gameId: gameId.toNumber(),
+        chainId: chainId || accountChainId,
+        maxCoins: gameParams.maxCoins,
+      });
 
-      if (!tokenAddresses && selectedCoins.length > 0 && gameId && provider && signer && factoryAddress) {
-        const finalChainId = chainId || accountChainId;
-        if (finalChainId) {
-          try {
-            tokenAddresses = await getTokenAddressesFromSymbols(selectedCoins, finalChainId);
-          } catch (error) {
-          }
-        }
-      }
+      const askJoinMessage: Message = {
+        id: `ask-join-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.game.ask.join',
+          defaultMessage: `Would you like to join game #${gameId.toNumber()} now? If you say 'yes', 'join', 'enter', or 'confirm', I'll help you select your coins (captain and others) to join the game.`,
+        }, { gameId: gameId.toNumber() }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, askJoinMessage]);
 
-      if (tokenAddresses && gameId && provider && signer && factoryAddress) {
-        try {
-          const joiningMessage: Message = {
-            id: `joining-${Date.now()}`,
-            role: 'assistant',
-            content: formatMessage({
-              id: 'chat.game.joining',
-              defaultMessage: 'Joining the game... Please confirm the transaction in your wallet.',
-            }),
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, joiningMessage]);
-
-          const selectedCoinsArray = [
-            tokenAddresses.captainCoin,
-            ...tokenAddresses.coinFeeds
-          ];
-
-          const finalChainId = chainId || accountChainId;
-          if (!finalChainId) {
-            throw new Error('ChainId is not available');
-            }
-
-          let validatedJoinData;
-          try {
-            const joinGameResponse = await fetch('/api/join-game', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-            gameId: gameId.toNumber(),
-                selectedCoins: selectedCoinsArray,
-                chainId: finalChainId,
-            maxCoins: gameParams.maxCoins,
-              }),
-            });
-
-            if (!joinGameResponse.ok) {
-              const errorData = await joinGameResponse.json().catch(() => ({ error: 'Backend validation failed' }));
-              throw new Error(errorData.error || 'Failed to validate join game data');
-            }
-
-            validatedJoinData = await joinGameResponse.json();
-          } catch (validationError: any) {
-            throw new Error(`Failed to validate join game data: ${validationError.message || 'Unknown error'}`);
-          }
-
-          const checksummedCaptainCoin = validatedJoinData.captainCoin;
-          const checksummedFeeds = validatedJoinData.feeds;
-          const gameIdString = validatedJoinData.gameId;
-
-          const { getCoinLeagueGameOnChain } = await import('../services/coinleague');
-          const gameOnChain = await getCoinLeagueGameOnChain(provider, factoryAddress, gameIdString);
-          
-          if (!gameOnChain || !gameOnChain.amount_to_play) {
-            throw new Error('Could not get game data from blockchain. Please try again.');
-          }
-
-          const amountToPlay = BigNumber.from(gameOnChain.amount_to_play);
-
-
-          const affiliateAddress = undefined;
-
-          let joinTx;
-          try {
-            joinTx = await joinGame({
-              factoryAddress,
-              feeds: checksummedFeeds,
-              captainCoin: checksummedCaptainCoin,
-              provider: provider,
-              signer: signer,
-              id: gameIdString,
-              affiliate: affiliateAddress,
-              value: amountToPlay,
-            });
-          } catch (joinError: any) {
-            let errorMessage = 'Unknown error';
-            if (joinError?.message) {
-              errorMessage = joinError.message;
-            } else if (joinError?.reason) {
-              errorMessage = joinError.reason;
-            } else if (typeof joinError === 'string') {
-              errorMessage = joinError;
-            } else if (joinError?.error?.message) {
-              errorMessage = joinError.error.message;
-            } else if (joinError?.error?.reason) {
-              errorMessage = joinError.error.reason;
-            } else if (joinError?.toString) {
-              errorMessage = joinError.toString();
-            }
-
-            if (joinError.reason || joinError.message?.includes('Panic') || joinError.message?.includes('revert')) {
-              throw new Error(`Failed to join game: ${errorMessage}. Please check that the game exists and the token addresses are valid.`);
-            }
-            throw new Error(`Failed to join game: ${errorMessage}`);
-          }
-
-
-          const joinReceipt = await joinTx.wait();
-
-          if (!joinReceipt) {
-            throw new Error('Join transaction receipt is null - transaction may have failed');
-          }
-
-
-          if (joinReceipt.status !== 1) {
-            throw new Error(`Join transaction failed with status ${joinReceipt.status}. Transaction hash: ${joinReceipt.transactionHash}`);
-          }
-
-          if (!joinReceipt.transactionHash || joinReceipt.transactionHash.length !== 66) {
-            throw new Error(`Invalid join transaction hash: ${joinReceipt.transactionHash}`);
-          }
-
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          
-          try {
-            const finalChainId = chainId || accountChainId;
-            if (finalChainId && account) {
-              const registerResponse = await fetch('/api/register-participant', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  gameId: gameId.toNumber(),
-                  userAddress: account,
-                  captainCoin: checksummedCaptainCoin,
-                  chainId: finalChainId,
-                  coinFeeds: checksummedFeeds,
-                  affiliate: undefined,
-                }),
-              });
-
-              if (registerResponse.ok) {
-                const registerResult = await registerResponse.json();
-                if (!registerResult.success) {
-                  console.error('Failed to register participant in database:', registerResult.error);
-                  console.error('Game ID:', gameId.toNumber(), 'Chain ID:', finalChainId, 'User:', account);
-                } else {
-                  console.log('Participant registered successfully:', registerResult.participantId);
-                }
-              } else {
-                const errorData = await registerResponse.json().catch(() => ({ error: registerResponse.statusText }));
-                console.error('Failed to register participant in database:', registerResponse.status, errorData);
-                console.error('Game ID:', gameId.toNumber(), 'Chain ID:', finalChainId, 'User:', account);
-              }
-            } else {
-              console.warn('Cannot register participant: missing chainId or account', { chainId: finalChainId, account });
-            }
-          } catch (registerError) {
-            console.error('Error registering participant in database:', registerError);
-            if (registerError instanceof Error) {
-              console.error('Error stack:', registerError.stack);
-            }
-          }
-
-          await new Promise(resolve => setTimeout(resolve, 8000));
-
-          const joinSuccessMessage: Message = {
-            id: `join-success-${Date.now()}`,
-            role: 'assistant',
-            content: formatMessage({
-              id: 'chat.game.joined',
-              defaultMessage: `Successfully joined game #${gameId.toNumber()}! Redirecting to game...`,
-            }, { gameId: gameId.toNumber() }),
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, joinSuccessMessage]);
-
-          const finalChainIdForNav = chainId || accountChainId;
-          const networkSlug = getNetworkSlugFromChainId(finalChainIdForNav);
-
-          if (!networkSlug) {
-            const errorMessage: Message = {
-              id: `error-${Date.now()}`,
-              role: 'assistant',
-              content: formatMessage({
-                id: 'chat.error.network',
-                defaultMessage: `Game created and joined successfully, but could not determine network. Please navigate manually to game #${gameId.toNumber()}.`,
-              }, { gameId: gameId.toNumber() }),
-              timestamp: new Date(),
-            };
-            setMessages((prev) => [...prev, errorMessage]);
-            setIsCreatingGame(false);
-            return;
-          }
-
-          setTimeout(() => {
-            router.push(`/game/${networkSlug}/${gameId.toNumber()}`);
-          if (onClose) {
-            onClose({}, 'escapeKeyDown');
-          }
-          }, 2000);
-        } catch (joinError: any) {
-          let errorMessage = 'Unknown error';
-          if (joinError?.message) {
-            errorMessage = joinError.message;
-          } else if (joinError?.reason) {
-            errorMessage = joinError.reason;
-          } else if (typeof joinError === 'string') {
-            errorMessage = joinError;
-          } else if (joinError?.error?.message) {
-            errorMessage = joinError.error.message;
-          } else if (joinError?.error?.reason) {
-            errorMessage = joinError.error.reason;
-          } else if (joinError?.toString) {
-            errorMessage = joinError.toString();
-          }
-
-          const joinErrorMessage: Message = {
-            id: `join-error-${Date.now()}`,
-            role: 'assistant',
-            content: formatMessage({
-              id: 'chat.error.join.game',
-              defaultMessage: `Game created successfully, but there was an error joining the game: ${errorMessage}. Please join manually from the game page.`,
-            }),
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, joinErrorMessage]);
-
-          setIsCreatingGame(false);
-          return;
-        }
-      } else {
-
-        if (gameId) {
-          const finalChainIdForNav = chainId || accountChainId;
-          const networkSlug = getNetworkSlugFromChainId(finalChainIdForNav);
-
-          if (networkSlug) {
-            let errorMessage: Message;
-            
-            if (!selectedCoins || selectedCoins.length === 0) {
-              errorMessage = {
-                id: `error-${Date.now()}`,
-                role: 'assistant',
-                content: formatMessage({
-                  id: 'chat.game.created.no.tokens',
-                  defaultMessage: `Game #${gameId.toNumber()} created successfully! However, no tokens were selected during game creation. Please join manually from the game page and select your tokens.`,
-                }, { gameId: gameId.toNumber() }),
-                timestamp: new Date(),
-              };
-            } else if (!tokenAddresses) {
-              errorMessage = {
-                id: `error-${Date.now()}`,
-                role: 'assistant',
-                content: formatMessage({
-                  id: 'chat.game.created.token.addresses.error',
-                  defaultMessage: `Game #${gameId.toNumber()} created successfully! However, there was an error getting token addresses. Please join manually from the game page.`,
-                }, { gameId: gameId.toNumber() }),
-                timestamp: new Date(),
-              };
-            } else {
-              errorMessage = {
-              id: `error-${Date.now()}`,
-              role: 'assistant',
-              content: formatMessage({
-                id: 'chat.game.created.manual.join',
-                defaultMessage: `Game #${gameId.toNumber()} created successfully! Please join manually from the game page.`,
-              }, { gameId: gameId.toNumber() }),
-              timestamp: new Date(),
-            };
-            }
-            
-            setMessages((prev) => [...prev, errorMessage]);
-
-            setTimeout(() => {
-              router.push(`/game/${networkSlug}/${gameId.toNumber()}`);
-              if (onClose) {
-                onClose({}, 'escapeKeyDown');
-              }
-            }, 2000);
-          }
-        }
-      }
+      setIsCreatingGame(false);
+      return;
     } catch (error: any) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,

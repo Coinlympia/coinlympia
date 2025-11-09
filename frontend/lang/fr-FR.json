@@ -4792,6 +4792,9 @@
   "chat.confirmed": {
     "defaultMessage": "Confirmé"
   },
+  "chat.game.ask.join": {
+    "defaultMessage": "Souhaitez-vous rejoindre le jeu #{gameId} maintenant ? Si vous dites 'oui', 'rejoindre', 'entrer' ou 'confirmer', je vous aiderai à sélectionner vos pièces (capitaine et autres) pour rejoindre le jeu."
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Récupération des données de prix en temps réel..."
   },

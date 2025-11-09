@@ -65,7 +65,7 @@ import { ethers } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import { SyntheticEvent, useCallback, useMemo, useState } from 'react';
+import { SyntheticEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { generateShareLink, ShareTypes } from 'src/utils/share';
 
@@ -92,6 +92,12 @@ const CoinLeagueProfilePage: NextPage = () => {
   const { address } = router.query;
 
   const profileQuery = useProfileGame(address as string);
+
+  useEffect(() => {
+    if (profileQuery.data && profileQuery.data.user && profileQuery.data.user.username && profileQuery.data.user.username.trim() !== '') {
+      router.replace(`/u/${profileQuery.data.user.username}`);
+    }
+  }, [profileQuery.data, router]);
 
   const [showShare, setShowShare] = useState(false);
 

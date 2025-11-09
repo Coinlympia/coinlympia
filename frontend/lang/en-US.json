@@ -4975,6 +4975,9 @@
   "chat.confirmed": {
     "defaultMessage": "Confirmed"
   },
+  "chat.game.ask.join": {
+    "defaultMessage": "Would you like to join game #{gameId} now? If you say 'yes', 'join', 'enter', or 'confirm', I'll help you select your coins (captain and others) to join the game."
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Fetching real-time price data..."
   },

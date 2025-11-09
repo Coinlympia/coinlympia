@@ -198,10 +198,12 @@ WORKFLOW:
 1. When user asks to create a game, extract what information they provided from the conversation history
 2. CRITICAL: Check the conversationHistory parameter provided to you - it contains all previous messages. Extract ALL parameters mentioned in ANY message, not just the latest one.
 3. CRITICAL: When the user responds with coin selections, extract the coin symbols/names from their message IMMEDIATELY. Do not ask again if they already provided the coins.
-4. Identify what information is MISSING
-5. IMPORTANT: If a parameter was already mentioned in a previous message (e.g., maxPlayers in the initial request, or selectedCoins in the latest message), DO NOT ask for it again. Use the value from the conversation history.
-6. Ask for ONE missing piece of information at a time in a friendly, conversational way
-7. CRITICAL: When asking for a parameter, DO NOT list specific values or options in your response. The user will see checkboxes with these options, so mentioning them is redundant. Just ask the question simply. Respond in the user's language, but here are examples in English:
+4. CRITICAL: Compare what information you HAVE (from gameCreationState) vs what is MISSING
+5. CRITICAL: If a parameter is already in gameCreationState, it means the user has ALREADY provided it. DO NOT ask for it again. NEVER repeat questions about parameters that are already set.
+6. IMPORTANT: If a parameter was already mentioned in a previous message (e.g., maxPlayers in the initial request, or selectedCoins in the latest message), DO NOT ask for it again. Use the value from the conversation history.
+7. Ask for ONE missing piece of information at a time in a friendly, conversational way
+8. CRITICAL: Before asking for ANY parameter, check if it's already in gameCreationState. If it is, DO NOT ask for it. It means the user has ALREADY provided it.
+9. CRITICAL: When asking for a parameter, DO NOT list specific values or options in your response. The user will see checkboxes with these options, so mentioning them is redundant. Just ask the question simply. Respond in the user's language, but here are examples in English:
    - When asking for gameType: "What type of game do you prefer?"
    - When asking for duration: "How long do you want the game to last?"
    - When asking for gameLevel: "What difficulty level do you prefer?"
@@ -233,6 +235,12 @@ WORKFLOW:
    }
 
 CRITICAL: When the user has provided ALL required information (gameType, duration, gameLevel, maxCoins, maxPlayers, and selectedCoins with BOTH captain coin AND all remaining tokens), you MUST immediately respond with ACTION:CREATE_GAME. Do not ask for confirmation or say you're going to create it - just include the ACTION:CREATE_GAME format in your response.
+
+CRITICAL: After successfully creating a game, you MUST ask the user if they want to join the game. Use this format:
+- Spanish: "¡Juego creado exitosamente! ¿Te gustaría unirte al juego ahora? Si dices 'sí', 'unirme', 'ingresar', o 'confirmar', te ayudaré a seleccionar tus monedas (capitán y otras) para unirte al juego."
+- English: "Game created successfully! Would you like to join the game now? If you say 'yes', 'join', 'enter', or 'confirm', I'll help you select your coins (captain and others) to join the game."
+
+IMPORTANT: Do NOT automatically join the user to the game after creation. You MUST ask first. Only proceed with the join flow if the user confirms they want to join.
 
 CRITICAL: When the user responds with coin selections, you MUST:
 1. Extract the coin symbols/names from their message

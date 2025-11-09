@@ -538,13 +538,18 @@ const GAME_PROFILES_STATE = 'GAME_PROFILES_STATE';
 export function useGameProfilesState(
   addresses?: string[]
 ): ProfileContextState {
-  const query = useQuery([GAME_PROFILES_STATE, String(addresses)], async () => {
-    if (!addresses) {
-      return;
-    }
-    const profiles = await getProfiles(addresses);
-
-    return profiles;
+  const query = useQuery({
+    queryKey: [GAME_PROFILES_STATE, String(addresses)],
+    queryFn: async () => {
+      if (!addresses || addresses.length === 0) {
+        return [];
+      }
+      const profiles = await getProfiles(addresses);
+      return profiles;
+    },
+    enabled: !!addresses && addresses.length > 0,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 
   return { profiles: query.data || [] };

@@ -4792,6 +4792,9 @@
   "chat.confirmed": {
     "defaultMessage": "Bekreftet"
   },
+  "chat.game.ask.join": {
+    "defaultMessage": "Vil du bli med i spillet #{gameId} nå? Hvis du sier 'ja', 'bli med', 'gå inn' eller 'bekreft', vil jeg hjelpe deg med å velge myntene dine (kaptein og andre) for å bli med i spillet."
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Henter sanntidsprisdata..."
   },

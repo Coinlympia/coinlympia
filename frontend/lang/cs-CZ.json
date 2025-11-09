@@ -4919,6 +4919,9 @@
   "chat.confirmed": {
     "defaultMessage": "Potvrzeno"
   },
+  "chat.game.ask.join": {
+    "defaultMessage": "Chtěli byste se nyní připojit ke hře #{gameId}? Pokud řeknete 'ano', 'připojit', 'vstoupit' nebo 'potvrdit', pomohu vám vybrat vaše mince (kapitán a další) pro připojení ke hře."
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Načítám data cen v reálném čase..."
   },

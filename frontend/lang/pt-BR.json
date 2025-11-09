@@ -4989,6 +4989,9 @@
   "chat.confirmed": {
     "defaultMessage": "Confirmado"
   },
+  "chat.game.ask.join": {
+    "defaultMessage": "Gostaria de se juntar ao jogo #{gameId} agora? Se você disser 'sim', 'juntar', 'entrar' ou 'confirmar', vou ajudá-lo a selecionar suas moedas (capitão e outras) para se juntar ao jogo."
+  },
   "chat.loading.fetching": {
     "defaultMessage": "Buscando dados de preços em tempo real..."
   },

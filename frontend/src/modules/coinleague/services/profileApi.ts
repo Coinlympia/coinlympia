@@ -87,18 +87,44 @@ export const remove = (sig: string, message: string, account: string) => {
 };
 
 export const getProfile = async (address: string) => {
+  try {
+    const response = await axios.post<{ success: boolean; profiles?: GameProfile[]; error?: string }>('/api/user/all-addresses', { addresses: [address] });
+    if (response.data.success && response.data.profiles && response.data.profiles.length > 0) {
+      return response.data.profiles[0];
+    }
+  } catch (error) {
+    console.error('Error fetching profile from local API:', error);
+  }
+  
   return axios
     .get<GameProfile>(`${PROFILE_API}/address/${address}`)
-    .then((response) => response.data);
+    .then((response) => response.data)
+    .catch((error) => {
+      console.error('Error fetching profile from external API:', error);
+      throw error;
+    });
 };
 
-/**
- *
- * @param addresses list of addresses
- * @returns
- */
+  /**
+   *
+   */
 export const getProfiles = (addresses: string[]): Promise<GameProfile[]> => {
   return axios
-    .post<GameProfile[]>(`${PROFILE_API}/all/addresses`, { addresses })
-    .then((response) => response.data);
+    .post<{ success: boolean; profiles?: GameProfile[]; error?: string }>('/api/user/all-addresses', { addresses })
+    .then((response) => {
+      if (response.data.success && response.data.profiles) {
+        return response.data.profiles;
+      }
+      return [];
+    })
+    .catch((error) => {
+      console.error('Error fetching profiles from local API:', error);
+      return axios
+        .post<GameProfile[]>(`${PROFILE_API}/all/addresses`, { addresses })
+        .then((response) => response.data)
+        .catch((fallbackError) => {
+          console.error('Error fetching profiles from external API:', fallbackError);
+          return [];
+        });
+    });
 };
