@@ -87,7 +87,7 @@ class GameSyncWorker {
     const startTime = Date.now();
 
     try {
-      this.logger.debug(`Starting sync for chainId ${this.config.chainId}...`);
+      this.logger.info(`Starting sync for chainId ${this.config.chainId}...`);
 
       const result = await syncAllGamesFromGraphQL({
         chainId: this.config.chainId,
@@ -103,15 +103,21 @@ class GameSyncWorker {
       this.state.lastError = result.error || null;
 
       if (result.success) {
-        this.logger.debug(`Sync completed for chainId ${this.config.chainId}: synced=${result.synced}, updated=${result.updated}, skipped=${result.skipped}, errors=${result.errors}, duration=${duration}ms`);
+        this.logger.info(`Sync completed for chainId ${this.config.chainId}: synced=${result.synced}, updated=${result.updated}, skipped=${result.skipped}, errors=${result.errors}, duration=${duration}ms`);
       } else {
         this.logger.warn(`Sync failed for chainId ${this.config.chainId}: ${result.error}`);
+        if (result.errorsDetails && result.errorsDetails.length > 0) {
+          this.logger.warn(`Error details for chainId ${this.config.chainId}:`, result.errorsDetails.slice(0, 3));
+        }
       }
     } catch (error: any) {
       const duration = Date.now() - startTime;
       this.state.lastError = error?.message || String(error);
       this.state.errors++;
       this.logger.error(`Error in sync for chainId ${this.config.chainId} after ${duration}ms:`, error);
+      if (error?.stack) {
+        this.logger.error(`Error stack for chainId ${this.config.chainId}:`, error.stack);
+      }
     } finally {
       this.isProcessing = false;
     }

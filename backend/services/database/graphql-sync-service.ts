@@ -203,11 +203,10 @@ export async function syncAllGamesFromGraphQL(
       };
     }
 
-    if (process.env.DEBUG === 'true') {
-      console.log(`[GraphQL Sync] Starting sync for chainId ${chainId}, limit: ${limit}, status: ${status}, syncAll: ${syncAll}, updateExisting: ${updateExisting}`);
-    }
+    console.log(`[GraphQL Sync] Starting sync for chainId ${chainId}, limit: ${limit}, status: ${status}, syncAll: ${syncAll}, updateExisting: ${updateExisting}`);
 
     const graphEndpoint = getGraphEndpoint(chainId);
+    console.log(`[GraphQL Sync] GraphQL endpoint for chainId ${chainId}: ${graphEndpoint || 'NOT FOUND'}`);
     
     if (!graphEndpoint || !graphEndpoint.startsWith('http')) {
       const errorMsg = `No valid GraphQL endpoint found for chainId ${chainId}. Set GRAPHQL_ENDPOINT_${chainId} environment variable or use default endpoint.`;
@@ -223,6 +222,7 @@ export async function syncAllGamesFromGraphQL(
     }
 
     const factoryAddress = getFactoryAddress(chainId);
+    console.log(`[GraphQL Sync] Factory address for chainId ${chainId}: ${factoryAddress || 'NOT FOUND'}`);
     if (!factoryAddress) {
       const errorMsg = `No factory address found for chainId ${chainId}`;
       console.error(`[GraphQL Sync] ${errorMsg}`);
@@ -258,16 +258,20 @@ export async function syncAllGamesFromGraphQL(
       }
 
       const query = buildGamesQuery(variables);
-      if (process.env.DEBUG === 'true') {
-        console.log(`[GraphQL Sync] Fetching games batch: skip=${currentSkip}, first=${pageSize}`);
-      }
+      console.log(`[GraphQL Sync] Fetching games batch for chainId ${chainId}: skip=${currentSkip}, first=${pageSize}`);
+      console.log(`[GraphQL Sync] GraphQL query: ${query.substring(0, 200)}...`);
 
       let response: { games: any[] };
       try {
+        console.log(`[GraphQL Sync] Making GraphQL request to ${graphEndpoint}...`);
         response = await request(graphEndpoint, query, variables) as { games: any[] };
+        console.log(`[GraphQL Sync] GraphQL request successful for chainId ${chainId}`);
       } catch (error) {
+        console.error(`[GraphQL Sync] GraphQL request failed for chainId ${chainId}:`, error);
         if (error instanceof ClientError) {
           const errorMessage = error.response.errors?.[0]?.message || 'Unknown GraphQL error';
+          const fullError = JSON.stringify(error.response, null, 2);
+          console.error(`[GraphQL Sync] GraphQL error details for chainId ${chainId}:`, fullError);
           if (errorMessage.includes('removed') || errorMessage.includes('not found')) {
             console.warn(`[GraphQL Sync] GraphQL endpoint for chainId ${chainId} is not available: ${errorMessage}`);
             return {
@@ -285,9 +289,7 @@ export async function syncAllGamesFromGraphQL(
       }
 
       const games = response.games || [];
-      if (process.env.DEBUG === 'true') {
-        console.log(`[GraphQL Sync] Found ${games.length} games in this batch`);
-      }
+      console.log(`[GraphQL Sync] Found ${games.length} games in this batch for chainId ${chainId}`);
 
       if (games.length === 0) {
         hasMore = false;
@@ -329,6 +331,29 @@ export async function syncAllGamesFromGraphQL(
           })
         : [];
       const existingCreatorAddresses = new Set(existingCreators.map(c => c.address));
+
+      const zeroAddress = '0x0000000000000000000000000000000000000000';
+      if (!existingCreatorAddresses.has(zeroAddress)) {
+        const zeroAddressUser = await prisma.userAccount.findUnique({
+          where: { address: zeroAddress },
+          select: { address: true },
+        });
+        
+        if (!zeroAddressUser) {
+          try {
+            await prisma.userAccount.create({
+              data: { address: zeroAddress },
+            });
+          } catch (createError: any) {
+            if (createError?.code === 'P2002' && createError?.meta?.target?.includes('address')) {
+            } else if (process.env.DEBUG === 'true') {
+              console.warn(`[GraphQL Sync] Error creating zero address user:`, createError);
+            }
+          }
+        }
+        existingCreatorAddresses.add(zeroAddress);
+      }
+
 
       for (const graphGame of games) {
         try {
@@ -499,8 +524,9 @@ export async function syncAllGamesFromGraphQL(
       }
     }
 
-    if (totalSynced > 0 || totalUpdated > 0 || totalErrors > 0) {
-      console.log(`[GraphQL Sync] ✓ Completed: synced=${totalSynced}, updated=${totalUpdated}, skipped=${totalSkipped}, errors=${totalErrors}`);
+    console.log(`[GraphQL Sync] ✓ Completed sync for chainId ${chainId}: synced=${totalSynced}, updated=${totalUpdated}, skipped=${totalSkipped}, errors=${totalErrors}`);
+    if (allErrorsDetails.length > 0) {
+      console.warn(`[GraphQL Sync] Error details for chainId ${chainId}:`, allErrorsDetails.slice(0, 5));
     }
 
     return {
@@ -513,7 +539,13 @@ export async function syncAllGamesFromGraphQL(
     };
   } catch (error: any) {
     const errorMessage = error?.message || String(error);
-    console.error('[GraphQL Sync] ✗ Fatal error syncing games from GraphQL:', errorMessage);
+    const errorStack = error?.stack || '';
+    const chainId = syncRequest.chainId;
+    console.error(`[GraphQL Sync] ✗ Fatal error syncing games from GraphQL for chainId ${chainId}:`, errorMessage);
+    console.error(`[GraphQL Sync] Error stack:`, errorStack);
+    if (error instanceof Error) {
+      console.error(`[GraphQL Sync] Full error object:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    }
     return {
       success: false,
       error: errorMessage,

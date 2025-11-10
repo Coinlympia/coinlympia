@@ -60,6 +60,7 @@ const logger = {
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 5001;
+const STATUS_PORT = process.env.STATUS_PORT || 8080;
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -83,6 +84,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(express.static('public'));
 
 app.get('/health', (req, res) => {
   logger.info('Health check requested');
@@ -93,6 +95,7 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
   });
 });
+
 
 app.post('/api/chat-response', async (req, res) => {
   const startTime = Date.now();
@@ -413,8 +416,8 @@ if (SYNC_ENABLED) {
       .filter(id => !isNaN(id) && id > 0);
     logger.info(`Using custom chain list from GAME_SYNC_CHAINS: ${supportedChains.join(', ')}`);
   } else {
-    supportedChains = [ChainId.Polygon, ChainId.Base, ChainId.BSC];
-    logger.info(`Using default chain list (Mumbai excluded - endpoint removed): ${supportedChains.join(', ')}`);
+    supportedChains = [ChainId.Polygon];
+    logger.info(`Using default chain list: ${supportedChains.join(', ')}`);
   }
   
   supportedChains.forEach(chainId => {
@@ -549,6 +552,275 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+const statusApp = express();
+statusApp.use(express.static('public'));
+
+statusApp.get('/', async (req, res) => {
+  try {
+    const states = syncWorkerManager.getAllWorkersState();
+    const uptime = process.uptime();
+    const uptimeHours = Math.floor(uptime / 3600);
+    const uptimeMinutes = Math.floor((uptime % 3600) / 60);
+    const uptimeSeconds = Math.floor(uptime % 60);
+    
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coinlympia Backend Status</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+        .status-card h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .status-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .status-badge.online {
+            background: #10b981;
+            color: white;
+        }
+        .status-badge.offline {
+            background: #ef4444;
+            color: white;
+        }
+        .workers-section {
+            margin-top: 30px;
+        }
+        .workers-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        .worker-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .worker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .worker-header h3 {
+            color: #333;
+            font-size: 1.2em;
+        }
+        .worker-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .worker-stat {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .worker-stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .worker-stat-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+        .no-workers {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-size: 1.1em;
+        }
+        .timestamp {
+            text-align: center;
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/coinlympia-logo.png" alt="Coinlympia Logo" class="logo" />
+            <h1>Coinlympia Backend</h1>
+            <p class="subtitle">Server Status Dashboard</p>
+        </div>
+        
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>Server Status</h3>
+                <div class="value">Online</div>
+                <span class="status-badge online">Running</span>
+            </div>
+            <div class="status-card">
+                <h3>Uptime</h3>
+                <div class="value">${uptimeHours}h ${uptimeMinutes}m ${uptimeSeconds}s</div>
+            </div>
+            <div class="status-card">
+                <h3>Sync Workers</h3>
+                <div class="value">${Object.keys(states).length}</div>
+                <span class="status-badge ${SYNC_ENABLED ? 'online' : 'offline'}">${SYNC_ENABLED ? 'Enabled' : 'Disabled'}</span>
+            </div>
+            <div class="status-card">
+                <h3>Poll Interval</h3>
+                <div class="value">${Math.floor(SYNC_POLL_INTERVAL / 1000)}s</div>
+            </div>
+        </div>
+        
+        <div class="workers-section">
+            <h2>Sync Workers Status</h2>
+            ${Object.keys(states).length === 0 ? 
+                '<div class="no-workers">No sync workers are currently running.</div>' :
+                Object.entries(states).map(([chainId, state]: [string, any]) => {
+                    const chainNames: { [key: number]: string } = {
+                        137: 'Polygon',
+                        8453: 'Base',
+                        56: 'BSC',
+                        80001: 'Mumbai'
+                    };
+                    const chainName = chainNames[parseInt(chainId)] || 'Chain ' + chainId;
+                    const lastSync = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleString() : 'Never';
+                    const runningTime = state.startTime ? Math.floor((Date.now() - new Date(state.startTime).getTime()) / 1000) : 0;
+                    const runningHours = Math.floor(runningTime / 3600);
+                    const runningMinutes = Math.floor((runningTime % 3600) / 60);
+                    const errorHtml = state.lastError ? 
+                        '<div style="margin-top: 15px; padding: 10px; background: #fee; border-radius: 6px; color: #c33; font-size: 0.9em;"><strong>Last Error:</strong> ' + state.lastError + '</div>' : '';
+                    
+                    return '<div class="worker-card">' +
+                        '<div class="worker-header">' +
+                        '<h3>' + chainName + ' (Chain ID: ' + chainId + ')</h3>' +
+                        '<span class="status-badge ' + (state.isRunning ? 'online' : 'offline') + '">' +
+                        (state.isRunning ? 'Running' : 'Stopped') +
+                        '</span>' +
+                        '</div>' +
+                        '<div class="worker-stats">' +
+                        '<div class="worker-stat">' +
+                        '<div class="worker-stat-label">Games Synced</div>' +
+                        '<div class="worker-stat-value">' + (state.gamesSynced || 0) + '</div>' +
+                        '</div>' +
+                        '<div class="worker-stat">' +
+                        '<div class="worker-stat-label">Errors</div>' +
+                        '<div class="worker-stat-value">' + (state.errors || 0) + '</div>' +
+                        '</div>' +
+                        '<div class="worker-stat">' +
+                        '<div class="worker-stat-label">Last Sync</div>' +
+                        '<div class="worker-stat-value" style="font-size: 0.9em;">' + lastSync + '</div>' +
+                        '</div>' +
+                        '<div class="worker-stat">' +
+                        '<div class="worker-stat-label">Running Time</div>' +
+                        '<div class="worker-stat-value" style="font-size: 0.9em;">' + runningHours + 'h ' + runningMinutes + 'm</div>' +
+                        '</div>' +
+                        '</div>' +
+                        errorHtml +
+                        '</div>';
+                }).join('')
+            }
+        </div>
+        
+        <div class="timestamp">
+            Last updated: ${new Date().toLocaleString()}
+        </div>
+    </div>
+</body>
+</html>
+    `;
+    
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error: any) {
+    logger.error('Error generating status page:', error);
+    res.status(500).send(`
+      <html>
+        <head><title>Error</title></head>
+        <body style="font-family: sans-serif; padding: 40px; text-align: center;">
+          <h1 style="color: #ef4444;">Error</h1>
+          <p>Failed to generate status page: ${error?.message || 'Unknown error'}</p>
+        </body>
+      </html>
+    `);
+  }
+});
+
 app.listen(PORT, () => {
   logger.success(`Backend server running on http://localhost:${PORT}`);
   logger.info(`Health check: http://localhost:${PORT}/health`);
@@ -560,6 +832,11 @@ app.listen(PORT, () => {
     logger.info(`Sync Status API: http://localhost:${PORT}/api/sync/status`);
   logger.info(`Debug mode: ${process.env.DEBUG === 'true' ? 'ENABLED' : 'DISABLED'}`);
   logger.info(`CORS origin: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+});
+
+statusApp.listen(STATUS_PORT, () => {
+  logger.success(`Status page server running on http://localhost:${STATUS_PORT}`);
+  logger.info(`Status page: http://localhost:${STATUS_PORT}/`);
 });
 
 process.on('SIGTERM', () => {
