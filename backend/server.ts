@@ -8,7 +8,7 @@ import { analyzeTokens } from './services/ai/token-analysis-service';
 import { queryDatabase } from './services/database/query-service';
 import { GameSyncWorkerManager } from './services/database/game-sync-worker';
 import type { ChatRequest, DatabaseQueryRequest, FindGamesRequest, JoinGameRequest, TokenAnalysisRequest } from './types';
-import { ChainId } from '../frontend/src/modules/common/constants/enums';
+import { ChainId } from './constants/enums';
 
 config();
 

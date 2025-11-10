@@ -1,4 +1,4 @@
-import { prisma } from '../../../frontend/src/lib/prisma';
+import { prisma } from '../../lib/prisma';
 import type { DatabaseQueryRequest, DatabaseQueryResponse } from '../../types';
 
 export async function queryDatabase(

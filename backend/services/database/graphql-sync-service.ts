@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import request, { ClientError } from 'graphql-request';
 import { ethers } from 'ethers';
-import { ChainId } from '../../../frontend/src/modules/common/constants/enums';
-import { COIN_LEAGUES_FACTORY_ADDRESS_V3 } from '../../../frontend/src/modules/coinleague/constants';
+import { ChainId } from '../../constants/enums';
+import { COIN_LEAGUES_FACTORY_ADDRESS_V3 } from '../../constants/coinleague';
 import { config } from 'dotenv';
 import { syncGameDetailsFromBlockchain } from './sync-games-service';
 

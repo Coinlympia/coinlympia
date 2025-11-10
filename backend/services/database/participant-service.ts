@@ -1,4 +1,4 @@
-import { prisma } from '../../../frontend/src/lib/prisma';
+import { prisma } from '../../lib/prisma';
 import { ethers } from 'ethers';
 
 export interface RegisterParticipantRequest {

@@ -54,7 +54,7 @@ if (dbUrl) {
 }
 
 import { syncAllGamesFromGraphQL } from '../services/database/graphql-sync-service';
-import { ChainId } from '../../frontend/src/modules/common/constants/enums';
+import { ChainId } from '../constants/enums';
 
 async function main() {
   const args = process.argv.slice(2);

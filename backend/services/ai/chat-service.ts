@@ -1,8 +1,7 @@
 import OpenAI from 'openai';
-import { StableCoinToPlay } from '../../../frontend/src/modules/coinleague/constants';
-import { GameLevel } from '../../../frontend/src/modules/coinleague/constants/enums';
-import { GET_GAME_LEVEL_AMOUNTS } from '../../../frontend/src/modules/coinleague/utils/game';
-import { ChainId } from '../../../frontend/src/modules/common/constants/enums';
+import { StableCoinToPlay, GameLevel } from '../../constants/coinleague';
+import { GET_GAME_LEVEL_AMOUNTS } from '../../utils/game';
+import { ChainId } from '../../constants/enums';
 import { ethers } from 'ethers';
 import type { ChatRequest, ChatResponse } from '../../types';
 import { queryDatabase } from '../database/query-service';

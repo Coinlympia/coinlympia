@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ethers } from 'ethers';
-import { ChainId } from '../../../frontend/src/modules/common/constants/enums';
+import { ChainId } from '../../constants/enums';
 
 let prismaInstance: PrismaClient | null = null;
 

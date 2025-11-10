@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { prisma } from '../../../frontend/src/lib/prisma';
+import { prisma } from '../../lib/prisma';
 import type { TokenAnalysisRequest, TokenPerformance } from '../../types';
 
 export async function analyzeTokens(
