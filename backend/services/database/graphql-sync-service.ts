@@ -300,6 +300,36 @@ export async function syncAllGamesFromGraphQL(
       let batchErrors = 0;
       const batchErrorsDetails: string[] = [];
 
+      const validGames = games.filter(g => {
+        const intId = typeof g.intId === 'string' ? parseInt(g.intId, 10) : Number(g.intId);
+        return !isNaN(intId) && intId > 0;
+      });
+
+      const intIds = validGames.map(g => {
+        const intId = typeof g.intId === 'string' ? parseInt(g.intId, 10) : Number(g.intId);
+        return intId;
+      });
+
+      const existingGames = await prisma.game.findMany({
+        where: { intId: { in: intIds } },
+        select: { intId: true, address: true, creatorAddress: true },
+      });
+      const existingGameMap = new Map(existingGames.map(g => [g.intId, g]));
+
+      const creatorAddressesFromDb = existingGames
+        .map(g => g.creatorAddress?.toLowerCase())
+        .filter((addr): addr is string => !!addr && addr !== '0x0000000000000000000000000000000000000000');
+      
+      const uniqueCreatorAddresses = Array.from(new Set(creatorAddressesFromDb));
+
+      const existingCreators = uniqueCreatorAddresses.length > 0 
+        ? await prisma.userAccount.findMany({
+            where: { address: { in: uniqueCreatorAddresses } },
+            select: { address: true },
+          })
+        : [];
+      const existingCreatorAddresses = new Set(existingCreators.map(c => c.address));
+
       for (const graphGame of games) {
         try {
           const intId = typeof graphGame.intId === 'string' 
@@ -314,9 +344,7 @@ export async function syncAllGamesFromGraphQL(
             continue;
           }
 
-          const existingGame = await prisma.game.findUnique({
-            where: { intId },
-          });
+          const existingGame = existingGameMap.get(intId);
 
           if (existingGame && !updateExisting) {
             batchSkipped++;
@@ -381,27 +409,17 @@ export async function syncAllGamesFromGraphQL(
 
           let creatorAddress = (existingGame?.creatorAddress || '0x0000000000000000000000000000000000000000').toLowerCase();
           
-          let creatorAccount = await prisma.userAccount.findUnique({
-            where: { address: creatorAddress },
-          });
-
-          if (!creatorAccount) {
+          if (!existingCreatorAddresses.has(creatorAddress) && creatorAddress !== '0x0000000000000000000000000000000000000000') {
             try {
-              creatorAccount = await prisma.userAccount.create({
-                data: {
-                  address: creatorAddress,
-                },
+              await prisma.userAccount.create({
+                data: { address: creatorAddress },
               });
+              existingCreatorAddresses.add(creatorAddress);
             } catch (createError: any) {
               if (createError?.code === 'P2002' && createError?.meta?.target?.includes('address')) {
-                creatorAccount = await prisma.userAccount.findUnique({
-                  where: { address: creatorAddress },
-                });
-                if (!creatorAccount) {
-                  throw createError;
-                }
-              } else {
-                throw createError;
+                existingCreatorAddresses.add(creatorAddress);
+              } else if (process.env.DEBUG === 'true') {
+                console.warn(`[GraphQL Sync] Error creating creator ${creatorAddress}:`, createError);
               }
             }
           }

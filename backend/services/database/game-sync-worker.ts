@@ -127,7 +127,7 @@ export class GameSyncWorkerManager {
     this.logger = logger;
   }
 
-  startWorker(chainId: number, pollInterval: number = 30000): void {
+  startWorker(chainId: number, pollInterval: number = 120000): void {
     if (this.workers.has(chainId)) {
       this.logger.warn(`Worker for chainId ${chainId} already exists`);
       return;

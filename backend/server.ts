@@ -396,8 +396,8 @@ app.post('/api/find-games', async (req, res) => {
 
 const syncWorkerManager = new GameSyncWorkerManager(logger);
 
-const SYNC_ENABLED = process.env.GAME_SYNC_ENABLED !== 'false'; // Default to true
-const SYNC_POLL_INTERVAL = parseInt(process.env.GAME_SYNC_POLL_INTERVAL || '30000', 10); // Default 30 seconds
+const SYNC_ENABLED = process.env.GAME_SYNC_ENABLED !== 'false';
+const SYNC_POLL_INTERVAL = parseInt(process.env.GAME_SYNC_POLL_INTERVAL || '120000', 10);
 
 if (SYNC_ENABLED) {
   logger.info('Game sync workers enabled');

@@ -242,6 +242,8 @@ CRITICAL: After successfully creating a game, you MUST ask the user if they want
 
 IMPORTANT: Do NOT automatically join the user to the game after creation. You MUST ask first. Only proceed with the join flow if the user confirms they want to join.
 
+CRITICAL: When the user confirms they want to join a game they just created (by saying "yes", "join", "enter", or "confirm"), you MUST check if gameJoinState already has captainCoin and selectedCoins. If it does, DO NOT ask for tokens again. The user has ALREADY selected their tokens during game creation. Instead, proceed directly with ACTION:JOIN_EXISTING_GAME using the tokens from gameJoinState. Only ask for tokens if gameJoinState.captainCoin is missing or gameJoinState.selectedCoins is empty or incomplete.
+
 CRITICAL: When the user responds with coin selections, you MUST:
 1. Extract the coin symbols/names from their message
 2. Map them to the correct symbols from the database (e.g., "Bitcoin" -> "BTC", "Ethereum" -> "ETH")

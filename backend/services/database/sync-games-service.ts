@@ -103,55 +103,52 @@ export async function syncGameDetailsFromBlockchain(
 
     const allCoinFeeds: Map<string, { startPrice: string; endPrice: string | null; score: string | null }> = new Map();
 
+    const playerAddresses = players.map((p: any) => ethers.utils.getAddress(p.player_address).toLowerCase());
+    const existingUsers = await prisma.userAccount.findMany({
+      where: { address: { in: playerAddresses } },
+      select: { address: true },
+    });
+    const existingAddresses = new Set(existingUsers.map(u => u.address));
+    const newAddresses = playerAddresses.filter((addr: string) => !existingAddresses.has(addr));
+
+    if (newAddresses.length > 0) {
+      try {
+        await prisma.userAccount.createMany({
+          data: newAddresses.map((address: string) => ({ address })),
+          skipDuplicates: true,
+        });
+      } catch (error) {
+        if (process.env.DEBUG === 'true') {
+          console.warn('Error creating users in batch:', error);
+        }
+      }
+    }
+
+    const participantData: Array<{
+      gameId: string;
+      userAddress: string;
+      captainCoin: string;
+      affiliate: string | null;
+      index: number;
+      coinFeeds: string[];
+    }> = [];
+
     for (let index = 0; index < players.length; index++) {
       const player = players[index];
       const playerAddress = ethers.utils.getAddress(player.player_address).toLowerCase();
       const captainCoin = ethers.utils.getAddress(player.captain_coin);
       const affiliate = player.affiliate ? ethers.utils.getAddress(player.affiliate) : null;
       
-      let userAccount = await prisma.userAccount.findUnique({
-        where: { address: playerAddress },
-      });
-      
-      if (!userAccount) {
-        try {
-          userAccount = await prisma.userAccount.create({
-            data: { address: playerAddress },
-          });
-        } catch (createError: any) {
-          if (createError?.code === 'P2002' && createError?.meta?.target?.includes('address')) {
-            userAccount = await prisma.userAccount.findUnique({
-              where: { address: playerAddress },
-            });
-            if (!userAccount) {
-              throw createError;
-            }
-          } else {
-            throw createError;
-          }
-        }
-      }
-
       const playerCoinFeeds = await factoryContract.playerCoinFeeds(index, intId);
-      
-      const participant = await prisma.gameParticipant.upsert({
-        where: {
-          gameId_userAddress: {
-            gameId,
-            userAddress: playerAddress,
-          },
-        },
-        create: {
-          gameId,
-          userAddress: playerAddress,
-          captainCoin,
-          affiliate: affiliate || null,
-          championId: null,
-        },
-        update: {
-          captainCoin,
-          affiliate: affiliate || null,
-        },
+      const normalizedFeeds = playerCoinFeeds.map((feed: string) => ethers.utils.getAddress(feed));
+
+      participantData.push({
+        gameId,
+        userAddress: playerAddress,
+        captainCoin,
+        affiliate: affiliate || null,
+        index,
+        coinFeeds: normalizedFeeds,
       });
 
       if (!allCoinFeeds.has(captainCoin)) {
@@ -169,60 +166,102 @@ export async function syncGameDetailsFromBlockchain(
         }
       }
 
-      for (const feedAddress of playerCoinFeeds) {
-        const normalizedFeed = ethers.utils.getAddress(feedAddress);
-        
-        if (!allCoinFeeds.has(normalizedFeed)) {
+      for (const feedAddress of normalizedFeeds) {
+        if (!allCoinFeeds.has(feedAddress)) {
           try {
-            const coinData = await factoryContract.coins(intId, normalizedFeed);
-            allCoinFeeds.set(normalizedFeed, {
+            const coinData = await factoryContract.coins(intId, feedAddress);
+            allCoinFeeds.set(feedAddress, {
               startPrice: coinData.start_price.toString(),
               endPrice: coinData.end_price.toString() !== '0' ? coinData.end_price.toString() : null,
               score: coinData.score.toString() !== '0' ? coinData.score.toString() : null,
             });
           } catch (error) {
             if (process.env.DEBUG === 'true') {
-              console.warn(`Could not get coin data for ${normalizedFeed}:`, error);
+              console.warn(`Could not get coin data for ${feedAddress}:`, error);
             }
           }
         }
+      }
+    }
 
-        await prisma.gameParticipantCoinFeed.upsert({
+    const participants = await prisma.$transaction(
+      participantData.map(data =>
+        prisma.gameParticipant.upsert({
           where: {
-            participantId_tokenAddress: {
-              participantId: participant.id,
-              tokenAddress: normalizedFeed,
+            gameId_userAddress: {
+              gameId: data.gameId,
+              userAddress: data.userAddress,
             },
           },
           create: {
-            participantId: participant.id,
-            tokenAddress: normalizedFeed,
+            gameId: data.gameId,
+            userAddress: data.userAddress,
+            captainCoin: data.captainCoin,
+            affiliate: data.affiliate,
+            championId: null,
           },
-          update: {},
+          update: {
+            captainCoin: data.captainCoin,
+            affiliate: data.affiliate,
+          },
+        })
+      )
+    );
+
+    const participantCoinFeedsToCreate: Array<{
+      participantId: string;
+      tokenAddress: string;
+    }> = [];
+
+    for (let i = 0; i < participants.length; i++) {
+      const participant = participants[i];
+      const data = participantData[i];
+      for (const feedAddress of data.coinFeeds) {
+        participantCoinFeedsToCreate.push({
+          participantId: participant.id,
+          tokenAddress: feedAddress,
         });
       }
     }
 
-    for (const [tokenAddress, coinData] of allCoinFeeds.entries()) {
-      let gameToken = await prisma.gameToken.findUnique({
-        where: { address: tokenAddress },
+    if (participantCoinFeedsToCreate.length > 0) {
+      await prisma.gameParticipantCoinFeed.createMany({
+        data: participantCoinFeedsToCreate,
+        skipDuplicates: true,
       });
+    }
 
-      if (!gameToken) {
-        gameToken = await prisma.gameToken.create({
-          data: {
-            address: tokenAddress,
+    const tokenAddresses = Array.from(allCoinFeeds.keys());
+    const existingTokens = await prisma.gameToken.findMany({
+      where: { address: { in: tokenAddresses } },
+      select: { address: true },
+    });
+    const existingTokenAddresses = new Set(existingTokens.map(t => t.address));
+    const newTokenAddresses = tokenAddresses.filter(addr => !existingTokenAddresses.has(addr));
+
+    if (newTokenAddresses.length > 0) {
+      try {
+        await prisma.gameToken.createMany({
+          data: newTokenAddresses.map(address => ({
+            address,
             symbol: 'UNKNOWN',
             name: 'Unknown Token',
             base: 'USD',
             baseName: 'US Dollar',
             chainId,
             isActive: true,
-          },
+          })),
+          skipDuplicates: true,
         });
+      } catch (error) {
+        if (process.env.DEBUG === 'true') {
+          console.warn('Error creating tokens in batch:', error);
+        }
       }
+    }
 
-      await prisma.gameCoinFeed.upsert({
+    const coinFeedUpserts = Array.from(allCoinFeeds.entries()).map(([tokenAddress, coinData]) =>
+      prisma.gameCoinFeed.upsert({
         where: {
           gameId_tokenAddress: {
             gameId,
@@ -241,7 +280,11 @@ export async function syncGameDetailsFromBlockchain(
           endPrice: coinData.endPrice,
           score: coinData.score,
         },
-      });
+      })
+    );
+
+    if (coinFeedUpserts.length > 0) {
+      await prisma.$transaction(coinFeedUpserts);
     }
 
     if (finished && scoresDone && players.length > 0) {

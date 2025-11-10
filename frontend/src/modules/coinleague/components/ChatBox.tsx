@@ -1139,12 +1139,14 @@ export function ChatBox({
         setMessages((prev) => [...prev, errorMessage]);
       }
 
-      if (hasGameJoinContext && updatedGameJoinState.captainCoin && updatedGameJoinState.selectedCoins) {
+      if (hasGameJoinContext) {
         const maxCoinsNum = typeof updatedGameJoinState.maxCoins === 'string' 
           ? parseInt(updatedGameJoinState.maxCoins, 10) 
           : (updatedGameJoinState.maxCoins || 2);
         const requiredCoins = maxCoinsNum - 1;
-        const hasAllCoins = updatedGameJoinState.selectedCoins.length >= requiredCoins;
+        const hasAllCoins = updatedGameJoinState.captainCoin && 
+          updatedGameJoinState.selectedCoins && 
+          updatedGameJoinState.selectedCoins.length >= requiredCoins;
 
         const isReadyToJoin = userMessage.toLowerCase().includes('listo') ||
           userMessage.toLowerCase().includes('ready') ||
@@ -1155,7 +1157,8 @@ export function ChatBox({
           userMessage.toLowerCase().includes('ejecutar') ||
           userMessage.toLowerCase().includes('execute') ||
           userMessage.toLowerCase().includes('sí') ||
-          userMessage.toLowerCase().includes('yes');
+          userMessage.toLowerCase().includes('yes') ||
+          userMessage.toLowerCase().includes('enter');
 
         if (isReadyToJoin && hasAllCoins) {
           await executeJoinGame();
@@ -1521,12 +1524,23 @@ export function ChatBox({
       };
       setMessages((prev) => [...prev, gameCreatedMessage]);
 
+      const coinsToUse = gameParams.selectedCoins && gameParams.selectedCoins.length > 0
+        ? gameParams.selectedCoins
+        : (gameCreationState?.selectedCoins && gameCreationState.selectedCoins.length > 0
+          ? gameCreationState.selectedCoins
+          : []);
+      
+      const captainCoin = coinsToUse.length > 0 ? coinsToUse[0] : undefined;
+      const otherCoins = coinsToUse.length > 1 ? coinsToUse.slice(1) : [];
+      
       setGameCreationState({});
       
       setGameJoinState({
         gameId: gameId.toNumber(),
         chainId: chainId || accountChainId,
         maxCoins: gameParams.maxCoins,
+        captainCoin: captainCoin,
+        selectedCoins: otherCoins,
       });
 
       const askJoinMessage: Message = {
