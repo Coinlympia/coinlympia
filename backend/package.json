@@ -5,11 +5,12 @@
   "type": "module",
   "main": "server.ts",
   "scripts": {
-    "dev": "yarn tsx watch --clear-screen=false server.ts",
-    "build": "vite build",
-    "start": "npx tsx server.ts",
+    "dev": "tsx watch --clear-screen=false server.ts",
+    "build": "prisma generate --schema=./prisma/schema.prisma && echo 'Build complete'",
+    "start": "tsx server.ts",
     "type-check": "tsc --noEmit",
-    "sync-games": "node --import tsx scripts/sync-all-games.ts"
+    "sync-games": "node --import tsx scripts/sync-all-games.ts",
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "express": "^4.18.2",
