@@ -60,7 +60,6 @@ const logger = {
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 5001;
-const STATUS_PORT = process.env.STATUS_PORT || 8080;
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -85,6 +84,32 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
+
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Coinlympia Backend API',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    endpoints: {
+      health: '/health',
+      chat: '/api/chat-response',
+      parseGame: '/api/parse-game-request',
+      queryDatabase: '/api/query-database',
+      analyzeTokens: '/api/analyze-tokens',
+      joinGame: '/api/join-game',
+      registerParticipant: '/api/register-participant',
+      syncGames: '/api/sync-games',
+      syncGraphQL: '/api/sync/graphql',
+      findGames: '/api/find-games',
+      syncStatus: '/api/sync/status',
+      syncStart: '/api/sync/start',
+      syncStop: '/api/sync/stop',
+      syncWorker: '/api/sync/worker/:chainId',
+    },
+  });
+});
 
 app.get('/health', (req, res) => {
   logger.info('Health check requested');
@@ -547,15 +572,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.use((req, res) => {
-  logger.warn(`404 - Route not found: ${req.method} ${req.path}`);
-  res.status(404).json({ error: 'Route not found' });
-});
-
-const statusApp = express();
-statusApp.use(express.static('public'));
-
-statusApp.get('/', async (req, res) => {
+app.get('/status', async (req, res) => {
   try {
     const states = syncWorkerManager.getAllWorkersState();
     const uptime = process.uptime();
@@ -821,6 +838,11 @@ statusApp.get('/', async (req, res) => {
   }
 });
 
+app.use((req, res) => {
+  logger.warn(`404 - Route not found: ${req.method} ${req.path}`);
+  res.status(404).json({ error: 'Route not found' });
+});
+
 app.listen(PORT, () => {
   logger.success(`Backend server running on http://localhost:${PORT}`);
   logger.info(`Health check: http://localhost:${PORT}/health`);
@@ -832,11 +854,7 @@ app.listen(PORT, () => {
     logger.info(`Sync Status API: http://localhost:${PORT}/api/sync/status`);
   logger.info(`Debug mode: ${process.env.DEBUG === 'true' ? 'ENABLED' : 'DISABLED'}`);
   logger.info(`CORS origin: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-});
-
-statusApp.listen(STATUS_PORT, () => {
-  logger.success(`Status page server running on http://localhost:${STATUS_PORT}`);
-  logger.info(`Status page: http://localhost:${STATUS_PORT}/`);
+  logger.info(`Status page: http://localhost:${PORT}/status`);
 });
 
 process.on('SIGTERM', () => {
