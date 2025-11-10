@@ -40,25 +40,24 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
   }>();
   const { formatMessage } = useIntl();
   const theme = useTheme();
-  const { chainId } = useWeb3React();
+  const { chainId, account } = useWeb3React();
   const { chainId: gameChainId } = useLeaguesChainInfo();
   const activeChainId = (gameChainId || chainId) as ChainId;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!account) return;
     if (!input.trim() || isLoading) return;
 
     const userInput = input.trim();
     setInput('');
     setIsLoading(true);
 
-    // Abrir el chatbox inmediatamente - no esperar a que termine el análisis
     setChatBoxInitialMessage(userInput);
     setChatBoxInitialData(undefined);
     setShowChatBox(true);
     setIsLoading(false);
 
-    // Hacer el análisis de tokens en paralelo (sin bloquear la apertura del modal)
     if (activeChainId) {
       fetch('/api/analyze-tokens', {
         method: 'POST',
@@ -78,18 +77,14 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
         })
         .then((analysisData) => {
           if (analysisData && analysisData.tokens && analysisData.tokens.length > 0) {
-            // Actualizar el chatbox con los datos de análisis cuando estén disponibles
             setChatBoxInitialData(analysisData);
           }
         })
         .catch((error) => {
-          // Continuar sin datos de análisis si falla
           console.error('Error fetching token analysis:', error);
         });
     }
 
-    // No longer parse game request here - let the ChatBox AI handle it
-    // The AI will ask for missing information and create the game automatically when all data is collected
   };
 
   const handleCloseChatBox = () => {
@@ -109,7 +104,6 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
           initialMessage={chatBoxInitialMessage}
           initialData={chatBoxInitialData}
           chainId={activeChainId}
-          // availableTokens is no longer needed - API fetches from database
           onGameParamsExtracted={onGameParamsExtracted}
         />
       )}
@@ -132,11 +126,17 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
           },
           '@keyframes pulseGlow': {
             '0%, 100%': {
-              boxShadow: `0 0 20px ${theme.palette.primary.main}40, 0 0 40px ${theme.palette.primary.main}20`,
-              opacity: 1,
+              opacity: 0.6,
             },
             '50%': {
-              boxShadow: `0 0 30px ${theme.palette.primary.main}80, 0 0 60px ${theme.palette.primary.main}40, 0 0 80px ${theme.palette.primary.main}20`,
+              opacity: 1,
+            },
+          },
+          '@keyframes pulseGlowRed': {
+            '0%, 100%': {
+              opacity: 0.6,
+            },
+            '50%': {
               opacity: 1,
             },
           },
@@ -164,10 +164,20 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
               position: 'relative',
               borderRadius: 3,
               p: '2px',
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light}, ${theme.palette.primary.main})`,
+              background: !account
+                ? `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark}, ${theme.palette.error.main})`
+                : `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light}, ${theme.palette.primary.main})`,
               backgroundSize: '200% 200%',
-              animation: 'gradientShift 3s ease infinite, pulseGlow 2s ease-in-out infinite',
+              animation: !account
+                ? 'gradientShift 3s ease infinite, pulseGlowRed 2s ease-in-out infinite'
+                : 'gradientShift 3s ease infinite, pulseGlow 2s ease-in-out infinite',
               transition: 'all 0.3s ease',
+              boxShadow: !account
+                ? `0 0 20px ${theme.palette.error.main}40, 0 0 40px ${theme.palette.error.main}20, 0 0 60px ${theme.palette.error.main}20`
+                : `0 0 20px ${theme.palette.primary.main}40, 0 0 40px ${theme.palette.primary.main}20, 0 0 60px ${theme.palette.primary.main}20`,
+              filter: !account
+                ? `drop-shadow(0 0 10px ${theme.palette.error.main}60) drop-shadow(0 0 20px ${theme.palette.error.main}40)`
+                : `drop-shadow(0 0 10px ${theme.palette.primary.main}60) drop-shadow(0 0 20px ${theme.palette.primary.main}40)`,
               '&::before': {
                 content: '""',
                 position: 'absolute',
@@ -176,7 +186,9 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
                 right: '-2px',
                 bottom: '-2px',
                 borderRadius: 3,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light}, ${theme.palette.primary.main})`,
+                background: !account
+                  ? `linear-gradient(135deg, ${theme.palette.error.main}, ${theme.palette.error.dark}, ${theme.palette.error.main})`
+                  : `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light}, ${theme.palette.primary.main})`,
                 backgroundSize: '200% 200%',
                 animation: 'shimmer 3s linear infinite',
                 zIndex: -1,
@@ -213,25 +225,42 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
                       fullWidth
                       size="medium"
                       placeholder={formatMessage({
-                        id: 'chat.game.placeholder',
-                        defaultMessage:
-                          'e.g., "Create a bull game for 10 players with 3 coins"',
+                        id: !account ? 'chat.game.placeholder.connect.wallet' : 'chat.game.placeholder',
+                        defaultMessage: !account
+                          ? 'Please connect your wallet to use the chat'
+                          : 'e.g., "Create a bull game for 10 players with 3 coins"',
                       })}
                       value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      disabled={isLoading}
+                      onChange={(e) => {
+                        if (account) {
+                          setInput(e.target.value);
+                        }
+                      }}
+                      disabled={!account || isLoading}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
                           fontSize: '1rem',
                           py: 1,
+                          '& fieldset': {
+                            borderColor: !account 
+                              ? theme.palette.error.main 
+                              : theme.palette.mode === 'dark' 
+                                ? theme.palette.grey[600] 
+                                : theme.palette.grey[300],
+                          },
                           '&:hover': {
                             '& fieldset': {
-                              borderColor: theme.palette.primary.main,
+                              borderColor: !account 
+                                ? theme.palette.error.main 
+                                : theme.palette.primary.main,
                             },
                           },
                           '&.Mui-focused': {
                             '& fieldset': {
+                              borderColor: !account 
+                                ? theme.palette.error.main 
+                                : theme.palette.primary.main,
                               borderWidth: 2,
                             },
                           },
@@ -246,7 +275,7 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
                   >
                     <IconButton
                       type="submit"
-                      disabled={!input.trim() || isLoading}
+                      disabled={!account || !input.trim() || isLoading}
                       color="primary"
                       size="large"
                       sx={{

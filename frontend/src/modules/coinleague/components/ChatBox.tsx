@@ -1874,6 +1874,7 @@ export function ChatBox({
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (!account) return;
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -3086,16 +3087,46 @@ export function ChatBox({
                   defaultMessage: 'Type your message...',
                 })}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={() => setIsFocused(true)}
+                onChange={(e) => {
+                  if (account) {
+                    setInput(e.target.value);
+                  }
+                }}
+                onFocus={() => {
+                  if (account) {
+                    setIsFocused(true);
+                  }
+                }}
                 onBlur={() => setIsFocused(false)}
-              disabled={isLoading || isCreatingGame}
+                disabled={!account || isLoading || isCreatingGame}
+                sx={(theme) => ({
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: !account 
+                        ? theme.palette.error.main 
+                        : theme.palette.mode === 'dark' 
+                          ? theme.palette.grey[600] 
+                          : theme.palette.grey[300],
+                    },
+                    '&:hover fieldset': {
+                      borderColor: !account 
+                        ? theme.palette.error.main 
+                        : theme.palette.primary.main,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: !account 
+                        ? theme.palette.error.main 
+                        : theme.palette.primary.main,
+                      borderWidth: 2,
+                    },
+                  },
+                })}
               />
             </Box>
             <Box sx={{ pr: 2, flexShrink: 0 }}>
               <IconButton
                 type="submit"
-              disabled={!input.trim() || isLoading || isCreatingGame}
+                disabled={!account || !input.trim() || isLoading || isCreatingGame}
                 color="primary"
                 sx={(theme) => ({
                   color: '#FFFFFF',
