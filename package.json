@@ -9,7 +9,7 @@
     "frontend/packages/*"
   ],
   "scripts": {
-    "postinstall": "npm run build:packages || true",
+    "postinstall": "echo 'Skipping frontend build in backend deployment' || true",
     "build": "npm run --workspace=coinlympia-frontend build",
     "build:packages": "npm run --workspace=@dexkit/dexappbuilder-render build",
     "dev": "yarn workspace coinlympia-frontend dev",
