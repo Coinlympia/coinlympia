@@ -121,7 +121,7 @@
     "framer-motion": "^12.23.24",
     "graphql": "^16.6.0",
     "graphql-request": "^5.0.0",
-    "html-react-parser": "^3.0.4",
+    "html-react-parser": "^4.2.0",
     "jotai": "1.6.5",
     "jwt-decode": "^3.1.2",
     "merge-images": "^2.0.0",
