@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "postinstall": "npm run build:packages || true",
-    "build": "yarn workspace coinlympia-frontend build",
-    "build:packages": "yarn workspace @dexkit/dexappbuilder-render run build",
+    "build": "npm run --workspace=coinlympia-frontend build",
+    "build:packages": "npm run --workspace=@dexkit/dexappbuilder-render build",
     "dev": "yarn workspace coinlympia-frontend dev",
     "dev:backend": "yarn workspace coinlympia-backend dev",
     "dev:all": "concurrently \"yarn dev\" \"yarn dev:backend\"",
