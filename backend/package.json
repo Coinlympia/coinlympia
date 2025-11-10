@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch --clear-screen=false server.ts",
     "build": "prisma generate --schema=./prisma/schema.prisma && echo 'Build complete'",
-    "start": "npx tsx server.ts",
+    "start": "tsx server.ts",
     "type-check": "tsc --noEmit",
     "sync-games": "node --import tsx scripts/sync-all-games.ts",
     "postinstall": "prisma generate --schema=./prisma/schema.prisma"
