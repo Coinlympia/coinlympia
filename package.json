@@ -9,7 +9,7 @@
     "frontend/packages/*"
   ],
   "scripts": {
-    "postinstall": "yarn build:packages || true",
+    "postinstall": "npm run build:packages || true",
     "build": "yarn workspace coinlympia-frontend build",
     "build:packages": "yarn workspace @dexkit/dexappbuilder-render run build",
     "dev": "yarn workspace coinlympia-frontend dev",
