@@ -81,7 +81,7 @@ Return a JSON object with:
 }
 
 IMPORTANT: If the query mentions "create", "make", "game", "players", "bull", "bear" in the context of creating a game, set isAnalysisQuery to false.
-If the query mentions "performance", "best", "worst", "top", "ranking", "desempeño", "rendimiento", "mejor", "peor", "análisis", set isAnalysisQuery to true.
+If the query mentions "performance", "best", "worst", "top", "ranking", set isAnalysisQuery to true.
 
 Return only valid JSON, no additional text.`;
 
@@ -143,17 +143,17 @@ Return only valid JSON, no additional text.`;
 
       let historicalPriceStr: string | null = null;
       
-      if (timePeriod.includes('20m') || timePeriod.includes('20 minutes') || timePeriod.includes('20 minutos')) {
+      if (timePeriod.includes('20m') || timePeriod.includes('20 minutes')) {
         historicalPriceStr = token.price20m;
-      } else if (timePeriod.includes('1h') || timePeriod.includes('1 hour') || timePeriod.includes('1 hora')) {
+      } else if (timePeriod.includes('1h') || timePeriod.includes('1 hour')) {
         historicalPriceStr = token.price1h;
-      } else if (timePeriod.includes('4h') || timePeriod.includes('4 hours') || timePeriod.includes('4 horas')) {
+      } else if (timePeriod.includes('4h') || timePeriod.includes('4 hours')) {
         historicalPriceStr = token.price4h;
-      } else if (timePeriod.includes('8h') || timePeriod.includes('8 hours') || timePeriod.includes('8 horas')) {
+      } else if (timePeriod.includes('8h') || timePeriod.includes('8 hours')) {
         historicalPriceStr = token.price8h;
-      } else if (timePeriod.includes('7d') || timePeriod.includes('week') || timePeriod.includes('7 days') || timePeriod.includes('7 días')) {
+      } else if (timePeriod.includes('7d') || timePeriod.includes('week') || timePeriod.includes('7 days')) {
         historicalPriceStr = token.price7d;
-      } else if (timePeriod.includes('30d') || timePeriod.includes('month') || timePeriod.includes('30 days') || timePeriod.includes('30 días')) {
+      } else if (timePeriod.includes('30d') || timePeriod.includes('month') || timePeriod.includes('30 days')) {
         historicalPriceStr = token.price30d;
       } else {
         historicalPriceStr = token.price24h;

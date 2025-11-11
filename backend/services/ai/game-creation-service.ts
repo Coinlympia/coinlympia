@@ -30,28 +30,26 @@ The user wants to create a game with the following possible parameters:
 
 Extract ALL parameters mentioned in the conversation, even if they appear in different messages. Look through the entire conversation to find all mentioned parameters.
 
-CRITICAL: When the user says "crea un juego bull" or "create a bull game", extract gameType: "bull" immediately.
+CRITICAL: When the user says "create a bull game", extract gameType: "bull" immediately.
 CRITICAL: When the user provides a number like 3600, 14400, 28800, 86400, or 604800, extract it as duration.
-CRITICAL: When the user says "3600 segundos" or "3600 seconds", extract duration: 3600.
+CRITICAL: When the user says "3600 seconds", extract duration: 3600.
 
 IMPORTANT: When extracting maxPlayers, look for:
-- Numbers followed by "jugadores", "players", "personas", "people"
-- Phrases like "para dos jugadores" = 2, "for 10 players" = 10, "para 5 personas" = 5
-- Numbers in the context of player count: "2 jugadores" = 2, "ten players" = 10
+- Numbers followed by "players", "people"
+- Phrases like "for 10 players" = 10, "for 5 people" = 5
+- Numbers in the context of player count: "ten players" = 10
 
 IMPORTANT: When extracting gameLevel, look for:
-- Level numbers: "nivel 1", "level 2", "nivel 3", etc. = 1, 2, 3, etc.
+- Level numbers: "level 1", "level 2", "level 3", etc. = 1, 2, 3, etc.
 - Level names: "beginner" = 1, "intermediate" = 2, "advanced" = 3, "expert" = 4, "master" = 5, "grandmaster" = 6
-- Level names in English: "beginner" = 1, "intermediate" = 2, "advanced" = 3, "expert" = 4, "master" = 5, "grandmaster" = 6
-- Phrases like "de principiantes" = 1, "for beginners" = 1, "nivel principiante" = 1
+- Phrases like "for beginners" = 1
 
 IMPORTANT: When extracting maxCoins, look for:
-- Numbers followed by "monedas", "coins", "tokens"
-- Phrases like "con 3 monedas" = 3, "with 3 coins" = 3, "3 monedas" = 3
-- Numbers in the context of coin count: "2 monedas" = 2, "five coins" = 5
+- Numbers followed by "coins", "tokens"
+- Phrases like "with 3 coins" = 3
+- Numbers in the context of coin count: "five coins" = 5
 
 IMPORTANT: When extracting duration, look for:
-- Time units: "1 hora" = 3600, "4 horas" = 14400, "8 horas" = 28800, "24 horas" = 86400, "una semana" = 604800
 - Time units in English: "1 hour" = 3600, "4 hours" = 14400, "8 hours" = 28800, "24 hours" = 86400, "1 week" = 604800
 - Direct numbers: 3600, 14400, 28800, 86400, 604800
 
@@ -70,9 +68,8 @@ Return a JSON object with all parameters that were mentioned in the conversation
 IMPORTANT: When extracting selectedCoins, look for:
 - Token symbols (BTC, ETH, ADA, USDT, etc.)
 - Token names (Bitcoin, Ethereum, Cardano, Tether, etc.)
-- Phrases like "Bitcoin y Ethereum" = ["BTC", "ETH"]
 - Phrases like "BTC and ETH" = ["BTC", "ETH"]
-- Multiple tokens separated by commas, "y", "and", etc.
+- Multiple tokens separated by commas, "and", etc.
 - Map common token names to their symbols:
   * Bitcoin -> BTC
   * Ethereum -> ETH
@@ -87,14 +84,13 @@ Example responses:
 - "Bear game with 3 coins" -> {"gameType": "bear", "maxCoins": 3}
 - "10 player game lasting 4 hours" -> {"maxPlayers": 10, "duration": 14400}
 - "Bull game for 2 players of 5 minutes" -> {"gameType": "bull", "maxPlayers": 2, "duration": 300}
-- "crea un juego bear para dos jugadores" -> {"gameType": "bear", "maxPlayers": 2}
 - "create a bull game for 10 players with 3 coins" -> {"gameType": "bull", "maxPlayers": 10, "maxCoins": 3}
 - "create a beginner bull game with 3 coins, five players, and a one-week duration" -> {"gameType": "bull", "gameLevel": 1, "maxCoins": 3, "maxPlayers": 5, "duration": 604800}
 - "create bull game" -> {"gameType": "bull"}
 - "Bull game" -> {"gameType": "bull"}
 
 IMPORTANT: Convert time units to seconds. If user says "5 minutes", return 300. If user says "1 hour", return 3600.
-IMPORTANT: Extract player count from phrases like "para dos jugadores", "for two players", "para 10 jugadores", etc.
+IMPORTANT: Extract player count from phrases like "for two players", "for 10 players", etc.
 
 Return only valid JSON, no additional text.`;
 

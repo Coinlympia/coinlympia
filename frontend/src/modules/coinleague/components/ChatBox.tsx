@@ -1152,6 +1152,9 @@ export function ChatBox({
           setIsSelectingToken(false);
           return;
         } else {
+          setIsSelectingToken(false);
+          await executeJoinGame();
+          return;
         }
       }
       
@@ -1376,29 +1379,24 @@ export function ChatBox({
           throw new Error(`Invalid transaction hash: ${createGameReceipt.transactionHash}`);
         }
 
+        const { getCoinLeagueV3Contract } = await import('../services/coinLeagueFactoryV3');
+        const contract = await getCoinLeagueV3Contract({ address: factoryAddress, provider, useSigner: false, signer: undefined });
+        
+        const gameCreatedEvent = createGameReceipt.logs
+          .map((log: any) => {
+            try {
+              return contract.interface.parseLog(log);
+            } catch {
+              return null;
+            }
+          })
+          .find((parsedLog: any) => parsedLog && parsedLog.name === 'GameCreated');
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        let attempts = 0;
-        const maxAttempts = 5;
-
-        while (attempts < maxAttempts) {
-          gameId = await totalGamesMutation.mutateAsync();
-          const gameIdNumber = gameId?.toNumber();
-
-          if (gameId && !gameId.isZero() && gameIdNumber > 0) {
-            break;
-          }
-
-          attempts++;
-          if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
+        if (!gameCreatedEvent || !gameCreatedEvent.args || !gameCreatedEvent.args.id) {
+          throw new Error('Failed to get game ID from GameCreated event - game may not have been created');
         }
 
-        if (!gameId || gameId.isZero()) {
-          throw new Error('Failed to get valid game ID from blockchain after multiple attempts - game may not have been created');
-        }
+        gameId = gameCreatedEvent.args.id;
 
       } catch (createError: any) {
 

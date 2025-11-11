@@ -13,17 +13,17 @@ export async function queryDatabase(
 
     const queryLower = query.toLowerCase();
 
-    if (queryLower.includes('token') || queryLower.includes('moneda') || queryLower.includes('coin')) {
+    if (queryLower.includes('token') || queryLower.includes('coin')) {
       const where: any = { isActive: true };
 
       if (context?.chainId) {
         where.chainId = context.chainId;
       }
 
-      if (queryLower.includes('symbol') || queryLower.includes('símbolo')) {
-        const symbolMatch = query.match(/symbol[:\s]+(\w+)|símbolo[:\s]+(\w+)/i);
+      if (queryLower.includes('symbol')) {
+        const symbolMatch = query.match(/symbol[:\s]+(\w+)/i);
         if (symbolMatch) {
-          where.symbol = { contains: symbolMatch[1] || symbolMatch[2], mode: 'insensitive' };
+          where.symbol = { contains: symbolMatch[1], mode: 'insensitive' };
         }
       }
 
@@ -87,18 +87,18 @@ export async function queryDatabase(
       };
     }
 
-    if (queryLower.includes('game') || queryLower.includes('juego')) {
+    if (queryLower.includes('game')) {
       const where: any = {};
 
       if (context?.chainId) {
         where.chainId = context.chainId;
       }
 
-      if (queryLower.includes('waiting') || queryLower.includes('esperando')) {
+      if (queryLower.includes('waiting')) {
         where.status = 'Waiting';
-      } else if (queryLower.includes('started') || queryLower.includes('iniciado')) {
+      } else if (queryLower.includes('started')) {
         where.status = 'Started';
-      } else if (queryLower.includes('finished') || queryLower.includes('terminado')) {
+      } else if (queryLower.includes('finished')) {
         where.status = 'Finished';
       }
 
@@ -151,22 +151,22 @@ export async function queryDatabase(
       };
     }
 
-    if (queryLower.includes('user') || queryLower.includes('usuario') || queryLower.includes('player') || queryLower.includes('jugador')) {
+    if (queryLower.includes('user') || queryLower.includes('player')) {
       const where: any = {};
 
       if (context?.userAddress) {
         where.address = context.userAddress;
-      } else if (queryLower.includes('address') || queryLower.includes('dirección')) {
+      } else if (queryLower.includes('address')) {
         const addressMatch = query.match(/0x[a-fA-F0-9]{40}/);
         if (addressMatch) {
           where.address = addressMatch[0];
         }
       }
 
-      if (queryLower.includes('username') || queryLower.includes('nombre')) {
-        const usernameMatch = query.match(/username[:\s]+(\w+)|nombre[:\s]+(\w+)/i);
+      if (queryLower.includes('username')) {
+        const usernameMatch = query.match(/username[:\s]+(\w+)/i);
         if (usernameMatch) {
-          where.username = { contains: usernameMatch[1] || usernameMatch[2], mode: 'insensitive' };
+          where.username = { contains: usernameMatch[1], mode: 'insensitive' };
         }
       }
 
@@ -207,14 +207,14 @@ export async function queryDatabase(
       };
     }
 
-    if (queryLower.includes('ranking') || queryLower.includes('result') || queryLower.includes('resultado') || queryLower.includes('winner') || queryLower.includes('ganador')) {
+    if (queryLower.includes('ranking') || queryLower.includes('result') || queryLower.includes('winner')) {
       const where: any = {};
 
-      if (queryLower.includes('first') || queryLower.includes('primero')) {
+      if (queryLower.includes('first')) {
         where.position = 1;
-      } else if (queryLower.includes('second') || queryLower.includes('segundo')) {
+      } else if (queryLower.includes('second')) {
         where.position = 2;
-      } else if (queryLower.includes('third') || queryLower.includes('tercero')) {
+      } else if (queryLower.includes('third')) {
         where.position = 3;
       }
 
@@ -245,7 +245,7 @@ export async function queryDatabase(
           type: 'results',
           count: results.length,
           results: results.map(result => ({
-            gameId: result.game.gameId,
+            gameId: result.game.intId,
             userAddress: result.userAddress,
             username: result.user.username,
             position: result.position,

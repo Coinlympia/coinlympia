@@ -60,18 +60,18 @@ export async function generateChatResponse(
   let tokenPerformanceData: any = null;
 
   const messageLower = message.toLowerCase();
-  const isAboutCoins = messageLower.includes('coin') || messageLower.includes('moneda') || messageLower.includes('token') ||
-    messageLower.includes('seleccionar') || messageLower.includes('elegir') || messageLower.includes('choose') ||
-    messageLower.includes('select') || messageLower.includes('disponible') || messageLower.includes('available');
+  const isAboutCoins = messageLower.includes('coin') || messageLower.includes('token') ||
+    messageLower.includes('choose') ||
+    messageLower.includes('select') || messageLower.includes('available');
 
   const conversationText = conversationHistory.map(m => m.content).join(' ') + ' ' + message;
-  const isGameCreationContext = conversationText.toLowerCase().includes('crear') || conversationText.toLowerCase().includes('create') ||
-    conversationText.toLowerCase().includes('juego') || conversationText.toLowerCase().includes('game');
+  const isGameCreationContext = conversationText.toLowerCase().includes('create') ||
+    conversationText.toLowerCase().includes('game');
 
   if (isAboutCoins || isGameCreationContext || gameCreationState) {
     try {
       const dbResponse = await queryDatabase({
-        query: 'tokens coins monedas',
+        query: 'tokens coins',
         context: {
           chainId: chainId || tokenData?.chainId,
           userAddress: undefined,
@@ -82,9 +82,8 @@ export async function generateChatResponse(
         databaseData = dbResponse.data;
 
         if (databaseData.type === 'tokens' && databaseData.tokens && databaseData.tokens.length > 0) {
-          const isUserSelectingCoins = messageLower.includes('select') || messageLower.includes('elegir') ||
-            messageLower.includes('seleccionar') || messageLower.includes('choose') ||
-            (messageLower.includes('moneda') && (messageLower.includes('seleccion') || messageLower.includes('elegir'))) ||
+          const isUserSelectingCoins = messageLower.includes('select') ||
+            messageLower.includes('choose') ||
             (messageLower.includes('coin') && (messageLower.includes('select') || messageLower.includes('choose'))) ||
             (messageLower.includes('token') && (messageLower.includes('select') || messageLower.includes('choose')));
 
@@ -261,9 +260,18 @@ CRITICAL WORKFLOW FOR JOINING A GAME:
    - IMPORTANT: Check the "ALL COINS SELECTED" status above. If it says "YES - SHOW SUMMARY NOW", you MUST show the summary and ask for confirmation NOW. Do not ask for more coins.
 
 4. STEP 4 - Handle Confirmation:
-   - If user confirms (says "yes", "confirm", "ready", "join"), proceed with joining.
+   - CRITICAL: If "ALL COINS SELECTED: YES - SHOW SUMMARY NOW" appears above AND the user confirms (says "yes", "confirm", "ready", "join"), you MUST immediately respond with ACTION:JOIN_EXISTING_GAME.
+   - Format: ACTION:JOIN_EXISTING_GAME followed by JSON with gameId and chainId.
+   - Example response when user says "yes" and all coins are already selected:
+     "Perfect! Let's join the game now!"
+     ACTION:JOIN_EXISTING_GAME
+     {
+       "gameId": ${gameJoinState.gameId},
+       "chainId": ${gameJoinState.chainId || 137}
+     }
    - If user cancels (says "no", "cancel", "change"), reset the selection and start over:
      "No problem! Let's start over. Please select your captain coin again."
+   - IMPORTANT: When all coins are selected (captainCoin + selectedCoins complete) AND user confirms, you MUST generate ACTION:JOIN_EXISTING_GAME. Do NOT ask for tokens again.
 
 IMPORTANT RULES:
 - ALWAYS respond to the user's message. Never leave them without a response.
@@ -285,9 +293,13 @@ CRITICAL: When the user is in the process of joining a game (gameJoinState is se
 
 MANDATORY CHECK BEFORE RESPONDING:
 1. Look at the "ALL COINS SELECTED" status in CURRENT SELECTION STATUS above.
-2. If it says "YES - SHOW SUMMARY NOW", you MUST show the summary and ask for confirmation. Do NOT ask for more coins.
-3. If it says "NO", check how many coins are still needed and ask for those coins.
-4. Your response MUST match the current selection status.`;
+2. If "ALL COINS SELECTED: YES - SHOW SUMMARY NOW" AND the user's message is a confirmation (contains words like "yes", "confirm", "join", "ready", "enter"), you MUST immediately respond with ACTION:JOIN_EXISTING_GAME. Do NOT show summary again, do NOT ask for confirmation again. The user has confirmed, so execute the join action.
+3. If "ALL COINS SELECTED: YES - SHOW SUMMARY NOW" BUT the user has NOT confirmed yet, show the summary and ask for confirmation. Do NOT ask for more coins.
+4. If it says "NO", check how many coins are still needed and ask for those coins.
+5. Your response MUST match the current selection status.
+
+CRITICAL SPECIAL CASE - User just created a game:
+If the user just said "yes", "join", "confirm", or "ready" AND gameJoinState shows captainCoin is set AND selectedCoins is complete (${captainCoin && selectedCoins.length === maxCoins - 1 ? 'TRUE - this is the case RIGHT NOW' : 'FALSE'}), this means they want to join the game they just created with the tokens they already selected. You MUST respond with ACTION:JOIN_EXISTING_GAME immediately. Do NOT ask for token selection again.`;
     }
   }
 

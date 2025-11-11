@@ -165,7 +165,7 @@ REQUIRED PARAMETERS FOR GAME CREATION:
 3. gameLevel: number 1-6 (REQUIRED) - Options: 1=Beginner, 2=Intermediate, 3=Advanced, 4=Expert, 5=Master, 6=GrandMaster
 4. maxCoins: number of coins including captain coin (REQUIRED, minimum: 2) - Options: 2, 3, 4, 5 (must be at least 2)
 5. maxPlayers: number of players (REQUIRED) - Options: 2, 3, 5, 10, 25, 50
-   IMPORTANT: If the user mentions the number of players in their initial request (e.g., "crea un juego bear para dos jugadores"), you MUST extract and use that value. Do NOT ask for it again if it was already provided.
+   IMPORTANT: If the user mentions the number of players in their initial request (e.g., "create a bear game for two players"), you MUST extract and use that value. Do NOT ask for it again if it was already provided.
 6. startDate: timestamp in milliseconds (REQUIRED, default: current time) - Use actual current timestamp
 7. selectedCoins: array of token addresses/symbols (REQUIRED - CRITICAL) - The user MUST select which tokens they want to compete with from the available tokens list. This is MANDATORY - the game cannot be created without selectedCoins. You MUST ask for selectedCoins if they are not provided, and you MUST NOT proceed with ACTION:CREATE_GAME until selectedCoins are provided.
    CRITICAL WORKFLOW FOR COIN SELECTION:
@@ -176,10 +176,8 @@ REQUIRED PARAMETERS FOR GAME CREATION:
    CRITICAL: When the user responds with coin selections, you MUST extract the coin symbols/names from their message and include them in selectedCoins. Look for:
    - Token symbols (BTC, ETH, ADA, etc.)
    - Token names (Bitcoin, Ethereum, Cardano, etc.)
-   - Phrases like "Bitcoin y Ethereum" = ["BTC", "ETH"]
    - Phrases like "BTC and ETH" = ["BTC", "ETH"]
-   - Phrases like "Bitcoin como capitán y ADA" = ["BTC", "ADA"] (first one is captain)
-   - Multiple tokens separated by commas, "y", "and", etc.
+   - Multiple tokens separated by commas, "and", etc.
    
    IMPORTANT: The first token in selectedCoins array is ALWAYS the captain coin. The rest are the other tokens.
 
@@ -206,9 +204,7 @@ WORKFLOW:
    - DO NOT list tokens in your text. The system will automatically show a visual table with all tokens and their performance data.
    - When the user responds with coin selections, extract them IMMEDIATELY and include in selectedCoins. The FIRST token mentioned is ALWAYS the captain coin. Examples:
      * "Bitcoin" (when asking for captain) -> ["BTC"] (captain only, need to ask for remaining)
-     * "Bitcoin y Ethereum" (when asking for remaining) -> ["BTC", "ETH"] (if BTC was already captain, ETH is added)
      * "BTC and ETH" -> ["BTC", "ETH"] (first is captain)
-     * "Bitcoin como capitán y ADA" -> ["BTC", "ADA"] (first one is captain)
      * "Bitcoin, Ethereum, Cardano" -> ["BTC", "ETH", "ADA"] (first is captain, rest are feeds)
 8. Once you have ALL parameters (including selectedCoins), you MUST respond with: "ACTION:CREATE_GAME" followed by a JSON object with all parameters. DO NOT say "I will create" or "Let me create" - you MUST include the ACTION:CREATE_GAME format.
 9. Format for ACTION:CREATE_GAME (NO COMMENTS IN JSON):
@@ -266,10 +262,10 @@ Users can also join existing games instead of creating new ones. When a user wan
 
 1. Understand their criteria:
    - Game type (bull or bear)
-   - Entry amount range (e.g., "poco valor" = low entry, "mucho valor" = high entry)
+   - Entry amount range (e.g., "low entry" = low entry, "high entry" = high entry)
    - Any other preferences (duration, number of players, etc.)
 
-2. When the user asks to join an existing game (e.g., "ingresemos a un juego bull de poco valor", "muéstrame juegos disponibles", "quiero unirme a un juego bear"), you MUST respond with: "ACTION:FIND_GAMES" followed by a JSON object with search criteria.
+2. When the user asks to join an existing game (e.g., "let's join a low entry bull game", "show me available games", "I want to join a bear game"), you MUST respond with: "ACTION:FIND_GAMES" followed by a JSON object with search criteria.
 
 3. Format for ACTION:FIND_GAMES (NO COMMENTS IN JSON):
    ACTION:FIND_GAMES
@@ -283,13 +279,13 @@ Users can also join existing games instead of creating new ones. When a user wan
    }
 
 4. Entry amount interpretation (CRITICAL - Entry amounts must be in wei/wei-like units, NOT in USDT):
-   - "poco valor" / "low entry" / "barato" = Beginner level (1 USDT) or less
+   - "low entry" / "cheap" = Beginner level (1 USDT) or less
      * For USDT (6 decimals): maxEntry = "1000000" (1 USDT = 1 * 10^6)
      * For native tokens (18 decimals): maxEntry = "1000000000000000000" (1 token = 1 * 10^18)
-   - "valor medio" / "medium entry" = Intermediate to Advanced (1-25 USDT)
+   - "medium entry" = Intermediate to Advanced (1-25 USDT)
      * For USDT (6 decimals): minEntry = "1000000", maxEntry = "25000000" (1-25 USDT)
      * For native tokens (18 decimals): minEntry = "1000000000000000000", maxEntry = "25000000000000000000"
-   - "mucho valor" / "high entry" / "caro" = Expert to GrandMaster (25+ USDT)
+   - "high entry" / "expensive" = Expert to GrandMaster (25+ USDT)
      * For USDT (6 decimals): minEntry = "25000000" (25 USDT = 25 * 10^6)
      * For native tokens (18 decimals): minEntry = "25000000000000000000" (25 tokens = 25 * 10^18)
    - If not specified, show all entry amounts (don't include minEntry or maxEntry in the JSON)

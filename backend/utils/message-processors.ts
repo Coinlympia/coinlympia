@@ -81,6 +81,8 @@ export function validateGameParams(gameParams: GameParams): {
 
   if (!gameParams.selectedCoins || gameParams.selectedCoins.length === 0) {
     missingParams.push('selectedCoins');
+  } else if (gameParams.maxCoins && gameParams.selectedCoins.length !== gameParams.maxCoins) {
+    missingParams.push('selectedCoins');
   }
 
   return {
@@ -125,15 +127,13 @@ export function isAskingForCoinsInResponse(
 
   const responseLower = responseText.toLowerCase();
   return (
-    responseLower.includes('select') || responseLower.includes('elegir') ||
-    responseLower.includes('seleccionar') || responseLower.includes('choose') ||
-    (responseLower.includes('moneda') && (responseLower.includes('seleccion') || responseLower.includes('elegir'))) ||
+    responseLower.includes('select') ||
+    responseLower.includes('choose') ||
     (responseLower.includes('coin') && (responseLower.includes('select') || responseLower.includes('choose'))) ||
     (responseLower.includes('token') && (responseLower.includes('select') || responseLower.includes('choose'))) ||
-    responseLower.includes('qué monedas') || responseLower.includes('which coins') ||
-    responseLower.includes('qué tokens') || responseLower.includes('which tokens') ||
-    responseLower.includes('selecciona') || responseLower.includes('elige') ||
-    responseLower.includes('por favor, elige') || responseLower.includes('please select')
+    responseLower.includes('which coins') ||
+    responseLower.includes('which tokens') ||
+    responseLower.includes('please select')
   );
 }
 
