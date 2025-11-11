@@ -108,7 +108,6 @@ export function ChatBox({
   const [tokenAnalysisData, setTokenAnalysisData] = useState<{
     [timeframe: string]: { tokens: TokenPerformance[]; timePeriod: string };
   }>({});
-  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const router = useRouter();
   const { provider, chainId: accountChainId, signer, account } = useWeb3React();
   const factoryAddress = useFactoryAddress();
@@ -289,75 +288,10 @@ export function ChatBox({
     }
   }, [initialData, initialMessage, hasGeneratedInitialResponse, messages]);
 
-  const detectLanguage = (text: string): string => {
-    const lowerText = text.toLowerCase();
-    
-    const spanishPatterns = [
-      /\b(uneme|únete|unirse|unir|crear|juego|juegos|moneda|monedas|capitán|seleccionar|elegir|disponible|disponibles|bajo|baja|valor|alto|alta|bear|bull|alcista|bajista|duracion|duración|jugadores|nivel|principiante|intermedio|avanzado|expert|maestro|grandmaster|confirmar|listo|sí|no|cancelar|cambiar|editar|empezar|de nuevo|restante|más|adicional|completar|tabla|disponibles|selecciona|elige|cuántas|cuántos|cuánto|tiempo|días|semana|hora|horas|minutos|segundos|personas|entrada|sala|espacios|espacio|poco|mucho|medio|barato|caro|ingresemos|muéstrame|quiero|unirme|a|un|una|el|la|los|las|de|del|en|con|por|para|que|es|son|está|están|tiene|tienen|hacer|hacerlo|hacerla|hacerlos|hacerlas|quiero|quieres|quiere|queremos|quieren|puedo|puedes|puede|podemos|pueden|necesito|necesitas|necesita|necesitamos|necesitan|deseo|deseas|desea|deseamos|desean|prefiero|prefieres|prefiere|preferimos|prefieren)\b/i,
-      /\b(el|la|los|las|un|una|unos|unas|de|del|en|con|por|para|que|es|son|está|están|tiene|tienen|hacer|hacerlo|hacerla|hacerlos|hacerlas|quiero|quieres|quiere|queremos|quieren|puedo|puedes|puede|podemos|pueden|necesito|necesitas|necesita|necesitamos|necesitan|deseo|deseas|desea|deseamos|desean|prefiero|prefieres|prefiere|preferimos|prefieren)\b/i,
-    ];
-    
-    const chinesePatterns = [
-      /[\u4e00-\u9fff]/,
-      /\b(加入|创建|游戏|硬币|选择|可用|低|高|熊|牛|持续时间|玩家|级别|初学者|中级|高级|专家|大师|确认|准备|是|否|取消|更改|编辑|重新开始|剩余|更多|额外|完成|表格|可用|选择|选择|多少|多少|多少|时间|天|周|小时|小时|分钟|秒|人|入口|房间|空间|空间)\b/i,
-    ];
-    
-    const frenchPatterns = [
-      /\b(rejoindre|créer|jeu|pièce|sélectionner|choisir|disponible|bas|valeur|haut|ours|taureau|durée|joueurs|niveau|débutant|intermédiaire|avancé|expert|maître|grand maître|confirmer|prêt|oui|non|annuler|changer|modifier|recommencer|restant|plus|supplémentaire|compléter|tableau|disponibles|sélectionne|choisir|combien|combien|combien|temps|jours|semaine|heure|heures|minutes|secondes|personnes|entrée|salle|espaces|espace)\b/i,
-      /\b(le|la|les|un|une|des|de|du|en|avec|par|pour|que|est|sont|est|sont|a|ont|faire|faire|veux|veux|veut|voulons|veulent|peux|peux|peut|pouvons|peuvent|besoin|besoin|besoin|besoin|besoin|souhaite|souhaite|souhaite|souhaitons|souhaitent|préfère|préfère|préfère|préférons|préfèrent)\b/i,
-    ];
-    
-    const germanPatterns = [
-      /\b(beitreten|erstellen|spiel|münze|auswählen|wählen|verfügbar|niedrig|wert|hoch|bär|stier|dauer|spieler|niveau|anfänger|mittelstufe|fortgeschritten|experte|meister|großmeister|bestätigen|bereit|ja|nein|abbrechen|ändern|bearbeiten|neu starten|verbleibend|mehr|zusätzlich|abschließen|tabelle|verfügbar|auswählen|wählen|wie viele|wie viele|wie viele|zeit|tage|woche|stunde|stunden|minuten|sekunden|personen|eintritt|raum|räume|raum)\b/i,
-      /\b(der|die|das|ein|eine|eines|von|dem|im|mit|durch|für|dass|ist|sind|ist|sind|hat|haben|machen|machen|will|will|will|wollen|wollen|kann|kann|kann|können|können|brauche|brauchst|braucht|brauchen|brauchen|möchte|möchtest|möchte|möchten|möchten|bevorzuge|bevorzugst|bevorzugt|bevorzugen|bevorzugen)\b/i,
-    ];
-    
-    const italianPatterns = [
-      /\b(unisciti|creare|gioco|moneta|selezionare|scegliere|disponibile|basso|valore|alto|orso|toro|durata|giocatori|livello|principiante|intermedio|avanzato|esperto|maestro|grande maestro|confermare|pronto|sì|no|annullare|cambiare|modificare|ricominciare|rimanente|più|aggiuntivo|completare|tabella|disponibili|seleziona|scegli|quante|quanti|quanto|tempo|giorni|settimana|ora|ore|minuti|secondi|persone|entrata|sala|spazi|spazio)\b/i,
-      /\b(il|la|lo|gli|le|un|una|uno|dei|degli|delle|di|del|dello|della|dei|degli|delle|in|con|per|che|è|sono|è|sono|ha|hanno|fare|fare|voglio|vuoi|vuole|vogliamo|vogliono|posso|puoi|può|possiamo|possono|ho bisogno|hai bisogno|ha bisogno|abbiamo bisogno|hanno bisogno|desidero|desideri|desidera|desideriamo|desiderano|preferisco|preferisci|preferisce|preferiamo|preferiscono)\b/i,
-    ];
-    
-    const portuguesePatterns = [
-      /\b(unir|juntar|criar|juego|moeda|selecionar|escolher|disponível|baixo|valor|alto|urso|touro|duração|jogadores|nível|principiante|intermediário|avançado|especialista|mestre|grande mestre|confirmar|pronto|sim|não|cancelar|alterar|editar|começar de novo|restante|mais|adicional|completar|tabela|disponíveis|seleciona|escolhe|quantas|quantos|quanto|tempo|dias|semana|hora|horas|minutos|segundos|pessoas|entrada|sala|espaços|espaço)\b/i,
-      /\b(o|a|os|as|um|uma|uns|umas|de|do|da|dos|das|em|com|por|para|que|é|são|está|estão|tem|têm|fazer|fazer|quero|queres|quer|queremos|querem|posso|podes|pode|podemos|podem|preciso|precisas|precisa|precisamos|precisam|desejo|desejas|deseja|desejamos|desejam|prefiro|preferes|prefere|preferimos|preferem)\b/i,
-    ];
-    
-    if (chinesePatterns.some(pattern => pattern.test(text))) {
-      return 'chinese';
-    }
-    
-    if (spanishPatterns.some(pattern => pattern.test(text))) {
-      return 'spanish';
-    }
-    
-    if (frenchPatterns.some(pattern => pattern.test(text))) {
-      return 'french';
-    }
-    
-    if (germanPatterns.some(pattern => pattern.test(text))) {
-      return 'german';
-    }
-    
-    if (italianPatterns.some(pattern => pattern.test(text))) {
-      return 'italian';
-    }
-    
-    if (portuguesePatterns.some(pattern => pattern.test(text))) {
-      return 'portuguese';
-    }
-    
-    return 'english';
-  };
 
   const generateAIResponse = async (userMessage: string, tokenData?: { tokens: TokenPerformance[]; timePeriod: string }, overrideGameJoinState?: typeof gameJoinState) => {
     setIsLoading(true);
     try {
-      if (!detectedLanguage || messages.length === 0) {
-        const lang = detectLanguage(userMessage);
-        setDetectedLanguage(lang);
-        console.log('[ChatBox] Detected language:', lang);
-      }
-      
       const currentGameCreationState = gameCreationStateRef.current;
       const currentGameJoinState = overrideGameJoinState !== undefined ? overrideGameJoinState : gameJoinState;
       
@@ -726,7 +660,7 @@ export function ChatBox({
           chainId: chainId,
           gameCreationState: updatedGameCreationState,
           gameJoinState: hasGameJoinContext ? updatedGameJoinState : undefined,
-          language: detectedLanguage || 'english',
+          language: 'english',
         }),
       });
 
@@ -1697,19 +1631,7 @@ export function ChatBox({
     };
     setGameJoinState(updatedGameJoinState);
 
-    const userMessage = detectedLanguage === 'spanish' 
-      ? `Quiero unirme al juego #${joinGameParams.gameId}`
-      : detectedLanguage === 'french'
-      ? `Je veux rejoindre le jeu #${joinGameParams.gameId}`
-      : detectedLanguage === 'german'
-      ? `Ich möchte Spiel #${joinGameParams.gameId} beitreten`
-      : detectedLanguage === 'italian'
-      ? `Voglio unirmi al gioco #${joinGameParams.gameId}`
-      : detectedLanguage === 'portuguese'
-      ? `Quero me juntar ao jogo #${joinGameParams.gameId}`
-      : detectedLanguage === 'chinese'
-      ? `我想加入游戏 #${joinGameParams.gameId}`
-      : `I want to join game #${joinGameParams.gameId}`;
+    const userMessage = `I want to join game #${joinGameParams.gameId}`;
     
     const userMessageObj: Message = {
       id: `user-${Date.now()}`,
@@ -2614,19 +2536,7 @@ export function ChatBox({
                                     setGameJoinState(updatedGameJoinState);
                                     setIsJoinConfirmed(false);
 
-                                    const userMessage = detectedLanguage === 'spanish' 
-                                      ? `Quiero unirme al juego #${game.id}`
-                                      : detectedLanguage === 'french'
-                                      ? `Je veux rejoindre le jeu #${game.id}`
-                                      : detectedLanguage === 'german'
-                                      ? `Ich möchte Spiel #${game.id} beitreten`
-                                      : detectedLanguage === 'italian'
-                                      ? `Voglio unirmi al gioco #${game.id}`
-                                      : detectedLanguage === 'portuguese'
-                                      ? `Quero me juntar ao jogo #${game.id}`
-                                      : detectedLanguage === 'chinese'
-                                      ? `我想加入游戏 #${game.id}`
-                                      : `I want to join game #${game.id}`;
+                                    const userMessage = `I want to join game #${game.id}`;
                                     
                                     const userMessageObj: Message = {
                                       id: `user-${Date.now()}`,

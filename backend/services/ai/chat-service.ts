@@ -18,7 +18,7 @@ import {
 export async function generateChatResponse(
   request: ChatRequest
 ): Promise<ChatResponse> {
-  const { message, conversationHistory, tokenData, chainId, gameCreationState, gameJoinState, language } = request;
+  const { message, conversationHistory, tokenData, chainId, gameCreationState, gameJoinState } = request;
   
   if (gameCreationState && Object.keys(gameCreationState).length > 0) {
     console.log('[Chat Service] Received gameCreationState:', JSON.stringify(gameCreationState, null, 2));
@@ -125,7 +125,7 @@ export async function generateChatResponse(
     coinToPlaySymbol,
     databaseData,
     tokenData || undefined,
-    language || 'english'
+    'english'
   );
 
   if (gameCreationState) {
@@ -242,47 +242,40 @@ CRITICAL WORKFLOW FOR JOINING A GAME:
 1. STEP 1 - Captain Coin Selection:
    - If captainCoin is NOT set, you MUST ask the user to select their captain coin first.
    - Explain that the captain coin is the main token they're betting on.
-   - CRITICAL: You MUST respond in the detected language: "${language || 'english'}". Do NOT use English if the user is speaking Spanish, Chinese, French, etc.
-   - Example in Spanish: "¡Perfecto! Quieres unirte al juego #${gameJoinState.gameId || 'X'}. Primero, necesito que selecciones tu moneda capitán. Por favor, dime qué token quieres usar como tu moneda capitán."
-   - Example in English: "Perfect! You want to join game #${gameJoinState.gameId || 'X'}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin."
+   - You MUST respond in English.
+   - Example: "Perfect! You want to join game #${gameJoinState.gameId || 'X'}. First, I need you to select your captain coin. Please tell me which token you want to use as your captain coin."
 
 2. STEP 2 - Additional Coins Selection:
    - If captainCoin IS set but selectedCoins is incomplete (less than ${maxCoins - 1} coins), you MUST ask the user to select the remaining coins.
    - Tell them exactly how many more coins they need.
-   - CRITICAL: You MUST respond in the detected language: "${language || 'english'}".
-   - Example in Spanish: "¡Excelente! Has seleccionado ${captainCoin} como tu moneda capitán. Ahora, por favor selecciona ${remainingCoinsNeeded} moneda(s) más de los tokens disponibles."
-   - Example in English: "Great! You've selected ${captainCoin} as your captain coin. Now, please select ${remainingCoinsNeeded} more coin(s) from the available tokens."
+   - You MUST respond in English.
+   - Example: "Great! You've selected ${captainCoin} as your captain coin. Now, please select ${remainingCoinsNeeded} more coin(s) from the available tokens."
 
 3. STEP 3 - Show Summary and Ask for Confirmation:
    - CRITICAL: If "ALL COINS SELECTED: YES - SHOW SUMMARY NOW" appears above, you MUST IMMEDIATELY show the summary and ask for confirmation in your response.
    - DO NOT wait for another message from the user. When the user selects the last required coin, you MUST respond with:
-     a) A clear summary of their selections (in the detected language):
-        - Spanish: "¡Perfecto! Aquí está tu selección:\n- Moneda Capitán: ${captainCoin}\n- Monedas Adicionales: ${selectedCoins.join(', ')}\nTotal: ${maxCoins} monedas"
-        - English: "Perfect! Here's your selection:\n- Captain Coin: ${captainCoin}\n- Additional Coins: ${selectedCoins.join(', ')}\nTotal: ${maxCoins} coins"
-     b) Ask for confirmation (in the detected language):
-        - Spanish: "¿Estás listo para unirte al juego? Por favor confirma diciendo 'sí', 'confirmar', 'listo', 'unirse', o 'listo'. Si quieres cambiar tu selección, solo di 'no' o 'cancelar' y empezaremos de nuevo."
-        - English: "Are you ready to join the game? Please confirm by saying 'yes', 'confirm', 'ready', 'join', or 'unirse'. If you want to change your selection, just say 'no' or 'cancel' and we'll start over."
+     a) A clear summary of their selections:
+        "Perfect! Here's your selection:\n- Captain Coin: ${captainCoin}\n- Additional Coins: ${selectedCoins.join(', ')}\nTotal: ${maxCoins} coins"
+     b) Ask for confirmation:
+        "Are you ready to join the game? Please confirm by saying 'yes', 'confirm', 'ready', or 'join'. If you want to change your selection, just say 'no' or 'cancel' and we'll start over."
    - IMPORTANT: Check the "ALL COINS SELECTED" status above. If it says "YES - SHOW SUMMARY NOW", you MUST show the summary and ask for confirmation NOW. Do not ask for more coins.
 
 4. STEP 4 - Handle Confirmation:
-   - If user confirms (says "yes", "confirm", "listo", "ready", "unirse", "join", "sí", "confirmar"), proceed with joining.
-   - If user cancels (says "no", "cancel", "cancelar", "change", "cambiar"), reset the selection and start over (in the detected language):
-     - Spanish: "¡No hay problema! Empecemos de nuevo. Por favor selecciona tu moneda capitán nuevamente."
-     - English: "No problem! Let's start over. Please select your captain coin again."
+   - If user confirms (says "yes", "confirm", "ready", "join"), proceed with joining.
+   - If user cancels (says "no", "cancel", "change"), reset the selection and start over:
+     "No problem! Let's start over. Please select your captain coin again."
 
 IMPORTANT RULES:
 - ALWAYS respond to the user's message. Never leave them without a response.
-- CRITICAL: You MUST respond in the detected language: "${language || 'english'}". If the user writes in Spanish, respond in Spanish. If they write in English, respond in English. Do NOT mix languages.
-- When the user selects a coin, acknowledge it immediately in the detected language:
-  - Spanish: "¡Excelente! He notado que seleccionaste [coin]."
-  - English: "Great! I've noted that you selected [coin]."
+- You MUST respond in English.
+- When the user selects a coin, acknowledge it immediately:
+  "Great! I've noted that you selected [coin]."
 - Extract coin symbols/names from the user's message. Look for:
   * Token symbols (BTC, ETH, ADA, etc.)
   * Token names (Bitcoin, Ethereum, Cardano, etc.)
-  * Phrases like "Bitcoin y Ethereum" = ["BTC", "ETH"]
-  * Multiple tokens separated by commas, "y", "and", etc.
+  * Phrases like "Bitcoin and Ethereum" = ["BTC", "ETH"]
+  * Multiple tokens separated by commas, "and", etc.
 - Be conversational and helpful, showing token analysis data when relevant.
-- CRITICAL: Always respond in the same language the user writes to you. The detected language is: "${language || 'english'}".
 
 CRITICAL: When the user is in the process of joining a game (gameJoinState is set):
 - DO NOT respond with ACTION:FIND_GAMES. The user is already in a game and selecting tokens.

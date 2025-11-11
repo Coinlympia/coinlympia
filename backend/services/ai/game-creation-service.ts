@@ -41,7 +41,7 @@ IMPORTANT: When extracting maxPlayers, look for:
 
 IMPORTANT: When extracting gameLevel, look for:
 - Level numbers: "nivel 1", "level 2", "nivel 3", etc. = 1, 2, 3, etc.
-- Level names in Spanish: "principiantes" = 1, "intermedio" = 2, "avanzado" = 3, "experto" = 4, "maestro" = 5, "gran maestro" = 6
+- Level names: "beginner" = 1, "intermediate" = 2, "advanced" = 3, "expert" = 4, "master" = 5, "grandmaster" = 6
 - Level names in English: "beginner" = 1, "intermediate" = 2, "advanced" = 3, "expert" = 4, "master" = 5, "grandmaster" = 6
 - Phrases like "de principiantes" = 1, "for beginners" = 1, "nivel principiante" = 1
 
