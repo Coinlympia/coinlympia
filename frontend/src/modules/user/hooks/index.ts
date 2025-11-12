@@ -179,7 +179,7 @@ export function useAuthUserQuery() {
     },
     enabled: !!account,
     retry: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -199,7 +199,7 @@ export function useUserByAddressQuery(address?: string) {
     },
     enabled: !!address,
     retry: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -219,7 +219,7 @@ export function useUserByUsernameQueryDB(username?: string) {
     },
     enabled: !!username,
     retry: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 }
 

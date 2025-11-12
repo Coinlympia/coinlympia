@@ -143,6 +143,6 @@ export function useSwapPrice({
       }
       return null;
     },
-    { enabled: Boolean(params), refetchInterval: 5000 }
+    { enabled: Boolean(params), refetchInterval: 20000 }
   );
 }

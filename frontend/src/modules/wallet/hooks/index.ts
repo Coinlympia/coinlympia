@@ -345,7 +345,7 @@ export function useEvmCoinPrices({
             await getPricesByChain(n, coinAddresses, currency),
           queryKey: [EMV_COIN_PRICES_QUERY, n, coinAddresses, currency],
           staleTime: Infinity,
-          refetchInterval: 10000,
+          refetchInterval: 30000,
         };
       }),
       {
@@ -356,7 +356,7 @@ export function useEvmCoinPrices({
           }),
         queryKey: [EMV_COIN_PRICES_QUERY_NATIVE, chains, nativeCoins, currency],
         staleTime: Infinity,
-        refetchInterval: 10000,
+        refetchInterval: 30000,
       },
     ];
   }, [coins, currency]);

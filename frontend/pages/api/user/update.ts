@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { userCache } from '@/lib/cache';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 interface UpdateUserRequest {
@@ -88,6 +89,11 @@ export default async function handler(
       where: { address: normalizedAddress },
       data: updateData,
     });
+
+    userCache.delete(`user:address:${normalizedAddress}`);
+    if (user.username) {
+      userCache.delete(`user:username:${user.username.toLowerCase()}`);
+    }
 
     console.log('[update.ts] User updated:', {
       id: user.id,

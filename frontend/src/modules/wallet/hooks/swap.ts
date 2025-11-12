@@ -131,7 +131,7 @@ export function useSwapQuote({
         buyToken !== undefined &&
         sellToken !== undefined &&
         (sellAmount !== '' || buyAmount !== ''),
-      refetchInterval: 5000,
+      refetchInterval: 20000,
     }
   );
 }

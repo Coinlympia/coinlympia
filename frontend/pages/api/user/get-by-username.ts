@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { userCache } from '@/lib/cache';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 interface GetUserByUsernameRequest {
@@ -42,6 +43,13 @@ export default async function handler(
       return res.status(400).json({ error: 'Username is required', success: false });
     }
 
+    const cacheKey = `user:username:${username.toLowerCase()}`;
+
+    const cached = userCache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     const result = await prisma.$queryRaw<Array<{
       id: string;
       address: string;
@@ -75,7 +83,7 @@ export default async function handler(
 
     const user = result[0];
 
-    return res.status(200).json({
+    const response = {
       success: true,
       user: {
         id: user.id,
@@ -94,7 +102,11 @@ export default async function handler(
         totalSpent: user.totalSpent,
         earnedMinusSpent: user.earnedMinusSpent,
       },
-    });
+    };
+
+    userCache.set(cacheKey, response, 10 * 60 * 1000);
+
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Error getting user by username:', error);
     return res.status(500).json({

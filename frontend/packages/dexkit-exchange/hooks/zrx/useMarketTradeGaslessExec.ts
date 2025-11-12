@@ -99,7 +99,7 @@ export function useMarketGaslessTradeStatusQuery({
     },
     {
       enabled: Boolean(tradeHash) && Boolean(chainId) && canGasless,
-      refetchInterval: 2000,
+      refetchInterval: 10000,
     }
   );
 }

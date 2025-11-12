@@ -110,6 +110,6 @@ export function useSwapGaslessTradeStatusQuery({
         throw err;
       }
     },
-    { refetchInterval: 2000 }
+    { refetchInterval: 10000 }
   );
 }

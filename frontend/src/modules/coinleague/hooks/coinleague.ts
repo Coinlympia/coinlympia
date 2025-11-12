@@ -548,7 +548,7 @@ export function useGameProfilesState(
       return profiles;
     },
     enabled: !!addresses && addresses.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     retry: 2,
   });
 

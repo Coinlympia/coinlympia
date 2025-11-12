@@ -19,7 +19,7 @@ export function useSubscription() {
     async () => {
       return (await instance?.get("/payments/subscription"))?.data;
     },
-    { refetchInterval: 5000 }
+    { refetchInterval: 15000 }
   );
 }
 
@@ -100,7 +100,7 @@ export function useCheckoutData({ id }: { id: string }) {
     async () => {
       return (await instance?.get(`/payments/checkout-session/${id}`))?.data;
     },
-    { refetchInterval: 3000 }
+    { refetchInterval: 15000 } // Aumentado de 3s a 15s para reducir carga en DB
   );
 }
 

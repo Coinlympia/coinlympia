@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { userCache } from '@/lib/cache';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 interface GetUserByAddressRequest {
@@ -43,6 +44,12 @@ export default async function handler(
     }
 
     const normalizedAddress = address.toLowerCase();
+    const cacheKey = `user:address:${normalizedAddress}`;
+
+    const cached = userCache.get(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
 
     const user = await prisma.userAccount.findUnique({
       where: { address: normalizedAddress },
@@ -52,7 +59,7 @@ export default async function handler(
       return res.status(404).json({ error: 'User not found', success: false });
     }
 
-    return res.status(200).json({
+    const response = {
       success: true,
       user: {
         id: user.id,
@@ -71,7 +78,11 @@ export default async function handler(
         totalSpent: user.totalSpent,
         earnedMinusSpent: user.earnedMinusSpent,
       },
-    });
+    };
+
+    userCache.set(cacheKey, response, 10 * 60 * 1000);
+
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Error getting user by address:', error);
     return res.status(500).json({

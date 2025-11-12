@@ -139,7 +139,7 @@ export function useSwapNativePrice({
     },
     {
       enabled: Boolean(params?.buyToken && params?.chainId && variant && variant !== SwapVariant.Classic),
-      refetchInterval: 5000,
+      refetchInterval: 20000,
       retry: 1,
       staleTime: 30000
     }

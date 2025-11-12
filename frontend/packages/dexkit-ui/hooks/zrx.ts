@@ -60,7 +60,7 @@ export function useZrxPriceQuery({
         !!params.sellToken &&
         !!params.sellAmount &&
         BigInt(params.sellAmount) > 0,
-      refetchInterval: useGasless ? 25000 : 10000,
+      refetchInterval: useGasless ? 30000 : 15000, // Aumentado para reducir carga en DB
       cacheTime: 0,
       staleTime: 0,
       onSuccess,
@@ -113,7 +113,7 @@ export function useZrxQuoteQuery({
         isEnabled,
       cacheTime: 0,
       staleTime: 0,
-      refetchInterval: useGasless ? 25000 : 10000,
+      refetchInterval: useGasless ? 30000 : 15000, // Aumentado para reducir carga en DB
       ...options,
     }
   );
@@ -156,7 +156,7 @@ export const useZrxQuoteMutation = ({
         !!params.sellToken &&
         !!params.sellAmount &&
         BigInt(params.sellAmount) > 0,
-      refetchInterval: useGasless ? 25000 : 10000,
+      refetchInterval: useGasless ? 30000 : 15000,
       ...options,
     }
   );
