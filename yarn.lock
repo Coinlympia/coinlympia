@@ -14969,6 +14969,7 @@ co@^4.6.0:
     dotenv "^16.0.0"
     ethers "^5.7.2"
     express "^4.18.2"
+    graphql "^16.6.0"
     graphql-request "^6.1.0"
     openai "^6.1.0"
     tsx "^4.20.6"
@@ -15035,6 +15036,7 @@ co@^4.6.0:
     react-error-boundary "^3.1.4"
     react-intersection-observer "^9.8.0"
     react-intl "^5.24.8"
+    react-markdown "^8.0.7"
     react-qr-code "^2.0.15"
     react-resizable "^3.0.4"
     react-ts-tradingview-widgets "^1.2.8"
@@ -27591,7 +27593,7 @@ react-lazy-with-preload@^2.2.1:
   resolved "https://registry.npmjs.org/react-lazy-with-preload/-/react-lazy-with-preload-2.2.1.tgz"
   integrity sha512-ONSb8gizLE5jFpdHAclZ6EAAKuFX2JydnFXPPPjoUImZlLjGtKzyBS8SJgJq7CpLgsGKh9QCZdugJyEEOVC16Q==
 
-react-markdown@^8.0.3, react-markdown@~8.0.0:
+react-markdown@^8.0.3, react-markdown@^8.0.7, react-markdown@~8.0.0:
   version "8.0.7"
   resolved "https://registry.npmjs.org/react-markdown/-/react-markdown-8.0.7.tgz"
   integrity sha512-bvWbzG4MtOU62XqBx3Xx+zB2raaFFsq4mYiAzfjXJMEz2sixgeAfraA3tvzULF02ZdOMUOKTBFFaZJDDrq+BJQ==

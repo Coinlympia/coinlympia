@@ -18,6 +18,7 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
+  Link,
   Paper,
   Stack,
   Tab,
@@ -30,6 +31,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/router';
 import React, { useEffect, useRef, useState } from 'react';
 import { FormattedMessage, useIntl } from 'react-intl';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useCoinToPlayStable, useCreateGameMutation, useCreateGameServerMutation, useTotalGamesMutation } from '../hooks/coinleague';
 import { useFactoryAddress } from '../hooks/coinleagueFactory';
 import { joinGame } from '../services/coinLeagueFactoryV3';
@@ -78,6 +81,8 @@ export function ChatBox({
   const [typingMessage, setTypingMessage] = useState<{ id: string; content: string } | null>(null);
   const [hasGeneratedInitialResponse, setHasGeneratedInitialResponse] = useState(false);
   const initialDataRef = useRef(initialData);
+  const hasProcessedInitialDataRef = useRef(false);
+  const isGeneratingResponseRef = useRef(false);
   const [gameCreationState, setGameCreationState] = useState<{
     gameType?: 'bull' | 'bear';
     duration?: number;
@@ -249,7 +254,9 @@ export function ChatBox({
   }, [initialData]);
 
   useEffect(() => {
-    if (initialMessage && !hasGeneratedInitialResponse) {
+    if (initialMessage && !hasGeneratedInitialResponse && !hasProcessedInitialDataRef.current) {
+      hasProcessedInitialDataRef.current = true;
+      
       const userMessage: Message = {
         id: `user-${Date.now()}`,
         role: 'user',
@@ -266,94 +273,59 @@ export function ChatBox({
         generateAIResponse(initialMessage);
       }
     }
-  }, [initialMessage, hasGeneratedInitialResponse]);
-
-  useEffect(() => {
-    if (initialMessage && hasGeneratedInitialResponse && initialData && initialData.tokens && initialData.tokens.length > 0) {
-      const hasAssistantMessage = messages.some(m => m.role === 'assistant');
-
-      const lastMessage = messages[messages.length - 1];
-      const isPlaceholderMessage = lastMessage?.role === 'assistant' &&
-        (lastMessage.content.length < 100 ||
-          lastMessage.content.toLowerCase().includes('momento') ||
-          lastMessage.content.toLowerCase().includes('obteniendo') ||
-          lastMessage.content.toLowerCase().includes('dame'));
-
-      if (!hasAssistantMessage || isPlaceholderMessage) {
-        if (isPlaceholderMessage) {
-          setMessages(prev => prev.filter(m => m.id !== lastMessage.id));
-        }
-        generateAIResponse(initialMessage, initialData);
-      }
-    }
-  }, [initialData, initialMessage, hasGeneratedInitialResponse, messages]);
+  }, [initialMessage]);
 
 
   const generateAIResponse = async (userMessage: string, tokenData?: { tokens: TokenPerformance[]; timePeriod: string }, overrideGameJoinState?: typeof gameJoinState) => {
+    if (isLoading || isGeneratingResponseRef.current) {
+      return;
+    }
+    
+    isGeneratingResponseRef.current = true;
     setIsLoading(true);
     try {
       const currentGameCreationState = gameCreationStateRef.current;
       const currentGameJoinState = overrideGameJoinState !== undefined ? overrideGameJoinState : gameJoinState;
       
+      // Define hasGameCreationContext at function scope so it's available everywhere
+      const hasGameCreationContext = 
+        gameCreationState?.gameType ||
+        gameCreationState?.duration ||
+        gameCreationState?.gameLevel !== undefined ||
+        messages.some(m => 
+          m.role === 'assistant' && (
+            m.content.toLowerCase().includes('create') ||
+            m.content.toLowerCase().includes('game') ||
+            m.content.toLowerCase().includes('duration') ||
+            m.content.toLowerCase().includes('level') ||
+            m.content.toLowerCase().includes('difficulty')
+          )
+        ) ||
+        messages.some(m => 
+          m.role === 'user' && (
+            m.content.toLowerCase().includes('create') ||
+            (m.content.toLowerCase().includes('bear') && m.content.toLowerCase().includes('game')) ||
+            (m.content.toLowerCase().includes('bull') && m.content.toLowerCase().includes('game'))
+          )
+        );
+      
       if (chainId) {
-        const hasGameCreationContext = 
-          gameCreationState?.gameType ||
-          gameCreationState?.duration ||
-          gameCreationState?.gameLevel !== undefined ||
-          messages.some(m => 
-            m.role === 'assistant' && (
-              m.content.toLowerCase().includes('crear') ||
-              m.content.toLowerCase().includes('create') ||
-              m.content.toLowerCase().includes('juego') ||
-              m.content.toLowerCase().includes('game') ||
-              m.content.toLowerCase().includes('duración') ||
-              m.content.toLowerCase().includes('duration') ||
-              m.content.toLowerCase().includes('nivel') ||
-              m.content.toLowerCase().includes('level') ||
-              m.content.toLowerCase().includes('dificultad') ||
-              m.content.toLowerCase().includes('difficulty')
-            )
-          ) ||
-          messages.some(m => 
-            m.role === 'user' && (
-              m.content.toLowerCase().includes('crea') ||
-              m.content.toLowerCase().includes('create') ||
-              (m.content.toLowerCase().includes('bear') && m.content.toLowerCase().includes('juego')) ||
-              (m.content.toLowerCase().includes('bull') && m.content.toLowerCase().includes('juego'))
-            )
-          );
-
         const isTokenQuery =
           !hasGameCreationContext &&
           (userMessage.toLowerCase().includes('token') ||
-          userMessage.toLowerCase().includes('moneda') ||
           userMessage.toLowerCase().includes('coin') ||
-          userMessage.toLowerCase().includes('desempeño') ||
           userMessage.toLowerCase().includes('performance') ||
-          userMessage.toLowerCase().includes('mejor') ||
           userMessage.toLowerCase().includes('best') ||
-          userMessage.toLowerCase().includes('peor') ||
           userMessage.toLowerCase().includes('worst') ||
-          (userMessage.toLowerCase().includes('semana') && 
-           !userMessage.toLowerCase().includes('juego') && 
-           !userMessage.toLowerCase().includes('game')) ||
           (userMessage.toLowerCase().includes('week') && 
-           !userMessage.toLowerCase().includes('juego') && 
-           !userMessage.toLowerCase().includes('game')) ||
-          (userMessage.toLowerCase().includes('día') && 
-           !userMessage.toLowerCase().includes('juego') && 
            !userMessage.toLowerCase().includes('game')) ||
           (userMessage.toLowerCase().includes('day') && 
-           !userMessage.toLowerCase().includes('juego') && 
            !userMessage.toLowerCase().includes('game')));
 
-        const isAskingForCaptainCoin = userMessage.toLowerCase().includes('capitán') || 
+        const isAskingForCaptainCoin = 
           userMessage.toLowerCase().includes('captain') ||
-          userMessage.toLowerCase().includes('moneda capitán') ||
           userMessage.toLowerCase().includes('captain coin') ||
-          userMessage.toLowerCase().includes('seleccionar') ||
           userMessage.toLowerCase().includes('select') ||
-          userMessage.toLowerCase().includes('elegir') ||
           userMessage.toLowerCase().includes('choose');
         
         if (!tokenData && (isTokenQuery || isAskingForCaptainCoin)) {
@@ -396,10 +368,7 @@ export function ChatBox({
           const userMessageLower = userMessage.toLowerCase();
           const wantsToCancel = userMessageLower.includes('no') ||
             userMessageLower.includes('cancel') ||
-            userMessageLower.includes('cancelar') ||
             userMessageLower.includes('change') ||
-            userMessageLower.includes('cambiar') ||
-            userMessageLower.includes('empezar de nuevo') ||
             userMessageLower.includes('start over') ||
             userMessageLower.includes('reset');
 
@@ -481,8 +450,8 @@ export function ChatBox({
           updatedGameCreationState.gameType = 'bull';
         } else if (userMessageLower.includes('bear') && !userMessageLower.includes('bull')) {
           updatedGameCreationState.gameType = 'bear';
-        } else if (allMessagesText.includes('crear') || allMessagesText.includes('create') || 
-                   allMessagesText.includes('juego') || allMessagesText.includes('game')) {
+        } else if (allMessagesText.includes('create') || 
+                   allMessagesText.includes('game')) {
           if (allMessagesText.includes('bull') && !allMessagesText.includes('bear')) {
             updatedGameCreationState.gameType = 'bull';
           } else if (allMessagesText.includes('bear') && !allMessagesText.includes('bull')) {
@@ -508,19 +477,18 @@ export function ChatBox({
         }
         
         if (!updatedGameCreationState.duration) {
-          if (userMessageLower.includes('1 hora') || userMessageLower.includes('1 hour') || 
-              (userMessageLower.includes('una hora') && !userMessageLower.includes('4') && !userMessageLower.includes('8') && !userMessageLower.includes('24'))) {
+          if (userMessageLower.includes('1 hour')) {
             updatedGameCreationState.duration = 3600;
-          } else if (userMessageLower.includes('4 horas') || userMessageLower.includes('4 hours')) {
+          } else if (userMessageLower.includes('4 hours')) {
             updatedGameCreationState.duration = 14400;
-          } else if (userMessageLower.includes('8 horas') || userMessageLower.includes('8 hours')) {
+          } else if (userMessageLower.includes('8 hours')) {
             updatedGameCreationState.duration = 28800;
-          } else if (userMessageLower.includes('24 horas') || userMessageLower.includes('24 hours') || 
-                    userMessageLower.includes('un día') || userMessageLower.includes('one day')) {
+          } else if (userMessageLower.includes('24 hours') || 
+                    userMessageLower.includes('one day')) {
             updatedGameCreationState.duration = 86400;
-          } else if (userMessageLower.includes('7 días') || userMessageLower.includes('7 days') || 
-                    userMessageLower.includes('una semana') || userMessageLower.includes('one week') || 
-                    userMessageLower.includes('1 semana') || userMessageLower.includes('1 week')) {
+          } else if (userMessageLower.includes('7 days') || 
+                    userMessageLower.includes('one week') || 
+                    userMessageLower.includes('1 week')) {
             updatedGameCreationState.duration = 604800;
           }
         }
@@ -528,9 +496,9 @@ export function ChatBox({
       
       if (!updatedGameCreationState.maxPlayers) {
         const playerPatterns = [
-          { pattern: /(?:para|for)\s+(\d+)\s+(?:jugadores|players|personas|people)/i, group: 1 },
-          { pattern: /(\d+)\s+(?:jugadores|players|personas|people)/i, group: 1 },
-          { pattern: /^(\d+)\s+(?:jugadores|players|personas|people)$/i, group: 1 },
+          { pattern: /(?:for)\s+(\d+)\s+(?:players|people)/i, group: 1 },
+          { pattern: /(\d+)\s+(?:players|people)/i, group: 1 },
+          { pattern: /^(\d+)\s+(?:players|people)$/i, group: 1 },
         ];
         
         const validPlayerCounts = [2, 3, 5, 10, 50];
@@ -549,8 +517,8 @@ export function ChatBox({
       
       if (!updatedGameCreationState.maxCoins) {
         const coinPatterns = [
-          { pattern: /(?:con|with)\s+(\d+)\s+(?:monedas|coins|tokens)/i, group: 1 },
-          { pattern: /(\d+)\s+(?:monedas|coins|tokens)/i, group: 1 },
+          { pattern: /(?:with)\s+(\d+)\s+(?:coins|tokens)/i, group: 1 },
+          { pattern: /(\d+)\s+(?:coins|tokens)/i, group: 1 },
         ];
         
         for (const { pattern, group } of coinPatterns) {
@@ -620,9 +588,8 @@ export function ChatBox({
       if (!updatedGameCreationState.gameLevel) {
         const userMessageLower = userMessage.toLowerCase();
         const levelPatterns = [
-          { pattern: /nivel\s*(\d+)/i, group: 1 },
           { pattern: /level\s*(\d+)/i, group: 1 },
-          { pattern: /(\d+)\s*(?:principiante|beginner|intermedio|intermediate|avanzado|advanced|expert|master|grandmaster)/i, group: 1 },
+          { pattern: /(\d+)\s*(?:beginner|intermediate|advanced|expert|master|grandmaster)/i, group: 1 },
         ];
         
         for (const { pattern, group } of levelPatterns) {
@@ -693,38 +660,23 @@ export function ChatBox({
         const needsMoreCoins = selectedCoinsCount < requiredCoins;
         
         const isAskingForCaptainCoin = !updatedGameJoinState.captainCoin && (
-          fullContent.toLowerCase().includes('capitán') ||
           fullContent.toLowerCase().includes('captain') ||
-          fullContent.toLowerCase().includes('moneda capitán') ||
           fullContent.toLowerCase().includes('captain coin') ||
-          fullContent.toLowerCase().includes('selecciona') ||
           fullContent.toLowerCase().includes('select') ||
-          fullContent.toLowerCase().includes('elige') ||
           fullContent.toLowerCase().includes('choose') ||
-          fullContent.toLowerCase().includes('dime') ||
           fullContent.toLowerCase().includes('tell me') ||
-          fullContent.toLowerCase().includes('qué token') ||
           fullContent.toLowerCase().includes('what token') ||
-          fullContent.toLowerCase().includes('token') ||
-          fullContent.toLowerCase().includes('moneda')
+          fullContent.toLowerCase().includes('token')
         );
         
         const isAskingForRemainingCoins = updatedGameJoinState.captainCoin && (
-          fullContent.toLowerCase().includes('restante') ||
           fullContent.toLowerCase().includes('remaining') ||
-          fullContent.toLowerCase().includes('más') ||
           fullContent.toLowerCase().includes('more') ||
-          fullContent.toLowerCase().includes('adicional') ||
           fullContent.toLowerCase().includes('additional') ||
-          fullContent.toLowerCase().includes('selecciona') ||
           fullContent.toLowerCase().includes('select') ||
-          fullContent.toLowerCase().includes('elige') ||
           fullContent.toLowerCase().includes('choose') ||
-          fullContent.toLowerCase().includes('completar') ||
           fullContent.toLowerCase().includes('complete') ||
-          fullContent.toLowerCase().includes('tabla') ||
           fullContent.toLowerCase().includes('table') ||
-          fullContent.toLowerCase().includes('disponibles') ||
           fullContent.toLowerCase().includes('available') ||
           fullContent.toLowerCase().includes('all coins selected') ||
           userMessage.toLowerCase().includes('all coins selected')
@@ -776,19 +728,15 @@ export function ChatBox({
         
         const isAskingForConfirmation = hasAllCoins && (
           fullContent.toLowerCase().includes('ready') ||
-          fullContent.toLowerCase().includes('listo') ||
           fullContent.toLowerCase().includes('confirm') ||
-          fullContent.toLowerCase().includes('confirmar') ||
           fullContent.toLowerCase().includes('yes') ||
-          fullContent.toLowerCase().includes('sí') ||
-          fullContent.toLowerCase().includes('unirse') ||
           fullContent.toLowerCase().includes('join') ||
           userMessage.toLowerCase().includes('all coins selected')
         );
         
         let finalContent = fullContent;
         if (hasAllCoins && !isAskingForConfirmation && !fullContent.toLowerCase().includes('ready') && 
-            !fullContent.toLowerCase().includes('listo') && !fullContent.toLowerCase().includes('confirm')) {
+            !fullContent.toLowerCase().includes('confirm')) {
           finalContent = formatMessage({
             id: 'chat.all.coins.selected',
             defaultMessage: `Great! You've selected all {count} coins (1 captain coin and {secondaryCount} secondary coins). Are you ready to join the game?`,
@@ -801,18 +749,49 @@ export function ChatBox({
       let messageOptions: Message['options'] = undefined;
       const contentLower = fullContent.toLowerCase();
       
-      if (!updatedGameCreationState.gameType && 
-          (contentLower.includes('qué tipo') || contentLower.includes('what type') ||
-          (contentLower.includes('tipo') && (contentLower.includes('deseas') || contentLower.includes('prefieres') || contentLower.includes('quieres') || 
-           contentLower.includes('want') || contentLower.includes('prefer') || contentLower.includes('choose'))) ||
-          (contentLower.includes('type') && (contentLower.includes('want') || contentLower.includes('prefer') || contentLower.includes('choose') || 
-           contentLower.includes('deseas') || contentLower.includes('prefieres') || contentLower.includes('quieres'))) ||
+      const userMessageLower = userMessage.toLowerCase();
+      const isUserAskingForAnalysis = userMessageLower.includes('performed') ||
+        userMessageLower.includes('performance') ||
+        userMessageLower.includes('best') ||
+        userMessageLower.includes('worst') ||
+        userMessageLower.includes('top') ||
+        userMessageLower.includes('ranking') ||
+        userMessageLower.includes('analysis') ||
+        (userMessageLower.includes('token') && (userMessageLower.includes('best') || userMessageLower.includes('worst') || userMessageLower.includes('top'))) ||
+        (userMessageLower.includes('coin') && (userMessageLower.includes('best') || userMessageLower.includes('worst') || userMessageLower.includes('top'))) ||
+        (userMessageLower.includes('show') && (userMessageLower.includes('token') || userMessageLower.includes('coin'))) ||
+        (userMessageLower.includes('which') && (userMessageLower.includes('token') || userMessageLower.includes('coin')));
+      
+      const isResponseAboutAnalysis = contentLower.includes('performed') ||
+        contentLower.includes('performance') ||
+        contentLower.includes('best') ||
+        contentLower.includes('worst') ||
+        contentLower.includes('top') ||
+        contentLower.includes('ranking') ||
+        contentLower.includes('analysis') ||
+        (contentLower.includes('token') && (contentLower.includes('best') || contentLower.includes('worst') || contentLower.includes('top'))) ||
+        (contentLower.includes('coin') && (contentLower.includes('best') || contentLower.includes('worst') || contentLower.includes('top')));
+      
+      const isPureTokenAnalysis = !hasGameJoinContext &&
+        (isUserAskingForAnalysis || 
+         (tokenDataForMessage && 
+          tokenDataForMessage.tokens && 
+          tokenDataForMessage.tokens.length > 0 &&
+          (isUserAskingForAnalysis || isResponseAboutAnalysis)));
+      
+      if (isPureTokenAnalysis && hasGameCreationContext) {
+        setGameCreationState({});
+        gameCreationStateRef.current = {};
+        updatedGameCreationState = {};
+      }
+
+      if (!isPureTokenAnalysis && !isUserAskingForAnalysis && !updatedGameCreationState.gameType && 
+          (contentLower.includes('what type') ||
+          (contentLower.includes('type') && (contentLower.includes('want') || contentLower.includes('prefer') || contentLower.includes('choose'))) ||
           (contentLower.includes('bull') && contentLower.includes('bear') && 
-           (contentLower.includes('opciones') || contentLower.includes('options') || contentLower.includes('elige') || contentLower.includes('choose'))) ||
-          (contentLower.includes('alcista') && contentLower.includes('bajista') && 
-           (contentLower.includes('opciones') || contentLower.includes('options') || contentLower.includes('elige') || contentLower.includes('choose'))) ||
+           (contentLower.includes('options') || contentLower.includes('choose'))) ||
           (contentLower.includes('bullish') && contentLower.includes('bearish') && 
-           (contentLower.includes('opciones') || contentLower.includes('options') || contentLower.includes('elige') || contentLower.includes('choose'))))) {
+           (contentLower.includes('options') || contentLower.includes('choose'))))) {
         messageOptions = [
           {
             id: 'game-type-bull',
@@ -834,17 +813,15 @@ export function ChatBox({
           },
         ];
       }
-      else if (!updatedGameCreationState.duration && (
-          contentLower.includes('duración') || contentLower.includes('duration') ||
-          contentLower.includes('cuánto tiempo') || contentLower.includes('how long') ||
-          (contentLower.includes('tiempo') && (contentLower.includes('dure') || contentLower.includes('dure el') || contentLower.includes('dure el juego'))) ||
+      else if (!isPureTokenAnalysis && !isUserAskingForAnalysis && !updatedGameCreationState.duration && (
+          contentLower.includes('duration') ||
+          contentLower.includes('how long') ||
           (contentLower.includes('time') && (contentLower.includes('last') || contentLower.includes('should last'))) ||
-          contentLower.includes('días') || contentLower.includes('days') ||
-          contentLower.includes('semana') || contentLower.includes('week') ||
+          contentLower.includes('days') ||
+          contentLower.includes('week') ||
           contentLower.includes('3600') || contentLower.includes('14400') ||
           contentLower.includes('28800') || contentLower.includes('86400') ||
           contentLower.includes('604800') ||
-          (contentLower.includes('hora') && (contentLower.includes('3600') || contentLower.includes('14400') || contentLower.includes('28800') || contentLower.includes('86400') || contentLower.includes('604800') || contentLower.includes('segundos'))) ||
           (contentLower.includes('hour') && (contentLower.includes('3600') || contentLower.includes('14400') || contentLower.includes('28800') || contentLower.includes('86400') || contentLower.includes('604800') || contentLower.includes('seconds'))))) {
         messageOptions = [
           { id: 'duration-1h', label: formatMessage({ id: 'chat.option.duration.1h', defaultMessage: '1 hour' }), value: 3600, checked: false },
@@ -854,11 +831,11 @@ export function ChatBox({
           { id: 'duration-7d', label: formatMessage({ id: 'chat.option.duration.7d', defaultMessage: '7 days' }), value: 604800, checked: false },
         ];
       }
-      else if ((contentLower.includes('nivel') || contentLower.includes('level') || 
-          contentLower.includes('dificultad') || contentLower.includes('difficulty') ||
-          contentLower.includes('principiante') || contentLower.includes('beginner') ||
-          contentLower.includes('intermedio') || contentLower.includes('intermediate') ||
-          contentLower.includes('avanzado') || contentLower.includes('advanced') ||
+      else if (!isPureTokenAnalysis && !isUserAskingForAnalysis && (contentLower.includes('level') || 
+          contentLower.includes('difficulty') ||
+          contentLower.includes('beginner') ||
+          contentLower.includes('intermediate') ||
+          contentLower.includes('advanced') ||
           contentLower.includes('expert') || contentLower.includes('master') ||
           contentLower.includes('grandmaster') || contentLower.includes('grand master') ||
           contentLower.includes('0.001') || contentLower.includes('1.0') || contentLower.includes('10.0') ||
@@ -873,13 +850,14 @@ export function ChatBox({
           { id: 'level-6', label: formatMessage({ id: 'chat.option.level.6', defaultMessage: 'Level 6 (GrandMaster) - Entry: 250.0 USDT' }), value: 6, checked: false },
         ];
           }
-      else if ((contentLower.includes('monedas') || contentLower.includes('coins') || 
+      else if (!isPureTokenAnalysis && (contentLower.includes('coins') || 
           contentLower.includes('tokens') ||
-          (contentLower.includes('cuántas') && contentLower.includes('monedas')) ||
           (contentLower.includes('how many') && contentLower.includes('coins')) ||
-          (contentLower.includes('cuántos') && contentLower.includes('tokens'))) && 
+          (contentLower.includes('how many') && contentLower.includes('tokens'))) && 
           !updatedGameCreationState.maxCoins &&
-          !hasGameJoinContext) {
+          !hasGameJoinContext &&
+          hasGameCreationContext &&
+          !tokenDataForMessage) {
         messageOptions = [
           { id: 'max-coins-2', label: formatMessage({ id: 'chat.option.max.coins.2', defaultMessage: '2 coins' }), value: 2, checked: false },
           { id: 'max-coins-3', label: formatMessage({ id: 'chat.option.max.coins.3', defaultMessage: '3 coins' }), value: 3, checked: false },
@@ -887,10 +865,9 @@ export function ChatBox({
           { id: 'max-coins-5', label: formatMessage({ id: 'chat.option.max.coins.5', defaultMessage: '5 coins' }), value: 5, checked: false },
         ];
       }
-      else if ((contentLower.includes('jugadores') || contentLower.includes('players') ||
-          (contentLower.includes('cuántos') && contentLower.includes('jugadores')) ||
+      else if (!isPureTokenAnalysis && !isUserAskingForAnalysis && (contentLower.includes('players') ||
           (contentLower.includes('how many') && contentLower.includes('players')) ||
-          (contentLower.includes('cuántas') && contentLower.includes('personas'))) && 
+          (contentLower.includes('how many') && contentLower.includes('people'))) && 
           !updatedGameCreationState.maxPlayers) {
         messageOptions = [
           { id: 'max-players-2', label: formatMessage({ id: 'chat.option.max.players.2', defaultMessage: '2 players' }), value: 2, checked: false },
@@ -1082,15 +1059,10 @@ export function ChatBox({
           updatedGameJoinState.selectedCoins && 
           updatedGameJoinState.selectedCoins.length >= requiredCoins;
 
-        const isReadyToJoin = userMessage.toLowerCase().includes('listo') ||
-          userMessage.toLowerCase().includes('ready') ||
-          userMessage.toLowerCase().includes('unirse') ||
+        const isReadyToJoin = userMessage.toLowerCase().includes('ready') ||
           userMessage.toLowerCase().includes('join') ||
-          userMessage.toLowerCase().includes('confirmar') ||
           userMessage.toLowerCase().includes('confirm') ||
-          userMessage.toLowerCase().includes('ejecutar') ||
           userMessage.toLowerCase().includes('execute') ||
-          userMessage.toLowerCase().includes('sí') ||
           userMessage.toLowerCase().includes('yes') ||
           userMessage.toLowerCase().includes('enter');
 
@@ -1105,13 +1077,9 @@ export function ChatBox({
         const userMessageLower = userMessage.toLowerCase();
         const wantsToEdit = userMessageLower.includes('no') ||
           userMessageLower.includes('cancel') ||
-          userMessageLower.includes('cancelar') ||
           userMessageLower.includes('change') ||
-          userMessageLower.includes('cambiar') ||
-          userMessageLower.includes('editar') ||
           userMessageLower.includes('edit') ||
           userMessageLower.includes('reset') ||
-          userMessageLower.includes('empezar de nuevo') ||
           userMessageLower.includes('start over');
 
         if (wantsToEdit) {
@@ -1173,6 +1141,7 @@ export function ChatBox({
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      isGeneratingResponseRef.current = false;
     }
   };
 
@@ -1812,6 +1781,25 @@ export function ChatBox({
   };
 
   const handleClose = () => {
+    setGameCreationState({});
+    setGameJoinState({});
+    setMessages([]);
+    setInput('');
+    setIsLoading(false);
+    setLoadingMessage('');
+    setHasGeneratedInitialResponse(false);
+    setIsCreatingGame(false);
+    setIsJoiningGame(false);
+    setIsJoinConfirmed(false);
+    setIsSelectingToken(false);
+    setIsSelectingGame(false);
+    setTokenAnalysisData({});
+    setSelectedTimeframe('24h');
+    gameCreationStateRef.current = {};
+    isSelectingGameRef.current = false;
+    hasProcessedInitialDataRef.current = false;
+    isGeneratingResponseRef.current = false;
+    
     if (onClose) {
       onClose({}, 'escapeKeyDown');
     }
@@ -1944,8 +1932,242 @@ export function ChatBox({
                               : theme.palette.text.primary,
                       })}
                     >
-                      <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {message.content}
+                      <Box
+                        sx={(theme) => ({
+                          '& p': {
+                            margin: 0,
+                            marginBottom: 1,
+                            '&:last-child': {
+                              marginBottom: 0,
+                            },
+                          },
+                          '& h1, & h2, & h3, & h4, & h5, & h6': {
+                            marginTop: 2,
+                            marginBottom: 1,
+                            fontWeight: 600,
+                            color: message.role === 'user' ? '#FFFFFF' : theme.palette.text.primary,
+                          },
+                          '& h1': { fontSize: '1.5rem' },
+                          '& h2': { fontSize: '1.25rem' },
+                          '& h3': { fontSize: '1.1rem' },
+                          '& ul, & ol': {
+                            margin: 0,
+                            paddingLeft: 3,
+                            marginBottom: 1,
+                          },
+                          '& li': {
+                            marginBottom: 0.5,
+                          },
+                          '& code': {
+                            backgroundColor:
+                              message.role === 'user'
+                                ? 'rgba(255, 255, 255, 0.2)'
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.grey[700]
+                                  : theme.palette.grey[200],
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            fontSize: '0.9em',
+                          },
+                          '& pre': {
+                            backgroundColor:
+                              message.role === 'user'
+                                ? 'rgba(255, 255, 255, 0.1)'
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.grey[900]
+                                  : theme.palette.grey[100],
+                            padding: 2,
+                            borderRadius: 1,
+                            overflow: 'auto',
+                            marginY: 1,
+                            border: `1px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
+                            '& code': {
+                              backgroundColor: 'transparent',
+                              padding: 0,
+                            },
+                          },
+                          '& a': {
+                            color: message.role === 'user' ? '#FFFFFF' : theme.palette.primary.main,
+                            textDecoration: 'underline',
+                            '&:hover': {
+                              textDecoration: 'none',
+                            },
+                          },
+                          '& blockquote': {
+                            borderLeft: `4px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.3)' : theme.palette.divider}`,
+                            paddingLeft: 2,
+                            marginLeft: 0,
+                            marginY: 1,
+                            fontStyle: 'italic',
+                            color: message.role === 'user' ? 'rgba(255, 255, 255, 0.9)' : theme.palette.text.secondary,
+                          },
+                          '& table': {
+                            borderCollapse: 'collapse',
+                            width: '100%',
+                            marginY: 1,
+                          },
+                          '& th, & td': {
+                            border: `1px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
+                            padding: '8px 12px',
+                            textAlign: 'left',
+                          },
+                          '& th': {
+                            backgroundColor:
+                              message.role === 'user'
+                                ? 'rgba(255, 255, 255, 0.1)'
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.grey[800]
+                                  : theme.palette.grey[50],
+                            fontWeight: 600,
+                          },
+                          '& hr': {
+                            border: 'none',
+                            borderTop: `1px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
+                            marginY: 2,
+                          },
+                        })}
+                      >
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <Typography component="p" variant="body1" sx={{ mb: 1, '&:last-child': { mb: 0 } }}>{children}</Typography>,
+                            h1: ({ children }) => <Typography component="h1" variant="h4" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{children}</Typography>,
+                            h2: ({ children }) => <Typography component="h2" variant="h5" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{children}</Typography>,
+                            h3: ({ children }) => <Typography component="h3" variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{children}</Typography>,
+                            h4: ({ children }) => <Typography component="h4" variant="subtitle1" sx={{ mt: 1.5, mb: 0.5, fontWeight: 600 }}>{children}</Typography>,
+                            h5: ({ children }) => <Typography component="h5" variant="subtitle2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 600 }}>{children}</Typography>,
+                            h6: ({ children }) => <Typography component="h6" variant="subtitle2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 600 }}>{children}</Typography>,
+                            ul: ({ children }) => <Box component="ul" sx={{ pl: 3, mb: 1 }}>{children}</Box>,
+                            ol: ({ children }) => <Box component="ol" sx={{ pl: 3, mb: 1 }}>{children}</Box>,
+                            li: ({ children }) => <Box component="li" sx={{ mb: 0.5 }}>{children}</Box>,
+                            code: ({ inline, children, className }) => {
+                              if (inline) {
+                                return (
+                                  <Box
+                                    component="code"
+                                    sx={(theme) => ({
+                                      backgroundColor:
+                                        message.role === 'user'
+                                          ? 'rgba(255, 255, 255, 0.2)'
+                                          : theme.palette.mode === 'dark'
+                                            ? theme.palette.grey[700]
+                                            : theme.palette.grey[200],
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      fontFamily: 'monospace',
+                                      fontSize: '0.9em',
+                                    })}
+                                  >
+                                    {children}
+                                  </Box>
+                                );
+                              }
+                              return (
+                                <Box
+                                  component="pre"
+                                  sx={(theme) => ({
+                                    backgroundColor:
+                                      message.role === 'user'
+                                        ? 'rgba(255, 255, 255, 0.1)'
+                                        : theme.palette.mode === 'dark'
+                                          ? theme.palette.grey[900]
+                                          : theme.palette.grey[100],
+                                    padding: 2,
+                                    borderRadius: 1,
+                                    overflow: 'auto',
+                                    marginY: 1,
+                                    border: `1px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
+                                  })}
+                                >
+                                  <Box
+                                    component="code"
+                                    sx={{
+                                      fontFamily: 'monospace',
+                                      fontSize: '0.9em',
+                                      whiteSpace: 'pre',
+                                      display: 'block',
+                                    }}
+                                  >
+                                    {children}
+                                  </Box>
+                                </Box>
+                              );
+                            },
+                            a: ({ href, children }) => (
+                              <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
+                                {children}
+                              </Link>
+                            ),
+                            blockquote: ({ children }) => (
+                              <Box
+                                component="blockquote"
+                                sx={(theme) => ({
+                                  borderLeft: `4px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.3)' : theme.palette.divider}`,
+                                  paddingLeft: 2,
+                                  marginLeft: 0,
+                                  marginY: 1,
+                                  fontStyle: 'italic',
+                                })}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            table: ({ children }) => (
+                              <Box
+                                component="table"
+                                sx={{
+                                  borderCollapse: 'collapse',
+                                  width: '100%',
+                                  marginY: 1,
+                                }}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            th: ({ children }) => (
+                              <Box
+                                component="th"
+                                sx={(theme) => ({
+                                  border: `1px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
+                                  padding: '8px 12px',
+                                  textAlign: 'left',
+                                  backgroundColor:
+                                    message.role === 'user'
+                                      ? 'rgba(255, 255, 255, 0.1)'
+                                      : theme.palette.mode === 'dark'
+                                        ? theme.palette.grey[800]
+                                        : theme.palette.grey[50],
+                                  fontWeight: 600,
+                                })}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            td: ({ children }) => (
+                              <Box
+                                component="td"
+                                sx={(theme) => ({
+                                  border: `1px solid ${message.role === 'user' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
+                                  padding: '8px 12px',
+                                  textAlign: 'left',
+                                })}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            hr: () => (
+                              <Divider
+                                sx={(theme) => ({
+                                  marginY: 2,
+                                  borderColor: message.role === 'user' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider,
+                                })}
+                              />
+                            ),
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
                         {message.isTyping && (
                           <motion.span
                             animate={{ opacity: [1, 0] }}
@@ -1958,7 +2180,7 @@ export function ChatBox({
                             |
                           </motion.span>
                         )}
-                      </Typography>
+                      </Box>
                           {message.options && message.options.length > 0 && (
                             <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
                               <Stack spacing={1}>
@@ -2156,24 +2378,18 @@ export function ChatBox({
                                   gameCreationState?.gameLevel !== undefined ||
                                   messages.some(m => 
                                     m.role === 'assistant' && (
-                                      m.content.toLowerCase().includes('crear') ||
                                       m.content.toLowerCase().includes('create') ||
-                                      m.content.toLowerCase().includes('juego') ||
                                       m.content.toLowerCase().includes('game') ||
-                                      m.content.toLowerCase().includes('duración') ||
                                       m.content.toLowerCase().includes('duration') ||
-                                      m.content.toLowerCase().includes('nivel') ||
                                       m.content.toLowerCase().includes('level') ||
-                                      m.content.toLowerCase().includes('dificultad') ||
                                       m.content.toLowerCase().includes('difficulty')
                                     )
                                   ) ||
                                   messages.some(m => 
                                     m.role === 'user' && (
-                                      m.content.toLowerCase().includes('crea') ||
                                       m.content.toLowerCase().includes('create') ||
-                                      (m.content.toLowerCase().includes('bear') && m.content.toLowerCase().includes('juego')) ||
-                                      (m.content.toLowerCase().includes('bull') && m.content.toLowerCase().includes('juego'))
+                                      (m.content.toLowerCase().includes('bear') && m.content.toLowerCase().includes('game')) ||
+                                      (m.content.toLowerCase().includes('bull') && m.content.toLowerCase().includes('game'))
                                     )
                                   );
                                 
@@ -2762,16 +2978,232 @@ export function ChatBox({
                         color: theme.palette.text.primary,
                       })}
                     >
-                      <Typography 
-                        variant="body1" 
-                        sx={(theme) => ({ 
-                          whiteSpace: 'pre-wrap', 
+                      <Box
+                        sx={(theme) => ({
                           mb: 2,
-                          color: theme.palette.text.primary,
+                          '& p': {
+                            margin: 0,
+                            marginBottom: 1,
+                            '&:last-child': {
+                              marginBottom: 0,
+                            },
+                          },
+                          '& h1, & h2, & h3, & h4, & h5, & h6': {
+                            marginTop: 2,
+                            marginBottom: 1,
+                            fontWeight: 600,
+                            color: theme.palette.text.primary,
+                          },
+                          '& h1': { fontSize: '1.5rem' },
+                          '& h2': { fontSize: '1.25rem' },
+                          '& h3': { fontSize: '1.1rem' },
+                          '& ul, & ol': {
+                            margin: 0,
+                            paddingLeft: 3,
+                            marginBottom: 1,
+                          },
+                          '& li': {
+                            marginBottom: 0.5,
+                          },
+                          '& code': {
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? theme.palette.grey[700]
+                                : theme.palette.grey[200],
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontFamily: 'monospace',
+                            fontSize: '0.9em',
+                          },
+                          '& pre': {
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? theme.palette.grey[900]
+                                : theme.palette.grey[100],
+                            padding: 2,
+                            borderRadius: 1,
+                            overflow: 'auto',
+                            marginY: 1,
+                            border: `1px solid ${theme.palette.divider}`,
+                            '& code': {
+                              backgroundColor: 'transparent',
+                              padding: 0,
+                            },
+                          },
+                          '& a': {
+                            color: theme.palette.primary.main,
+                            textDecoration: 'underline',
+                            '&:hover': {
+                              textDecoration: 'none',
+                            },
+                          },
+                          '& blockquote': {
+                            borderLeft: `4px solid ${theme.palette.divider}`,
+                            paddingLeft: 2,
+                            marginLeft: 0,
+                            marginY: 1,
+                            fontStyle: 'italic',
+                            color: theme.palette.text.secondary,
+                          },
+                          '& table': {
+                            borderCollapse: 'collapse',
+                            width: '100%',
+                            marginY: 1,
+                          },
+                          '& th, & td': {
+                            border: `1px solid ${theme.palette.divider}`,
+                            padding: '8px 12px',
+                            textAlign: 'left',
+                          },
+                          '& th': {
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? theme.palette.grey[800]
+                                : theme.palette.grey[50],
+                            fontWeight: 600,
+                          },
+                          '& hr': {
+                            border: 'none',
+                            borderTop: `1px solid ${theme.palette.divider}`,
+                            marginY: 2,
+                          },
                         })}
                       >
-                        {message.content}
-                      </Typography>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <Typography component="p" variant="body1" sx={{ mb: 1, '&:last-child': { mb: 0 } }}>{children}</Typography>,
+                            h1: ({ children }) => <Typography component="h1" variant="h4" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{children}</Typography>,
+                            h2: ({ children }) => <Typography component="h2" variant="h5" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{children}</Typography>,
+                            h3: ({ children }) => <Typography component="h3" variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{children}</Typography>,
+                            h4: ({ children }) => <Typography component="h4" variant="subtitle1" sx={{ mt: 1.5, mb: 0.5, fontWeight: 600 }}>{children}</Typography>,
+                            h5: ({ children }) => <Typography component="h5" variant="subtitle2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 600 }}>{children}</Typography>,
+                            h6: ({ children }) => <Typography component="h6" variant="subtitle2" sx={{ mt: 1.5, mb: 0.5, fontWeight: 600 }}>{children}</Typography>,
+                            ul: ({ children }) => <Box component="ul" sx={{ pl: 3, mb: 1 }}>{children}</Box>,
+                            ol: ({ children }) => <Box component="ol" sx={{ pl: 3, mb: 1 }}>{children}</Box>,
+                            li: ({ children }) => <Box component="li" sx={{ mb: 0.5 }}>{children}</Box>,
+                            code: ({ inline, children, className }) => {
+                              if (inline) {
+                                return (
+                                  <Box
+                                    component="code"
+                                    sx={(theme) => ({
+                                      backgroundColor:
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.grey[700]
+                                          : theme.palette.grey[200],
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      fontFamily: 'monospace',
+                                      fontSize: '0.9em',
+                                    })}
+                                  >
+                                    {children}
+                                  </Box>
+                                );
+                              }
+                              return (
+                                <Box
+                                  component="pre"
+                                  sx={(theme) => ({
+                                    backgroundColor:
+                                      theme.palette.mode === 'dark'
+                                        ? theme.palette.grey[900]
+                                        : theme.palette.grey[100],
+                                    padding: 2,
+                                    borderRadius: 1,
+                                    overflow: 'auto',
+                                    marginY: 1,
+                                    border: `1px solid ${theme.palette.divider}`,
+                                  })}
+                                >
+                                  <Box
+                                    component="code"
+                                    sx={{
+                                      fontFamily: 'monospace',
+                                      fontSize: '0.9em',
+                                      whiteSpace: 'pre',
+                                      display: 'block',
+                                    }}
+                                  >
+                                    {children}
+                                  </Box>
+                                </Box>
+                              );
+                            },
+                            a: ({ href, children }) => (
+                              <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
+                                {children}
+                              </Link>
+                            ),
+                            blockquote: ({ children }) => (
+                              <Box
+                                component="blockquote"
+                                sx={(theme) => ({
+                                  borderLeft: `4px solid ${theme.palette.divider}`,
+                                  paddingLeft: 2,
+                                  marginLeft: 0,
+                                  marginY: 1,
+                                  fontStyle: 'italic',
+                                })}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            table: ({ children }) => (
+                              <Box
+                                component="table"
+                                sx={{
+                                  borderCollapse: 'collapse',
+                                  width: '100%',
+                                  marginY: 1,
+                                }}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            th: ({ children }) => (
+                              <Box
+                                component="th"
+                                sx={(theme) => ({
+                                  border: `1px solid ${theme.palette.divider}`,
+                                  padding: '8px 12px',
+                                  textAlign: 'left',
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? theme.palette.grey[800]
+                                      : theme.palette.grey[50],
+                                  fontWeight: 600,
+                                })}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            td: ({ children }) => (
+                              <Box
+                                component="td"
+                                sx={(theme) => ({
+                                  border: `1px solid ${theme.palette.divider}`,
+                                  padding: '8px 12px',
+                                  textAlign: 'left',
+                                })}
+                              >
+                                {children}
+                              </Box>
+                            ),
+                            hr: () => (
+                              <Divider
+                                sx={(theme) => ({
+                                  marginY: 2,
+                                  borderColor: theme.palette.divider,
+                                })}
+                              />
+                            ),
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </Box>
                       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                         <Button
                           variant="outlined"
@@ -2788,7 +3220,6 @@ export function ChatBox({
                                 selectedCoins: [],
                               });
                               
-                              // Filter out all previous confirmation messages
                               setMessages((prev) => prev.filter((m) => !m.isConfirmationMessage));
                               
                               const editMessage: Message = {
