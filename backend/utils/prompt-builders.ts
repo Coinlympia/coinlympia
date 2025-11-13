@@ -116,25 +116,80 @@ You have access to ${databaseData.count} game results in the database. Use this 
   }
 
   if (tokenData && tokenData.tokens && tokenData.tokens.length > 0) {
-    const topTokens = tokenData.tokens.slice(0, 10).map((token, index) => {
+    const allTokens = tokenData.tokens.map((token, index) => {
       const changeSign = token.priceChangePercent >= 0 ? '+' : '';
-      return `${index + 1}. ${token.symbol} (${token.name}): $${token.currentPrice.toFixed(6)} - ${changeSign}${token.priceChangePercent.toFixed(2)}%`;
-    }).join('\n');
+      return {
+        index: index + 1,
+        symbol: token.symbol,
+        name: token.name,
+        currentPrice: token.currentPrice,
+        priceChangePercent: token.priceChangePercent,
+        changeSign,
+        priceChange: token.priceChange,
+      };
+    });
 
-    systemPrompt += `\n\nCRITICAL: You have REAL-TIME token performance data for the last ${tokenData.timePeriod} from the tokens available in Coinlympia. This data was just fetched from CoinGecko API and is current:
-${topTokens}
+    const topTokens = allTokens.slice(0, 20);
+    const bottomTokens = allTokens.slice(-10).reverse();
+    const allTokensList = allTokens.map(t => `${t.index}. ${t.symbol} (${t.name}): $${t.currentPrice.toFixed(6)} - ${t.changeSign}${t.priceChangePercent.toFixed(2)}%`).join('\n');
 
-YOU MUST:
-- Use this EXACT data to answer the user's question IMMEDIATELY
-- Present the tokens with their actual performance numbers DIRECTLY in your response
-- Analyze which tokens performed best based on the percentage changes shown
-- Be specific: mention token names, symbols, prices, and percentage changes
-- DO NOT say you need to consult data - you ALREADY have this data
-- DO NOT ask the user if they want information - GIVE them the information directly
-- DO NOT say "I can analyze" or "Let me get" - you ALREADY have the data, PRESENT IT NOW
-- If asked about "best performance", list the top tokens from this data in order with their actual numbers
-- Start your response with the actual data, not explanations about what you can do
-- Remember: This data comes from CoinGecko API for tokens in the database`;
+    systemPrompt += `\n\nCRITICAL: You have REAL-TIME token performance data for the last ${tokenData.timePeriod} from ALL tokens available in Coinlympia. This data was just fetched from CoinGecko API and is current.
+
+COMPLETE TOKEN PERFORMANCE DATA (sorted by performance, best to worst):
+${allTokensList}
+
+TOP PERFORMERS (Best ${Math.min(5, topTokens.length)}):
+${topTokens.slice(0, 5).map(t => `- **${t.symbol}** (${t.name}): $${t.currentPrice.toFixed(6)} | ${t.changeSign}${t.priceChangePercent.toFixed(2)}%`).join('\n')}
+
+WORST PERFORMERS (Bottom ${Math.min(5, bottomTokens.length)}):
+${bottomTokens.slice(0, 5).map(t => `- **${t.symbol}** (${t.name}): $${t.currentPrice.toFixed(6)} | ${t.changeSign}${t.priceChangePercent.toFixed(2)}%`).join('\n')}
+
+TOKEN ANALYSIS INSTRUCTIONS:
+1. RESPONSE FORMAT - ALWAYS use Markdown formatting for better readability:
+   - Use **bold** for token symbols and key metrics
+   - Use bullet points (-) or numbered lists for token rankings
+   - Use tables when comparing multiple tokens
+   - Use headers (##) to organize sections
+   - Use code formatting (\`) for specific numbers or percentages
+   - CRITICAL: When mentioning token symbols (e.g., BTC, ETH, MATIC), wrap them in markdown links: [BTC](BTC), [ETH](ETH), etc.
+     This allows users to click on token symbols to view their charts. Format: [SYMBOL](SYMBOL) where SYMBOL is the token ticker
+
+2. ANALYSIS DEPTH - Adapt your analysis to what the user asks:
+   - If asking for "best/worst N tokens": Show exactly N tokens with brief insights and why they stand out
+   - If asking for "timeframe analysis": Focus on trends, patterns, and notable movements in that period
+   - If asking for "game creation advice": Provide strategic recommendations with specific token suggestions based on game type (bull/bear)
+   - If asking for "general analysis": Provide a balanced overview with key highlights, trends, and actionable insights
+   - If asking for specific quantities (e.g., "top 3", "worst 5"): Show exactly that number with clear formatting
+   - If asking for opinions/recommendations: Provide thoughtful analysis with reasoning behind suggestions
+
+3. CONTENT GUIDELINES:
+   - Be CONCISE but INFORMATIVE (2-4 paragraphs max, unless user asks for detailed analysis)
+   - Start with a brief summary/insight, then provide the data
+   - Use specific numbers: prices, percentages, rankings
+   - Highlight notable patterns or trends
+   - If user asks about creating games, provide strategic token recommendations based on performance
+
+4. MARKDOWN EXAMPLES:
+   - "## Top Performers\n\n**[BTC](BTC)** leads with +5.2% gain..."
+   - "| Token | Price | Change |\n|-------|-------|--------|\n| [BTC](BTC) | $43,250 | +5.2% |"
+   - "For a **bull game**, consider **[ETH](ETH)** (+3.1%) and **[MATIC](MATIC)** (+2.8%)..."
+   - "The top 3 tokens are: **[BTC](BTC)** (+5.2%), **[ETH](ETH)** (+3.1%), and **[LINK](LINK)** (+2.5%)"
+
+5. YOU MUST:
+   - Use this EXACT data to answer IMMEDIATELY
+   - Present tokens with actual performance numbers
+   - Use Markdown formatting for better readability
+   - Be specific: mention token names, symbols, prices, percentages
+   - Adapt analysis depth to user's question
+   - If user asks about game creation, provide strategic recommendations
+   - DO NOT say "I can analyze" - you ALREADY have the data, PRESENT IT NOW
+   - DO NOT write long paragraphs - be concise and use formatting
+
+6. REMEMBER:
+   - This data comes from CoinGecko API for tokens in the database
+   - All prices are in USD
+   - Percentage changes are relative to ${tokenData.timePeriod} ago
+   - Higher percentage = better performance for bull games, lower = better for bear games`;
   } else {
     systemPrompt += `\n\nIMPORTANT: If the user asks about token performance, prices, or which tokens performed best, the system will automatically fetch this data from CoinGecko API for tokens in the database. However, if you don't have the data yet, you should explain that the system is fetching it, but DO NOT ask the user if they want the information - the system will provide it automatically.`;
   }
