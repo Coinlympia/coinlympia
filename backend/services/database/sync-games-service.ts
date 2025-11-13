@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ethers } from 'ethers';
-import { ChainId } from '../../constants/enums';
+import { createContractWithRetry, callWithRetry, callContractWithProviderRetry } from '../../utils/rpc-provider';
 
 let prismaInstance: PrismaClient | null = null;
 
@@ -35,16 +35,6 @@ function getPrismaClient(): PrismaClient {
   return prismaInstance;
 }
 
-function getRpcUrl(chainId: number): string | null {
-  const rpcUrls: { [key: number]: string } = {
-    [ChainId.Polygon]: process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com',
-    [ChainId.Base]: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
-    [ChainId.BSC]: process.env.BSC_RPC_URL || 'https://bsc-dataseed.binance.org',
-    [ChainId.Mumbai]: process.env.MUMBAI_RPC_URL || 'https://rpc-mumbai.maticvigil.com',
-  };
-  return rpcUrls[chainId] || null;
-}
-
 export async function syncGameDetailsFromBlockchain(
   gameId: string,
   intId: number,
@@ -52,9 +42,8 @@ export async function syncGameDetailsFromBlockchain(
   chainId: number,
   gameType: number
 ): Promise<void> {
-  const rpcUrl = getRpcUrl(chainId);
-  if (!rpcUrl || !factoryAddress) {
-    throw new Error(`Missing RPC URL or factory address for chainId ${chainId}`);
+  if (!factoryAddress) {
+    throw new Error(`Missing factory address for chainId ${chainId}`);
   }
 
   const factoryAbi = [
@@ -64,12 +53,27 @@ export async function syncGameDetailsFromBlockchain(
     'function coins(uint256 id, address coin_feed) external view returns (address coin_feed, int256 start_price, int256 end_price, int256 score)',
   ];
 
-  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
-  const factoryContract = new ethers.Contract(factoryAddress, factoryAbi, provider);
   const prisma = getPrismaClient();
 
   try {
-    const gameData = await factoryContract.games(intId);
+    const factoryAbiArray = factoryAbi;
+    
+    interface GameData {
+      started: boolean;
+      finished: boolean;
+      scores_done: boolean;
+      start_timestamp: ethers.BigNumber;
+      abort_timestamp: ethers.BigNumber;
+      total_amount_collected: ethers.BigNumber;
+    }
+    
+    const gameData = await callContractWithProviderRetry<GameData>(
+      chainId,
+      factoryAddress,
+      factoryAbiArray,
+      'games',
+      [intId]
+    ) as unknown as GameData;
     
     const started = gameData.started;
     const finished = gameData.finished;
@@ -87,7 +91,21 @@ export async function syncGameDetailsFromBlockchain(
       status = 'Started';
     }
 
-    const players = await factoryContract.getPlayers(intId);
+    interface Player {
+      coin_feeds: string[];
+      player_address: string;
+      captain_coin: string;
+      score: ethers.BigNumber;
+      affiliate: string | null;
+    }
+    
+    const players = await callContractWithProviderRetry<Player[]>(
+      chainId,
+      factoryAddress,
+      factoryAbiArray,
+      'getPlayers',
+      [intId]
+    ) as unknown as Player[];
     const currentPlayersCount = players.length;
 
     await prisma.game.update({
@@ -139,7 +157,17 @@ export async function syncGameDetailsFromBlockchain(
       const captainCoin = ethers.utils.getAddress(player.captain_coin);
       const affiliate = player.affiliate ? ethers.utils.getAddress(player.affiliate) : null;
       
-      const playerCoinFeeds = await factoryContract.playerCoinFeeds(index, intId);
+        if (index > 0) {
+          await new Promise(resolve => setTimeout(resolve, 600));
+        }
+      
+      const playerCoinFeeds = await callContractWithProviderRetry<string[]>(
+        chainId,
+        factoryAddress,
+        factoryAbiArray,
+        'playerCoinFeeds',
+        [index, intId]
+      ) as unknown as string[];
       const normalizedFeeds = playerCoinFeeds.map((feed: string) => ethers.utils.getAddress(feed));
 
       participantData.push({
@@ -153,32 +181,56 @@ export async function syncGameDetailsFromBlockchain(
 
       if (!allCoinFeeds.has(captainCoin)) {
         try {
-          const coinData = await factoryContract.coins(intId, captainCoin);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          interface CoinData {
+            coin_feed: string;
+            start_price: ethers.BigNumber;
+            end_price: ethers.BigNumber;
+            score: ethers.BigNumber;
+          }
+          const coinData = await callContractWithProviderRetry<CoinData>(
+            chainId,
+            factoryAddress,
+            factoryAbiArray,
+            'coins',
+            [intId, captainCoin]
+          ) as unknown as CoinData;
           allCoinFeeds.set(captainCoin, {
             startPrice: coinData.start_price.toString(),
             endPrice: coinData.end_price.toString() !== '0' ? coinData.end_price.toString() : null,
             score: coinData.score.toString() !== '0' ? coinData.score.toString() : null,
           });
         } catch (error) {
-          if (process.env.DEBUG === 'true') {
-            console.warn(`Could not get coin data for ${captainCoin}:`, error);
-          }
+          console.warn(`Could not get coin data for ${captainCoin}:`, error instanceof Error ? error.message : String(error));
         }
       }
 
       for (const feedAddress of normalizedFeeds) {
         if (!allCoinFeeds.has(feedAddress)) {
           try {
-            const coinData = await factoryContract.coins(intId, feedAddress);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            interface CoinData {
+              coin_feed: string;
+              start_price: ethers.BigNumber;
+              end_price: ethers.BigNumber;
+              score: ethers.BigNumber;
+            }
+            const coinData = await callContractWithProviderRetry<CoinData>(
+              chainId,
+              factoryAddress,
+              factoryAbiArray,
+              'coins',
+              [intId, feedAddress]
+            ) as unknown as CoinData;
             allCoinFeeds.set(feedAddress, {
               startPrice: coinData.start_price.toString(),
               endPrice: coinData.end_price.toString() !== '0' ? coinData.end_price.toString() : null,
               score: coinData.score.toString() !== '0' ? coinData.score.toString() : null,
             });
           } catch (error) {
-            if (process.env.DEBUG === 'true') {
-              console.warn(`Could not get coin data for ${feedAddress}:`, error);
-            }
+            console.warn(`Could not get coin data for ${feedAddress}:`, error instanceof Error ? error.message : String(error));
           }
         }
       }

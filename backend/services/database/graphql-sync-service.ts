@@ -5,6 +5,7 @@ import { ChainId } from '../../constants/enums';
 import { COIN_LEAGUES_FACTORY_ADDRESS_V3 } from '../../constants/coinleague';
 import { config } from 'dotenv';
 import { syncGameDetailsFromBlockchain } from './sync-games-service';
+import { createContractWithRetry, callWithRetry } from '../../utils/rpc-provider';
 
 config();
 
@@ -59,16 +60,6 @@ function getGraphEndpoint(chainId: number): string | null {
   return DEFAULT_GRAPHQL_ENDPOINTS[chainId] || null;
 }
 
-function getRpcUrl(chainId: number): string | null {
-  const rpcUrls: { [key: number]: string } = {
-    [ChainId.Polygon]: process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com',
-    [ChainId.Base]: process.env.BASE_RPC_URL || 'https://mainnet.base.org',
-    [ChainId.BSC]: process.env.BSC_RPC_URL || 'https://bsc-dataseed.binance.org',
-    [ChainId.Mumbai]: process.env.MUMBAI_RPC_URL || 'https://rpc-mumbai.maticvigil.com',
-  };
-  return rpcUrls[chainId] || null;
-}
-
 function getFactoryAddress(chainId: number): string {
   if (chainId === ChainId.Polygon && COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Polygon]) {
     return COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Polygon];
@@ -91,22 +82,14 @@ async function getGameAddressFromBlockchain(
   chainId: number
 ): Promise<string | null> {
   try {
-    const rpcUrl = getRpcUrl(chainId);
-    if (!rpcUrl) {
-      console.warn(`No RPC URL found for chainId ${chainId}`);
-      return null;
-    }
-
-    const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
-    
     const factoryAbi = [
       'function games(uint256) external view returns (address)',
     ];
 
-    const factoryContract = new ethers.Contract(factoryAddress, factoryAbi, provider);
-    const gameAddress = await factoryContract.games(intId);
+    const factoryContract = await createContractWithRetry(chainId, factoryAddress, factoryAbi);
+    const gameAddress = await callWithRetry(() => factoryContract.games(intId));
     
-    return gameAddress;
+    return gameAddress ? String(gameAddress) : null;
   } catch (error) {
     console.error(`Error getting game address from blockchain for game ${intId}:`, error);
     return null;
@@ -486,6 +469,10 @@ export async function syncAllGamesFromGraphQL(
           }
 
           try {
+            if (batchSynced + batchUpdated > 0) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
             await syncGameDetailsFromBlockchain(
               game.id,
               intId,
