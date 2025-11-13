@@ -1411,7 +1411,7 @@ export function ChatBox({
           role: 'assistant',
           content: formatMessage({
             id: 'chat.game.server.error',
-            defaultMessage: `Game created on blockchain, but there was an error creating it on the server. You may need to refresh the page to see it.`,
+            defaultMessage: `Game created on blockchain!`,
           }),
           timestamp: new Date(),
         };
