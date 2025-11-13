@@ -594,7 +594,6 @@ const CoinLeagueGame: NextPage = () => {
 
       joinGameMutation.mutate();
     } catch (error) {
-      console.error('Error updating selections:', error);
     }
   };
 
@@ -640,7 +639,6 @@ const CoinLeagueGame: NextPage = () => {
 
       joinGameMutation.mutate();
     } catch (error) {
-      console.error('Error joining game:', error);
     }
   };
 
@@ -652,7 +650,6 @@ const CoinLeagueGame: NextPage = () => {
     try {
       await switchNetworkMutation.mutateAsync({ chainId: ChainId.Polygon });
     } catch (error) {
-      console.error('Error switching to Polygon:', error);
     }
   };
 
@@ -1481,7 +1478,6 @@ export const getStaticProps: GetStaticProps = async ({
           }
         }
       } catch (e) {
-        console.log('error fetching data');
       }
     }
   }*/

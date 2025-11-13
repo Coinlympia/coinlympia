@@ -118,6 +118,7 @@ export function ChatBox({
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [selectedTokenSymbol, setSelectedTokenSymbol] = useState<string>('');
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<string | undefined>(undefined);
+  const [selectedTokenTimePeriod, setSelectedTokenTimePeriod] = useState<string | undefined>(undefined);
   const router = useRouter();
   const { provider, chainId: accountChainId, signer, account } = useWeb3React();
   const factoryAddress = useFactoryAddress();
@@ -292,7 +293,6 @@ export function ChatBox({
       const currentGameCreationState = gameCreationStateRef.current;
       const currentGameJoinState = overrideGameJoinState !== undefined ? overrideGameJoinState : gameJoinState;
       
-      // Define hasGameCreationContext at function scope so it's available everywhere
       const hasGameCreationContext = 
         gameCreationState?.gameType ||
         gameCreationState?.duration ||
@@ -315,17 +315,33 @@ export function ChatBox({
         );
       
       if (chainId) {
+        const userMessageLower = userMessage.toLowerCase();
+        const isExplicitTokenAnalysisQuery = 
+          userMessageLower.includes('analyze') ||
+          userMessageLower.includes('analysis') ||
+          userMessageLower.includes('performance') ||
+          (userMessageLower.includes('best') && (userMessageLower.includes('token') || userMessageLower.includes('coin') || userMessageLower.includes('performant'))) ||
+          (userMessageLower.includes('worst') && (userMessageLower.includes('token') || userMessageLower.includes('coin') || userMessageLower.includes('performant'))) ||
+          (userMessageLower.includes('which') && (userMessageLower.includes('token') || userMessageLower.includes('coin')) && (userMessageLower.includes('best') || userMessageLower.includes('worst') || userMessageLower.includes('performance')));
+        
         const isTokenQuery =
-          !hasGameCreationContext &&
-          (userMessage.toLowerCase().includes('token') ||
-          userMessage.toLowerCase().includes('coin') ||
-          userMessage.toLowerCase().includes('performance') ||
-          userMessage.toLowerCase().includes('best') ||
-          userMessage.toLowerCase().includes('worst') ||
-          (userMessage.toLowerCase().includes('week') && 
-           !userMessage.toLowerCase().includes('game')) ||
-          (userMessage.toLowerCase().includes('day') && 
-           !userMessage.toLowerCase().includes('game')));
+          isExplicitTokenAnalysisQuery ||
+          (!hasGameCreationContext &&
+          (userMessageLower.includes('token') ||
+          userMessageLower.includes('coin') ||
+          userMessageLower.includes('performance') ||
+          userMessageLower.includes('best') ||
+          userMessageLower.includes('worst') ||
+          (userMessageLower.includes('week') && 
+           !userMessageLower.includes('game')) ||
+          (userMessageLower.includes('day') && 
+           !userMessageLower.includes('game')) ||
+          (userMessageLower.includes('hour') && 
+           !userMessageLower.includes('game')) ||
+          (userMessageLower.includes('month') && 
+           !userMessageLower.includes('game')) ||
+          (userMessageLower.includes('year') && 
+           !userMessageLower.includes('game'))));
 
         const isAskingForCaptainCoin = 
           userMessage.toLowerCase().includes('captain') ||
@@ -333,7 +349,28 @@ export function ChatBox({
           userMessage.toLowerCase().includes('select') ||
           userMessage.toLowerCase().includes('choose');
         
-        if (!tokenData && (isTokenQuery || isAskingForCaptainCoin)) {
+        if (isTokenQuery) {
+          try {
+            const analysisResponse = await fetch('/api/analyze-tokens', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                text: userMessage,
+                chainId: chainId,
+              }),
+            });
+
+            if (analysisResponse.ok) {
+              const analysisData = await analysisResponse.json();
+              if (analysisData.tokens && analysisData.tokens.length > 0) {
+                tokenData = analysisData;
+              }
+            }
+          } catch (error) {
+          }
+        } else if (!tokenData && isAskingForCaptainCoin) {
           try {
             const analysisResponse = await fetch('/api/analyze-tokens', {
               method: 'POST',
@@ -2105,6 +2142,7 @@ export function ChatBox({
                               if (isTokenSymbol(linkText)) {
                                 const finalChainId = chainId || accountChainId;
                                 const tokenAddress = finalChainId ? getTokenAddress(linkText, finalChainId) : undefined;
+                                const messageTimePeriod = message.tokenPerformanceData?.timePeriod;
                                 
                                 if (finalChainId) {
                                   return (
@@ -2114,6 +2152,7 @@ export function ChatBox({
                                         e.preventDefault();
                                         setSelectedTokenSymbol(linkText.toUpperCase());
                                         setSelectedTokenAddress(tokenAddress);
+                                        setSelectedTokenTimePeriod(messageTimePeriod);
                                         setChartModalOpen(true);
                                       }}
                                       sx={{
@@ -2133,9 +2172,9 @@ export function ChatBox({
                               }
                               
                               return (
-                                <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
-                                  {children}
-                                </Link>
+                              <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
+                                {children}
+                              </Link>
                               );
                             },
                             blockquote: ({ children }) => (
@@ -3177,6 +3216,7 @@ export function ChatBox({
                               if (isTokenSymbol(linkText)) {
                                 const finalChainId = chainId || accountChainId;
                                 const tokenAddress = finalChainId ? getTokenAddress(linkText, finalChainId) : undefined;
+                                const messageTimePeriod = message.tokenPerformanceData?.timePeriod;
                                 
                                 if (finalChainId) {
                                   return (
@@ -3186,6 +3226,7 @@ export function ChatBox({
                                         e.preventDefault();
                                         setSelectedTokenSymbol(linkText.toUpperCase());
                                         setSelectedTokenAddress(tokenAddress);
+                                        setSelectedTokenTimePeriod(messageTimePeriod);
                                         setChartModalOpen(true);
                                       }}
                                       sx={{
@@ -3205,9 +3246,9 @@ export function ChatBox({
                               }
                               
                               return (
-                                <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
-                                  {children}
-                                </Link>
+                              <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
+                                {children}
+                              </Link>
                               );
                             },
                             blockquote: ({ children }) => (
@@ -3565,11 +3606,13 @@ export function ChatBox({
               setChartModalOpen(false);
               setSelectedTokenSymbol('');
               setSelectedTokenAddress(undefined);
+              setSelectedTokenTimePeriod(undefined);
             },
           }}
           tokenSymbol={selectedTokenSymbol}
           tokenAddress={selectedTokenAddress}
           chainId={chainId || accountChainId}
+          requestedTimePeriod={selectedTokenTimePeriod}
         />
     </Dialog>
   );

@@ -34,6 +34,7 @@ export async function analyzeTokens(
       price7d: true,
       price30d: true,
     },
+    take: 500,
   });
 
   if (!availableTokens || availableTokens.length === 0) {
@@ -62,10 +63,13 @@ The user might be asking about:
 - Token rankings, top performers, worst performers
 
 Examples of analysis queries:
-- "Which tokens have the best performance in the last 24 hours?"
-- "Show me coins with best performance in the last 20 minutes"
-- "What tokens performed best this week?"
-- "Which coins had the worst performance last month?"
+- "Which tokens have the best performance in the last 24 hours?" -> timePeriod: "24h"
+- "Show me coins with best performance in the last 20 minutes" -> timePeriod: "20m"
+- "What tokens performed best this week?" -> timePeriod: "7d"
+- "Which coins had the worst performance last month?" -> timePeriod: "30d"
+- "best performant tokens the past four hours" -> timePeriod: "4h"
+- "best performant tokens the past 24 hours" -> timePeriod: "24h"
+- "best performant tokens the past month" -> timePeriod: "30d"
 
 Examples of NON-analysis queries (these are about creating games):
 - "Create a bull game"
@@ -76,12 +80,21 @@ User query: "${text}"
 
 Return a JSON object with:
 {
-  "timePeriod": "string describing the period (e.g., "20m", "1h", "24h", "7d", "30d", "1w", "1m")",
+  "timePeriod": "string describing the period. MUST be one of: "20m", "1h", "4h", "8h", "24h", "7d", "30d". Use exact format: "20m" for 20 minutes, "1h" for 1 hour, "4h" for 4 hours, "8h" for 8 hours, "24h" for 24 hours/1 day, "7d" for 7 days/week, "30d" for 30 days/month/year",
   "isAnalysisQuery": boolean (true if the query is asking for token/coin analysis/performance, false if it's about creating games)
 }
 
+CRITICAL RULES FOR timePeriod:
+- "20 minutes", "20m", "past 20 minutes" -> "20m"
+- "1 hour", "1h", "past hour", "last hour" -> "1h"
+- "4 hours", "4h", "past four hours", "past 4 hours" -> "4h"
+- "8 hours", "8h", "past 8 hours" -> "8h"
+- "24 hours", "24h", "1 day", "past day", "last day", "past 24 hours" -> "24h"
+- "7 days", "7d", "1 week", "1w", "past week", "last week" -> "7d"
+- "30 days", "30d", "1 month", "1m", "past month", "last month", "year", "1y", "12m", "past year" -> "30d"
+
 IMPORTANT: If the query mentions "create", "make", "game", "players", "bull", "bear" in the context of creating a game, set isAnalysisQuery to false.
-If the query mentions "performance", "best", "worst", "top", "ranking", set isAnalysisQuery to true.
+If the query mentions "performance", "best", "worst", "top", "ranking", "performant", set isAnalysisQuery to true.
 
 Return only valid JSON, no additional text.`;
 
@@ -123,7 +136,36 @@ Return only valid JSON, no additional text.`;
     return { tokens: [], timePeriod: '24h' };
   }
 
-  const timePeriod = parsed.timePeriod || '24h';
+  let timePeriod = parsed.timePeriod || '24h';
+  
+  const textLower = text.toLowerCase();
+  
+  if (textLower.includes('twenty four hours') || textLower.includes('24 hours') || textLower.includes('past 24 hours') || 
+      textLower.includes('past day') || textLower.includes('last day') || textLower.includes('one day')) {
+    timePeriod = '24h';
+  } else if (textLower.includes('past month') || textLower.includes('last month') || 
+             (textLower.includes('month') && !textLower.includes('week') && !textLower.includes('four'))) {
+    timePeriod = '30d';
+  } else if (textLower.includes('past week') || textLower.includes('last week') || 
+             (textLower.includes('week') && !textLower.includes('month') && !textLower.includes('four'))) {
+    timePeriod = '7d';
+  } else if ((textLower.includes('four hours') || textLower.includes('4 hours') || textLower.includes('past four hours') || 
+              textLower.includes('past 4 hours')) && !textLower.includes('twenty four') && !textLower.includes('24')) {
+    timePeriod = '4h';
+  } else if (textLower.includes('8 hours') || textLower.includes('8h') || textLower === '8h' || textLower.includes('past 8 hours')) {
+    timePeriod = '8h';
+  } else if (textLower.includes('1 hour') || textLower.includes('past hour') || textLower.includes('last hour') || 
+             textLower === '1h' || textLower.includes('one hour')) {
+    timePeriod = '1h';
+  } else if (textLower.includes('20 minutes') || textLower.includes('20m') || textLower === '20m' || textLower.includes('past 20 minutes')) {
+    timePeriod = '20m';
+  } else if (timePeriod && (timePeriod === '4h' || timePeriod === '24h' || timePeriod === '7d' || timePeriod === '30d' || 
+             timePeriod === '1h' || timePeriod === '20m' || timePeriod === '8h')) {
+  } else {
+    timePeriod = '24h';
+  }
+  
+  console.log(`[Token Analysis Service] Detected timePeriod: "${timePeriod}" from query: "${text}" (OpenAI returned: "${parsed.timePeriod}")`);
 
   const tokenPerformances: TokenPerformance[] = [];
 
@@ -142,18 +184,28 @@ Return only valid JSON, no additional text.`;
       }
 
       let historicalPriceStr: string | null = null;
+      const timePeriodLower = timePeriod.toLowerCase().trim();
       
-      if (timePeriod.includes('20m') || timePeriod.includes('20 minutes')) {
+      if (timePeriodLower === '20m' || timePeriodLower === '20 minutes' || timePeriodLower.includes('20 minutes') || timePeriodLower.includes('20m')) {
         historicalPriceStr = token.price20m;
-      } else if (timePeriod.includes('1h') || timePeriod.includes('1 hour')) {
+      } else if (timePeriodLower === '1h' || timePeriodLower === '1 hour' || timePeriodLower.includes('past hour') || timePeriodLower.includes('last hour') || timePeriodLower.includes('1 hour')) {
         historicalPriceStr = token.price1h;
-      } else if (timePeriod.includes('4h') || timePeriod.includes('4 hours')) {
+      } else if (timePeriodLower === '4h' || timePeriodLower === '4 hours' || timePeriodLower.includes('four hours') || timePeriodLower.includes('past four hours') || timePeriodLower.includes('past 4 hours') || timePeriodLower.includes('4 hours')) {
         historicalPriceStr = token.price4h;
-      } else if (timePeriod.includes('8h') || timePeriod.includes('8 hours')) {
+      } else if (timePeriodLower === '8h' || timePeriodLower === '8 hours' || timePeriodLower.includes('past 8 hours') || timePeriodLower.includes('8 hours')) {
         historicalPriceStr = token.price8h;
-      } else if (timePeriod.includes('7d') || timePeriod.includes('week') || timePeriod.includes('7 days')) {
+      } else if (timePeriodLower === '24h' || timePeriodLower === '24 hours' || timePeriodLower === '1 day' || 
+                 timePeriodLower.includes('past day') || timePeriodLower.includes('last day') || timePeriodLower.includes('past 24 hours') || 
+                 timePeriodLower.includes('24 hours') || timePeriodLower.includes('1 day')) {
+        historicalPriceStr = token.price24h;
+      } else if (timePeriodLower === '7d' || timePeriodLower === '1w' || timePeriodLower === '7 days' || timePeriodLower === '1 week' ||
+                 timePeriodLower.includes('past week') || timePeriodLower.includes('last week') || 
+                 timePeriodLower.includes('7 days') || timePeriodLower.includes('week') || timePeriodLower.startsWith('1w')) {
         historicalPriceStr = token.price7d;
-      } else if (timePeriod.includes('30d') || timePeriod.includes('month') || timePeriod.includes('30 days')) {
+      } else if (timePeriodLower === '30d' || timePeriodLower === '1m' || timePeriodLower === '30 days' || timePeriodLower === '1 month' ||
+                 timePeriodLower.includes('past month') || timePeriodLower.includes('last month') || 
+                 timePeriodLower.includes('30 days') || timePeriodLower.includes('month') || timePeriodLower.includes('year') || 
+                 timePeriodLower.includes('1y') || timePeriodLower.includes('12m') || timePeriodLower.includes('past year')) {
         historicalPriceStr = token.price30d;
       } else {
         historicalPriceStr = token.price24h;

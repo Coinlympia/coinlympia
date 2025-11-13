@@ -60,34 +60,24 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<CreateOrGetUserResponse>
 ) {
-  console.log('[create-or-get] Request received:', { method: req.method, body: req.body });
-  
   if (req.method !== 'POST') {
-    console.log('[create-or-get] Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed', success: false });
   }
 
   try {
     const { address }: CreateOrGetUserRequest = req.body;
-    console.log('[create-or-get] Address received:', address);
 
     if (!address || typeof address !== 'string') {
-      console.error('[create-or-get] Invalid address:', address);
       return res.status(400).json({ error: 'Address is required', success: false });
     }
 
     const normalizedAddress = address.toLowerCase();
-    console.log('[create-or-get] Normalized address:', normalizedAddress);
-
-    console.log('[create-or-get] Checking for existing user...');
     let user = await prisma.userAccount.findUnique({
       where: { address: normalizedAddress },
     });
 
     if (!user) {
-      console.log('[create-or-get] User not found, creating new user...');
       const username = await generateUniqueUsername();
-      console.log('[create-or-get] Generated username:', username);
       
       try {
       user = await prisma.userAccount.create({
@@ -96,23 +86,18 @@ export default async function handler(
           username,
         },
       });
-        console.log('[create-or-get] User created successfully:', { id: user.id, address: user.address, username: user.username });
       } catch (createError: any) {
         if (createError?.code === 'P2002' && createError?.meta?.target?.includes('address')) {
-          console.log('[create-or-get] User was created by another request, fetching existing user...');
           user = await prisma.userAccount.findUnique({
             where: { address: normalizedAddress },
           });
           if (!user) {
             throw createError;
           }
-          console.log('[create-or-get] User found after race condition:', { id: user.id, address: user.address, username: user.username });
         } else {
           throw createError;
         }
       }
-    } else {
-      console.log('[create-or-get] User already exists:', { id: user.id, address: user.address, username: user.username });
     }
 
     return res.status(200).json({
@@ -126,11 +111,6 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error('[create-or-get] Error creating or getting user:', error);
-    if (error instanceof Error) {
-      console.error('[create-or-get] Error message:', error.message);
-      console.error('[create-or-get] Error stack:', error.stack);
-    }
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create or get user',

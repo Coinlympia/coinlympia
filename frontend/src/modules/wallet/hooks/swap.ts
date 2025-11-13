@@ -82,7 +82,6 @@ export function useSwapQuote({
       ) {
         return null;
       }
-      console.log(chainId);
 
       return await axios
         .get(ZERO_EX_QUOTE_ENDPOINT(chainId), {

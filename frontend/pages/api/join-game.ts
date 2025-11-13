@@ -46,7 +46,6 @@ export default async function handler(
     const result: JoinGameResponse = await backendResponse.json();
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Error calling backend join-game service:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to prepare join game';
     return res.status(500).json({ error: errorMessage });
   }

@@ -30,7 +30,6 @@ export default async function handler(
     const result: FindGamesResponse = await backendResponse.json();
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Error calling backend find-games service:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to find games';
     return res.status(500).json({ error: errorMessage });
   }

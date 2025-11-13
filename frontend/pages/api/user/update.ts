@@ -34,13 +34,6 @@ export default async function handler(
   try {
     const { address, username, profileImageURL, backgroundImageURL }: UpdateUserRequest = req.body;
 
-    console.log('[update.ts] Received update request:', {
-      address,
-      username,
-      profileImageURL,
-      backgroundImageURL,
-    });
-
     if (!address || typeof address !== 'string') {
       return res.status(400).json({ error: 'Address is required', success: false });
     }
@@ -83,8 +76,6 @@ export default async function handler(
       updateData.backgroundImageURL = backgroundImageURL && backgroundImageURL.trim() !== '' ? backgroundImageURL.trim() : null;
     }
 
-    console.log('[update.ts] Update data:', updateData);
-
     const user = await prisma.userAccount.update({
       where: { address: normalizedAddress },
       data: updateData,
@@ -94,12 +85,6 @@ export default async function handler(
     if (user.username) {
       userCache.delete(`user:username:${user.username.toLowerCase()}`);
     }
-
-    console.log('[update.ts] User updated:', {
-      id: user.id,
-      username: user.username,
-      updatedAt: user.updatedAt,
-    });
 
     return res.status(200).json({
       success: true,
@@ -114,7 +99,6 @@ export default async function handler(
       },
     });
   } catch (error) {
-    console.error('Error updating user:', error);
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update user',

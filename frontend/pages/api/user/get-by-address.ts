@@ -84,7 +84,6 @@ export default async function handler(
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error('Error getting user by address:', error);
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get user',

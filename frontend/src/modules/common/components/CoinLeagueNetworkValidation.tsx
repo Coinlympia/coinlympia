@@ -35,7 +35,6 @@ export default function CoinLeagueNetworkValidation({
     try {
       await switchNetworkMutation.mutateAsync({ chainId: ChainId.Polygon });
     } catch (error) {
-      console.error('Error switching to Polygon:', error);
     }
   };
 

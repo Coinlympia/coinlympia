@@ -77,7 +77,7 @@ When users ask questions that are NOT related to Coinlympia, games, or cryptocur
 
   if (databaseData) {
     if (databaseData.type === 'tokens') {
-      const tokensList = databaseData.tokens?.map((token: any, index: number) => {
+      const tokensList = databaseData.tokens?.slice(0, 200).map((token: any, index: number) => {
         return `${index + 1}. ${token.symbol} (${token.name})`;
       }).join('\n') || '';
 
@@ -131,9 +131,18 @@ You have access to ${databaseData.count} game results in the database. Use this 
 
     const topTokens = allTokens.slice(0, 20);
     const bottomTokens = allTokens.slice(-10).reverse();
-    const allTokensList = allTokens.map(t => `${t.index}. ${t.symbol} (${t.name}): $${t.currentPrice.toFixed(6)} - ${t.changeSign}${t.priceChangePercent.toFixed(2)}%`).join('\n');
+    const allTokensList = allTokens.slice(0, 200).map(t => `${t.index}. ${t.symbol} (${t.name}): $${t.currentPrice.toFixed(6)} - ${t.changeSign}${t.priceChangePercent.toFixed(2)}%`).join('\n');
 
-    systemPrompt += `\n\nCRITICAL: You have REAL-TIME token performance data for the last ${tokenData.timePeriod} from ALL tokens available in Coinlympia. This data was just fetched from CoinGecko API and is current.
+    const timePeriodDisplay = tokenData.timePeriod === '20m' ? '20 minutes' :
+                              tokenData.timePeriod === '1h' ? '1 hour' :
+                              tokenData.timePeriod === '4h' ? '4 hours' :
+                              tokenData.timePeriod === '8h' ? '8 hours' :
+                              tokenData.timePeriod === '24h' ? '24 hours' :
+                              tokenData.timePeriod === '7d' ? '7 days' :
+                              tokenData.timePeriod === '30d' ? '30 days' :
+                              tokenData.timePeriod;
+    
+    systemPrompt += `\n\nCRITICAL: You have REAL-TIME token performance data for the last ${timePeriodDisplay} from ALL tokens available in Coinlympia. This data was just fetched from CoinGecko API and is current. You can provide analysis for ANY timeframe requested by the user - the data is available for 20 minutes, 1 hour, 4 hours, 8 hours, 24 hours, 7 days, and 30 days.
 
 COMPLETE TOKEN PERFORMANCE DATA (sorted by performance, best to worst):
 ${allTokensList}
@@ -188,8 +197,9 @@ TOKEN ANALYSIS INSTRUCTIONS:
 6. REMEMBER:
    - This data comes from CoinGecko API for tokens in the database
    - All prices are in USD
-   - Percentage changes are relative to ${tokenData.timePeriod} ago
-   - Higher percentage = better performance for bull games, lower = better for bear games`;
+   - Percentage changes are relative to ${timePeriodDisplay} ago
+   - Higher percentage = better performance for bull games, lower = better for bear games
+   - CRITICAL: If the user asks for a different timeframe than what's currently shown, you MUST still use the data provided. The system will fetch the correct timeframe data automatically if needed. DO NOT say you can only provide data for a specific timeframe - you have access to all timeframes.`;
   } else {
     systemPrompt += `\n\nIMPORTANT: If the user asks about token performance, prices, or which tokens performed best, the system will automatically fetch this data from CoinGecko API for tokens in the database. However, if you don't have the data yet, you should explain that the system is fetching it, but DO NOT ask the user if they want the information - the system will provide it automatically.`;
   }

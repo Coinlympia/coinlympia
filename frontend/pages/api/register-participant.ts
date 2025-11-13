@@ -59,7 +59,6 @@ export default async function handler(
 
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Error registering participant:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to register participant';
     return res.status(500).json({ success: false, error: errorMessage });
   }

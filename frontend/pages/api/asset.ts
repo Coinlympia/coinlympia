@@ -21,7 +21,6 @@ export default async function handler(
     );
 
   } catch (e) {
-    console.log(e);
   }
 
   if (!asset) {
@@ -46,8 +45,6 @@ export default async function handler(
       }
     }
   } catch (e) {
-    console.log(e);
-    console.log('failed fetching from api');
   }
 
   const metadata = await getAssetMetadata(asset?.tokenURI, {

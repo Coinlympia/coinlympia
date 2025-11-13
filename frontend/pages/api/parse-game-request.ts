@@ -20,7 +20,6 @@ export default async function handler(
     const validatedParams = await parseGameRequest(text);
     return res.status(200).json(validatedParams);
   } catch (error) {
-    console.error('Error parsing game request:', error);
     return res.status(500).json({ error: 'Failed to parse game request' });
   }
 }
