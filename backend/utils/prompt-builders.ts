@@ -31,7 +31,8 @@ export function buildSystemPrompt(
   coinToPlaySymbol: string,
   databaseData?: DatabaseData | null,
   tokenData?: TokenData | null,
-  language?: string
+  language?: string,
+  userMessage?: string
 ): string {
   let systemPrompt = `You are a helpful AI assistant for Coinlympia, a cryptocurrency prediction game platform. 
 
@@ -77,14 +78,21 @@ When users ask questions that are NOT related to Coinlympia, games, or cryptocur
 
   if (databaseData) {
     if (databaseData.type === 'tokens') {
-      const tokensList = databaseData.tokens?.slice(0, 200).map((token: any, index: number) => {
-        return `${index + 1}. ${token.symbol} (${token.name})`;
-      }).join('\n') || '';
+      const isTokenAnalysisQuery = tokenData && tokenData.tokens && tokenData.tokens.length > 0;
+      
+      if (!isTokenAnalysisQuery) {
+        const tokensList = databaseData.tokens?.slice(0, 200).map((token: any, index: number) => {
+          return `${index + 1}. ${token.symbol} (${token.name})`;
+        }).join('\n') || '';
 
-      systemPrompt += `\n\nDATABASE DATA - ALL Available Tokens in Coinlympia (${databaseData.count} total):
+        systemPrompt += `\n\nDATABASE DATA - ALL Available Tokens in Coinlympia (${databaseData.count} total):
 ${tokensList}
 
 CRITICAL: When asking the user to select coins, DO NOT list the tokens in your text response. The system will automatically display a visual table with all available tokens and their performance data. Simply ask the user to select the coins they want from the table below. For example: "Please select {maxCoins} coins from the available tokens table below." or "Which coins would you like to use? You can see all available options with their performance data in the table below."`;
+      } else {
+        systemPrompt += `\n\nDATABASE DATA - Available Tokens Reference:
+You have access to ${databaseData.count} tokens in the database. DO NOT list all tokens in your response when providing token analysis. Only mention specific tokens that are relevant to the user's query about performance, best/worst performers, or analysis.`;
+      }
     } else if (databaseData.type === 'games') {
       const gamesList = databaseData.games?.slice(0, 10).map((game: any, index: number) => {
         return `${index + 1}. Game #${game.id} - Type: ${game.type === 1 ? 'Bull' : 'Bear'} - Status: ${game.status} - Players: ${game.currentPlayers}/${game.numPlayers} - Creator: ${game.creator}`;
@@ -201,7 +209,18 @@ TOKEN ANALYSIS INSTRUCTIONS:
    - Higher percentage = better performance for bull games, lower = better for bear games
    - CRITICAL: If the user asks for a different timeframe than what's currently shown, you MUST still use the data provided. The system will fetch the correct timeframe data automatically if needed. DO NOT say you can only provide data for a specific timeframe - you have access to all timeframes.`;
   } else {
-    systemPrompt += `\n\nIMPORTANT: If the user asks about token performance, prices, or which tokens performed best, the system will automatically fetch this data from CoinGecko API for tokens in the database. However, if you don't have the data yet, you should explain that the system is fetching it, but DO NOT ask the user if they want the information - the system will provide it automatically.`;
+    const messageLower = (userMessage || '').toLowerCase();
+    const isTokenAnalysisQuery = messageLower.includes('best') || messageLower.includes('worst') || 
+                                 messageLower.includes('performance') || messageLower.includes('performant') ||
+                                 messageLower.includes('analyze') || messageLower.includes('analysis') ||
+                                 (messageLower.includes('token') && (messageLower.includes('best') || messageLower.includes('worst'))) ||
+                                 (messageLower.includes('coin') && (messageLower.includes('best') || messageLower.includes('worst')));
+    
+    if (isTokenAnalysisQuery) {
+      systemPrompt += `\n\nCRITICAL: If the user asks about token performance, prices, or which tokens performed best, the system will automatically fetch this data from CoinGecko API. DO NOT say "I'm fetching" or "I'm currently fetching" - the data will be provided automatically. Wait for the data to be provided and then respond with the analysis immediately using the token performance data provided.`;
+    } else {
+      systemPrompt += `\n\nIMPORTANT: If the user asks about token performance, prices, or which tokens performed best, the system will automatically fetch this data from CoinGecko API for tokens in the database. However, if you don't have the data yet, you should explain that the system is fetching it, but DO NOT ask the user if they want the information - the system will provide it automatically.`;
+    }
   }
 
   systemPrompt += `\n\nDATABASE ACCESS (YOUR ONLY SOURCE FOR TOKEN LIST):

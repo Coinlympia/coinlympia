@@ -124,7 +124,8 @@ export async function generateChatResponse(
     coinToPlaySymbol,
     databaseData,
     tokenData || undefined,
-    'english'
+    'english',
+    message
   );
 
   if (gameCreationState) {
