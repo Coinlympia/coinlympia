@@ -37,7 +37,8 @@ import { myAppsApi } from "src/services/whitelabel";
 
 
 export const authOptions: AuthOptions = {
-
+  secret: process.env.NEXTAUTH_SECRET,
+  
   providers: [
     TwitterProvider({
       clientId: process.env.TWITTER_API_KEY || '',
