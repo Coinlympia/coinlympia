@@ -162,18 +162,25 @@ export function useAuthUserQuery() {
     queryKey: [GET_AUTH_USER, account],
     queryFn: async () => {
       if (account) {
-        const response = await getUserByAddressFromDB(account);
-        if (response.data.success && response.data.user) {
-          return {
-            id: response.data.user.id,
-            username: response.data.user.username,
-            profileImageURL: response.data.user.profileImageURL,
-            backgroundImageURL: response.data.user.backgroundImageURL,
-            accounts: [{ address: response.data.user.address }],
-            credentials: [],
-          };
+        try {
+          const response = await getUserByAddressFromDB(account);
+          if (response.data.success && response.data.user) {
+            return {
+              id: response.data.user.id,
+              username: response.data.user.username,
+              profileImageURL: response.data.user.profileImageURL,
+              backgroundImageURL: response.data.user.backgroundImageURL,
+              accounts: [{ address: response.data.user.address }],
+              credentials: [],
+            };
+          }
+          return null;
+        } catch (error: any) {
+          if (error?.response?.status === 404 || error?.response?.status === 503) {
+            return null;
+          }
+          throw error;
         }
-        return null;
       }
       return null;
     },

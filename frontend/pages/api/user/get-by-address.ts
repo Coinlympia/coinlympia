@@ -37,6 +37,13 @@ export default async function handler(
   }
 
   try {
+    if (!process.env.DATABASE_URL) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not configured',
+      });
+    }
+
     const { address }: GetUserByAddressRequest = req.body;
 
     if (!address || typeof address !== 'string') {
@@ -83,10 +90,26 @@ export default async function handler(
     userCache.set(cacheKey, response, 10 * 60 * 1000);
 
     return res.status(200).json(response);
-  } catch (error) {
+  } catch (error: any) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get user';
+    
+    if (error?.code === 'P2025' || error?.message?.includes('Record to find does not exist')) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+    
+    if (error?.code === 'P1001' || error?.message?.includes('Can\'t reach database server')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection error',
+      });
+    }
+    
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get user',
+      error: errorMessage,
     });
   }
 }

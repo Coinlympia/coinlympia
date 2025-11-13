@@ -65,6 +65,13 @@ export default async function handler(
   }
 
   try {
+    if (!process.env.DATABASE_URL) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database not configured',
+      });
+    }
+
     const { address }: CreateOrGetUserRequest = req.body;
 
     if (!address || typeof address !== 'string') {
@@ -110,10 +117,41 @@ export default async function handler(
         updatedAt: user.updatedAt,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create or get user';
+    
+    if (error?.code === 'P2002') {
+      const normalizedAddress = (req.body?.address || '').toLowerCase();
+      try {
+        const existingUser = await prisma.userAccount.findUnique({
+          where: { address: normalizedAddress },
+        });
+        if (existingUser) {
+          return res.status(200).json({
+            success: true,
+            user: {
+              id: existingUser.id,
+              address: existingUser.address,
+              username: existingUser.username,
+              createdAt: existingUser.createdAt,
+              updatedAt: existingUser.updatedAt,
+            },
+          });
+        }
+      } catch (findError) {
+      }
+    }
+    
+    if (error?.code === 'P1001' || error?.message?.includes('Can\'t reach database server')) {
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection error',
+      });
+    }
+    
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create or get user',
+      error: errorMessage,
     });
   }
 }
