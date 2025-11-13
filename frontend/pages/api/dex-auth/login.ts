@@ -28,7 +28,6 @@ export default async function handler(
         }
       })
     } catch (e) {
-      console.log(e)
     }
 
 

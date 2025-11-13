@@ -111,7 +111,6 @@ async function waitForRateLimit(): Promise<void> {
     const oldestRequest = Math.min(...RATE_LIMIT.requests);
     const waitTime = RATE_LIMIT.window - (Date.now() - oldestRequest) + 1000;
     if (waitTime > 0) {
-      console.log(`Rate limit reached, waiting ${Math.ceil(waitTime / 1000)}s...`);
       await delay(waitTime);
     }
   }
@@ -142,8 +141,6 @@ export async function getTokenCurrentPrice(
     });
 
     if (Object.keys(response.data).length === 0) {
-      console.warn(`Empty response for token ${tokenAddress} on ${platformId}. URL: ${url}`);
-      console.warn(`Response status: ${response.status}, headers:`, response.headers);
     }
 
     const price = response.data[normalizedAddress]?.usd;
@@ -163,24 +160,13 @@ export async function getTokenCurrentPrice(
       return priceVariations;
     }
 
-    console.warn(`No price found for token ${tokenAddress} on ${platformId}. Response:`, JSON.stringify(response.data));
     return null;
   } catch (error: any) {
     if (error.response?.status === 429) {
-      console.warn(`Rate limit hit for token ${tokenAddress}, waiting...`);
       await delay(5000);
       return null;
     }
 
-    console.error(`Error fetching current price for ${tokenAddress}:`, {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      url,
-      hasApiKey: !!getApiKey(),
-      endpoint,
-    });
     return null;
   }
 }
@@ -200,7 +186,6 @@ export async function getTokenHistoricalPrices(
 
   const endpoint = getEndpoint();
   const headers = getHeaders();
-  // Normalizar la dirección a lowercase para CoinGecko
   const normalizedAddress = tokenAddress.toLowerCase();
   const url = `${endpoint}/coins/${platformId}/contract/${normalizedAddress}/market_chart?vs_currency=usd&days=${days}`;
 
@@ -216,25 +201,13 @@ export async function getTokenHistoricalPrices(
       return prices;
     }
 
-    console.warn(`No historical prices found for token ${tokenAddress} on ${platformId}`);
     return null;
   } catch (error: any) {
     if (error.response?.status === 429) {
-      console.warn(`Rate limit hit for historical data of token ${tokenAddress}, waiting...`);
-      await delay(5000); // Esperar 5 segundos
+      await delay(5000);
       return null;
     }
 
-    // Log detallado del error
-    console.error(`Error fetching historical prices for ${tokenAddress}:`, {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      url,
-      hasApiKey: !!getApiKey(),
-      endpoint,
-    });
     return null;
   }
 }
@@ -278,7 +251,6 @@ export async function searchTokenBySymbol(symbol: string): Promise<string | null
 
     return null;
   } catch (error: any) {
-    console.error(`Error searching token ${symbol}:`, error.message);
     return null;
   }
 }
@@ -363,7 +335,6 @@ export async function getNativeCoinPrice(
 
     return null;
   } catch (error: any) {
-    console.error(`Error fetching native coin price for ${coingeckoId}:`, error.message);
     return null;
   }
 }
@@ -398,7 +369,6 @@ export async function getNativeCoinHistoricalPrices(
 
     return null;
   } catch (error: any) {
-    console.error(`Error fetching native coin historical prices for ${coingeckoId}:`, error.message);
     return null;
   }
 }
@@ -410,7 +380,6 @@ export async function getTokenPriceBySymbol(
 ): Promise<number | null> {
   const coingeckoId = await searchTokenBySymbol(symbol);
   if (!coingeckoId) {
-    console.warn(`Token ${symbol} not found in CoinGecko`);
     return null;
   }
 
@@ -459,11 +428,9 @@ export async function getMultipleTokenPrices(
     return prices;
   } catch (error: any) {
     if (error.response?.status === 429) {
-      console.warn(`Rate limit hit for batch prices, waiting...`);
       await delay(5000);
       return {};
     }
-    console.error(`Error fetching batch prices:`, error.message);
     return {};
   }
 }

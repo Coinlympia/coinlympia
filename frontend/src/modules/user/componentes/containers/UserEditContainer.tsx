@@ -88,11 +88,6 @@ export function UserEditContainer({
     setShowUpsertUser(true);
     if (userForm) {
       const oldUsername = user?.username;
-      console.log('[UserEditContainer] Updating user with data:', {
-        username: userForm.username,
-        profileImageURL: userForm.profileImageURL,
-        backgroundImageURL: userForm.backgroundImageURL,
-      });
       updateUserMutation.mutate(
         {
           username: userForm.username?.trim() || undefined,
@@ -101,7 +96,6 @@ export function UserEditContainer({
         },
         {
           onSuccess: (updatedUser) => {
-            console.log('[UserEditContainer] User updated successfully:', updatedUser);
             setTimeout(() => {
               setShowUpsertUser(false);
             }, 1500);
@@ -117,7 +111,6 @@ export function UserEditContainer({
             }
           },
           onError: (error) => {
-            console.error('[UserEditContainer] Error updating user:', error);
           },
         }
       );

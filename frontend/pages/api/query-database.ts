@@ -25,7 +25,6 @@ export default async function handler(
 
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Error querying database:', error);
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to query database',

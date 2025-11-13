@@ -35,7 +35,6 @@ const FormSchema: Yup.SchemaOf<UserForm> = Yup.object().shape({
             const { data } = await getUsernameExists(username);
             return !data.exists;
           } catch (error) {
-            console.warn('Error checking username availability:', error);
             return true;
           }
         }
@@ -70,7 +69,6 @@ const createEditFormSchema = (currentUsername?: string): Yup.SchemaOf<UserForm> 
               const { data } = await getUsernameExists(username, currentUsername);
               return !data.exists;
             } catch (error) {
-              console.warn('Error checking username availability:', error);
               return true;
             }
           }

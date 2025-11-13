@@ -125,7 +125,6 @@ const CoinLeagueIndex: NextPage = () => {
             url: url,
           });
         } catch (error) {
-          console.log('Error sharing', error);
         }
       } else {
         alert('Sharing not supported on this browser');

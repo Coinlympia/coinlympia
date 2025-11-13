@@ -30,6 +30,7 @@ interface TokenChartModalProps {
   tokenSymbol: string;
   tokenAddress?: string;
   chainId?: number;
+  requestedTimePeriod?: string;
 }
 
 interface ChartDataPoint {
@@ -37,11 +38,20 @@ interface ChartDataPoint {
   price: number;
 }
 
+interface ChartDataResponse {
+  success: boolean;
+  data?: ChartDataPoint[];
+  historicalPrice?: number | null;
+  currentPrice?: number | null;
+  error?: string;
+}
+
 export function TokenChartModal({
   dialogProps,
   tokenSymbol,
   tokenAddress,
   chainId,
+  requestedTimePeriod,
 }: TokenChartModalProps) {
   const { mode } = useColorScheme();
   const [isMounted, setIsMounted] = useState(false);
@@ -49,6 +59,8 @@ export function TokenChartModal({
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [historicalPrice, setHistoricalPrice] = useState<number | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -72,19 +84,66 @@ export function TokenChartModal({
             tokenAddress,
             symbol: tokenSymbol,
             chainId,
-            days: 7,
+            timePeriod: requestedTimePeriod,
           }),
         });
 
-        const result = await response.json();
+        const result = await response.json() as ChartDataResponse;
 
         if (result.success && result.data) {
-          setChartData(result.data);
+          let filteredData = result.data;
+          
+          if (requestedTimePeriod) {
+            const timePeriodLower = requestedTimePeriod.toLowerCase();
+            const now = Date.now();
+            let maxAge = 0;
+            
+            if (timePeriodLower.includes('year') || timePeriodLower.includes('1y') || timePeriodLower.includes('12m') || timePeriodLower.includes('past year')) {
+              maxAge = 30 * 24 * 60 * 60 * 1000;
+            } else if (timePeriodLower.includes('past month') || timePeriodLower.includes('month') || timePeriodLower.includes('30d') || timePeriodLower.includes('30 days') || timePeriodLower.includes('1m')) {
+              maxAge = 30 * 24 * 60 * 60 * 1000;
+            } else if (timePeriodLower.includes('week') || timePeriodLower.includes('7d') || timePeriodLower.includes('1w') || timePeriodLower.includes('past week')) {
+              maxAge = 7 * 24 * 60 * 60 * 1000;
+            } else if (timePeriodLower.includes('day') || timePeriodLower.includes('24h') || timePeriodLower.includes('1d')) {
+              maxAge = 24 * 60 * 60 * 1000;
+            } else if (timePeriodLower.includes('8h') || timePeriodLower.includes('8 hours')) {
+              maxAge = 8 * 60 * 60 * 1000;
+            } else if (timePeriodLower.includes('4h') || timePeriodLower.includes('4 hours')) {
+              maxAge = 4 * 60 * 60 * 1000;
+            } else if (timePeriodLower.includes('1h') || timePeriodLower.includes('1 hour')) {
+              maxAge = 60 * 60 * 1000;
+            } else if (timePeriodLower.includes('20m') || timePeriodLower.includes('20 minutes')) {
+              maxAge = 20 * 60 * 1000;
+            }
+            
+            if (maxAge > 0) {
+              const cutoffTime = now - maxAge;
+              filteredData = result.data.filter((point: ChartDataPoint) => point.timestamp >= cutoffTime);
+            }
+            
+            if (filteredData.length === 0 && (timePeriodLower.includes('year') || timePeriodLower.includes('1y') || timePeriodLower.includes('12m') || timePeriodLower.includes('past year') || 
+                timePeriodLower.includes('past month') || timePeriodLower.includes('month') || timePeriodLower.includes('30d') || timePeriodLower.includes('30 days') || timePeriodLower.includes('1m'))) {
+              const maxAvailableAge = 30 * 24 * 60 * 60 * 1000;
+              const maxAvailableCutoff = now - maxAvailableAge;
+              filteredData = result.data.filter((point: ChartDataPoint) => point.timestamp >= maxAvailableCutoff);
+            }
+          }
+          
+          setChartData(filteredData);
+          
+          if (result.historicalPrice !== null && result.historicalPrice !== undefined && 
+              result.currentPrice !== null && result.currentPrice !== undefined &&
+              result.historicalPrice > 0 && result.currentPrice > 0) {
+            setHistoricalPrice(result.historicalPrice);
+            setCurrentPrice(result.currentPrice);
+          } else {
+            setHistoricalPrice(null);
+            setCurrentPrice(null);
+          }
         } else {
           setError(result.error || 'Failed to load chart data');
         }
       } catch (err: any) {
-        console.error('Error fetching chart data:', err);
         setError(err.message || 'Failed to load chart data');
       } finally {
         setIsLoading(false);
@@ -92,7 +151,7 @@ export function TokenChartModal({
     };
 
     fetchChartData();
-  }, [isMounted, tokenSymbol, tokenAddress, chainId]);
+  }, [isMounted, tokenSymbol, tokenAddress, chainId, requestedTimePeriod]);
 
   if (!isMounted) {
     return null;
@@ -105,14 +164,23 @@ export function TokenChartModal({
     formattedPrice: point.price.toFixed(6),
   }));
 
-  const priceChange = chartData.length > 1
-    ? chartData[chartData.length - 1].price - chartData[0].price
-    : 0;
-  const priceChangePercent = chartData.length > 1 && chartData[0].price > 0
-    ? ((priceChange / chartData[0].price) * 100)
-    : 0;
+  let priceChange = 0;
+  let priceChangePercent = 0;
+  let displayCurrentPrice = 0;
 
-  const currentPrice = chartData.length > 0 ? chartData[chartData.length - 1].price : 0;
+  if (historicalPrice !== null && currentPrice !== null && historicalPrice > 0 && currentPrice > 0) {
+    priceChange = currentPrice - historicalPrice;
+    priceChangePercent = ((priceChange / historicalPrice) * 100);
+    displayCurrentPrice = currentPrice;
+  } else if (chartData.length > 1) {
+    const firstPrice = chartData[0].price;
+    const lastPrice = chartData[chartData.length - 1].price;
+    priceChange = lastPrice - firstPrice;
+    priceChangePercent = firstPrice > 0 ? ((priceChange / firstPrice) * 100) : 0;
+    displayCurrentPrice = lastPrice;
+  } else if (chartData.length > 0) {
+    displayCurrentPrice = chartData[chartData.length - 1].price;
+  }
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -165,10 +233,10 @@ export function TokenChartModal({
           <Typography variant="h6" component="span">
             {tokenSymbol} Chart
           </Typography>
-          {currentPrice > 0 && (
+          {displayCurrentPrice > 0 && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                ${currentPrice.toFixed(6)}
+                ${displayCurrentPrice.toFixed(6)}
               </Typography>
               {priceChangePercent !== 0 && (
                 <Typography

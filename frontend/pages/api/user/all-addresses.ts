@@ -99,7 +99,6 @@ export default async function handler(
       profiles,
     });
   } catch (error) {
-    console.error('Error getting profiles by addresses:', error);
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get profiles',

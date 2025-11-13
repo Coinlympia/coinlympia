@@ -88,7 +88,6 @@ export const GET_GAME_LEVEL_AMOUNTS = (
 
   // Validate coinToPlay exists
   if (!coinToPlay) {
-    console.error('CoinToPlay not found:', { chainId, coinToPlayAddress });
     throw new Error(`CoinToPlay not found for chainId ${chainId} and address ${coinToPlayAddress}`);
   }
 

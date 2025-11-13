@@ -93,14 +93,12 @@ export const getProfile = async (address: string) => {
       return response.data.profiles[0];
     }
   } catch (error) {
-    console.error('Error fetching profile from local API:', error);
   }
   
   return axios
     .get<GameProfile>(`${PROFILE_API}/address/${address}`)
     .then((response) => response.data)
     .catch((error) => {
-      console.error('Error fetching profile from external API:', error);
       throw error;
     });
 };
@@ -118,12 +116,10 @@ export const getProfiles = (addresses: string[]): Promise<GameProfile[]> => {
       return [];
     })
     .catch((error) => {
-      console.error('Error fetching profiles from local API:', error);
       return axios
         .post<GameProfile[]>(`${PROFILE_API}/all/addresses`, { addresses })
         .then((response) => response.data)
         .catch((fallbackError) => {
-          console.error('Error fetching profiles from external API:', fallbackError);
           return [];
         });
     });

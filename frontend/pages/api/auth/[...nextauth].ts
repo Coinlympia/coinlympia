@@ -25,7 +25,6 @@ import { myAppsApi } from "src/services/whitelabel";
             }
           })
         } catch (e) {
-          console.log('error on signin')
         }
         return true
       },
@@ -60,7 +59,6 @@ export const authOptions: AuthOptions = {
           }
         })
       } catch (e) {
-        console.log('error on signin')
       }
       return true
     }

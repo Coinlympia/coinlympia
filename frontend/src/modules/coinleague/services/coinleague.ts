@@ -213,7 +213,6 @@ export async function getPlayersScoreGame({ game, factoryAddress, provider }: { 
 
     coinFeeds[feed.coin].score = String(((end_price - start_price) * 100000) / end_price);
   }
-  console.log(coinFeeds);
 
   return { playerScoreSorted, coinFeeds };
 

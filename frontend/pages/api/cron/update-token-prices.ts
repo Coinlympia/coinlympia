@@ -32,7 +32,6 @@ async function fetchTokenPrices(
   try {
     const coingeckoId = await searchTokenBySymbol(symbol);
     if (!coingeckoId) {
-      console.warn(`Token ${symbol} not found in CoinGecko`);
       return null;
     }
 
@@ -104,7 +103,6 @@ async function fetchTokenPrices(
       contractInfo: contractInfo || null,
     };
   } catch (error: any) {
-    console.error(`Error fetching prices for token ${tokenAddress}:`, error.message);
     return null;
   }
 }
@@ -150,7 +148,6 @@ export default async function handler(
       const batchPromises = batch.map(async (token) => {
         const platformId = getPlatformId(token.chainId);
         if (!platformId) {
-          console.warn(`Chain ${token.chainId} not supported for token ${token.symbol}`);
           return false;
         }
 
@@ -164,10 +161,8 @@ export default async function handler(
         const { priceData, contractInfo } = result;
 
         try {
-          // Determinar el chainId real basado en la plataforma donde se encontró el token
           let actualChainId: number | null = null;
           if (contractInfo) {
-            // Mapear platformId de CoinGecko a chainId
             const platformToChainId: { [key: string]: number } = {
               'ethereum': 1,
               'polygon-pos': 137,
@@ -181,7 +176,7 @@ export default async function handler(
             where: { id: token.id },
             data: {
               ...priceData,
-              chainId: actualChainId ?? token.chainId, // Mantener el original si no se encontró
+              chainId: actualChainId ?? token.chainId,
               coingeckoPlatformId: contractInfo?.platformId || null,
               lastPriceUpdate: new Date(),
             },
@@ -189,7 +184,6 @@ export default async function handler(
           updated++;
           return true;
         } catch (error: any) {
-          console.error(`Error updating token ${token.symbol}:`, error.message);
           errors++;
           return false;
         }
@@ -202,7 +196,6 @@ export default async function handler(
       }
     }
 
-    console.log(`Price update completed: ${updated} tokens updated, ${errors} errors`);
 
     return res.status(200).json({
       success: true,
@@ -210,7 +203,6 @@ export default async function handler(
       errors,
     });
   } catch (error: any) {
-    console.error('Error in price update cron:', error);
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to update token prices',
     });

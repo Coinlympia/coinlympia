@@ -81,7 +81,6 @@ export function ChatGameCreator({ onGameParamsExtracted }: ChatGameCreatorProps)
           }
         })
         .catch((error) => {
-          console.error('Error fetching token analysis:', error);
         });
     }
 
