@@ -850,14 +850,13 @@ export function ChatBox({
           { id: 'level-6', label: formatMessage({ id: 'chat.option.level.6', defaultMessage: 'Level 6 (GrandMaster) - Entry: 250.0 USDT' }), value: 6, checked: false },
         ];
           }
-      else if (!isPureTokenAnalysis && (contentLower.includes('coins') || 
-          contentLower.includes('tokens') ||
-          (contentLower.includes('how many') && contentLower.includes('coins')) ||
-          (contentLower.includes('how many') && contentLower.includes('tokens'))) && 
+      else if (!isUserAskingForAnalysis &&
+          !isResponseAboutAnalysis &&
+          ((contentLower.includes('how many') && (contentLower.includes('coins') || contentLower.includes('tokens'))) ||
+          (contentLower.includes('coins') && (contentLower.includes('support') || contentLower.includes('include'))) ||
+          (contentLower.includes('tokens') && (contentLower.includes('support') || contentLower.includes('include')))) &&
           !updatedGameCreationState.maxCoins &&
-          !hasGameJoinContext &&
-          hasGameCreationContext &&
-          !tokenDataForMessage) {
+          !hasGameJoinContext) {
         messageOptions = [
           { id: 'max-coins-2', label: formatMessage({ id: 'chat.option.max.coins.2', defaultMessage: '2 coins' }), value: 2, checked: false },
           { id: 'max-coins-3', label: formatMessage({ id: 'chat.option.max.coins.3', defaultMessage: '3 coins' }), value: 3, checked: false },
