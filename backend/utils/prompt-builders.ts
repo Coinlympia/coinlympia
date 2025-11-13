@@ -295,7 +295,7 @@ Users can also join existing games instead of creating new ones. When a user wan
    For native tokens (18 decimals): multiply token amount by 1,000,000,000,000,000,000 (10^18)
 
 5. After the system returns available games, present them to the user in a clear, organized list showing:
-   - Game ID (Sala #)
+   - Game ID (Room #)
    - Game Type (Bull/Bear)
    - Entry Amount (in USDT)
    - Duration
