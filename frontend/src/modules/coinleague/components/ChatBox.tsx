@@ -38,6 +38,8 @@ import { useFactoryAddress } from '../hooks/coinleagueFactory';
 import { joinGame } from '../services/coinLeagueFactoryV3';
 import { GET_GAME_LEVEL_AMOUNTS } from '../utils/game';
 import { AvailableGame, Message, TokenPerformance } from '../types/chat';
+import { TokenChartModal } from './TokenChartModal';
+import { getTradingViewSymbol, isTokenSymbol, getTokenAddress } from '../utils/token-chart';
 
 interface ChatBoxProps {
   dialogProps: DialogProps;
@@ -113,6 +115,9 @@ export function ChatBox({
   const [tokenAnalysisData, setTokenAnalysisData] = useState<{
     [timeframe: string]: { tokens: TokenPerformance[]; timePeriod: string };
   }>({});
+  const [chartModalOpen, setChartModalOpen] = useState(false);
+  const [selectedTokenSymbol, setSelectedTokenSymbol] = useState<string>('');
+  const [selectedTokenAddress, setSelectedTokenAddress] = useState<string | undefined>(undefined);
   const router = useRouter();
   const { provider, chainId: accountChainId, signer, account } = useWeb3React();
   const factoryAddress = useFactoryAddress();
@@ -2093,11 +2098,46 @@ export function ChatBox({
                                 </Box>
                               );
                             },
-                            a: ({ href, children }) => (
-                              <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
-                                {children}
-                              </Link>
-                            ),
+                            a: ({ href, children }) => {
+                              const linkText = typeof children === 'string' ? children : 
+                                (Array.isArray(children) ? children.join('') : String(children));
+                              
+                              if (isTokenSymbol(linkText)) {
+                                const finalChainId = chainId || accountChainId;
+                                const tokenAddress = finalChainId ? getTokenAddress(linkText, finalChainId) : undefined;
+                                
+                                if (finalChainId) {
+                                  return (
+                                    <Link
+                                      href="#"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setSelectedTokenSymbol(linkText.toUpperCase());
+                                        setSelectedTokenAddress(tokenAddress);
+                                        setChartModalOpen(true);
+                                      }}
+                                      sx={{
+                                        textDecoration: 'underline',
+                                        cursor: 'pointer',
+                                        color: message.role === 'user' ? '#FFFFFF' : theme.palette.primary.main,
+                                        '&:hover': {
+                                          textDecoration: 'underline',
+                                          opacity: 0.8,
+                                        },
+                                      }}
+                                    >
+                                      {children}
+                                    </Link>
+                                  );
+                                }
+                              }
+                              
+                              return (
+                                <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
+                                  {children}
+                                </Link>
+                              );
+                            },
                             blockquote: ({ children }) => (
                               <Box
                                 component="blockquote"
@@ -3130,11 +3170,46 @@ export function ChatBox({
                                 </Box>
                               );
                             },
-                            a: ({ href, children }) => (
-                              <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
-                                {children}
-                              </Link>
-                            ),
+                            a: ({ href, children }) => {
+                              const linkText = typeof children === 'string' ? children : 
+                                (Array.isArray(children) ? children.join('') : String(children));
+                              
+                              if (isTokenSymbol(linkText)) {
+                                const finalChainId = chainId || accountChainId;
+                                const tokenAddress = finalChainId ? getTokenAddress(linkText, finalChainId) : undefined;
+                                
+                                if (finalChainId) {
+                                  return (
+                                    <Link
+                                      href="#"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setSelectedTokenSymbol(linkText.toUpperCase());
+                                        setSelectedTokenAddress(tokenAddress);
+                                        setChartModalOpen(true);
+                                      }}
+                                      sx={{
+                                        textDecoration: 'underline',
+                                        cursor: 'pointer',
+                                        color: message.role === 'user' ? '#FFFFFF' : theme.palette.primary.main,
+                                        '&:hover': {
+                                          textDecoration: 'underline',
+                                          opacity: 0.8,
+                                        },
+                                      }}
+                                    >
+                                      {children}
+                                    </Link>
+                                  );
+                                }
+                              }
+                              
+                              return (
+                                <Link href={href} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: 'underline' }}>
+                                  {children}
+                                </Link>
+                              );
+                            },
                             blockquote: ({ children }) => (
                               <Box
                                 component="blockquote"
@@ -3483,6 +3558,19 @@ export function ChatBox({
             </Box>
           </Box>
         </DialogContent>
+        <TokenChartModal
+          dialogProps={{
+            open: chartModalOpen,
+            onClose: () => {
+              setChartModalOpen(false);
+              setSelectedTokenSymbol('');
+              setSelectedTokenAddress(undefined);
+            },
+          }}
+          tokenSymbol={selectedTokenSymbol}
+          tokenAddress={selectedTokenAddress}
+          chainId={chainId || accountChainId}
+        />
     </Dialog>
   );
 }

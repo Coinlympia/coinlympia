@@ -1,6 +1,3 @@
-// Frontend types for chat components
-// These types are shared between frontend components and should match backend/types/index.ts
-
 export interface TokenPerformance {
   address: string;
   symbol: string;
