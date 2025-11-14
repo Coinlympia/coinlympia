@@ -109,7 +109,7 @@ async function fetchTokenPrices(
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<{ success: boolean; updated: number; errors: number } | { error: string }>
+  res: NextApiResponse<{ success: boolean; updated: number; errors: number; skipped?: number } | { error: string }>
 ) {
   const authHeader = req.headers.authorization;
   const cronSecret = process.env.CRON_SECRET;
@@ -140,10 +140,39 @@ export default async function handler(
 
     let updated = 0;
     let errors = 0;
+    let skipped = 0;
 
-    const batchSize = 3;
-    for (let i = 0; i < tokens.length; i += batchSize) {
-      const batch = tokens.slice(i, i + batchSize);
+    const now = Date.now();
+    const fiveMinutesAgo = now - (5 * 60 * 1000);
+
+    const tokensToUpdate = await prisma.gameToken.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { lastPriceUpdate: null },
+          { lastPriceUpdate: { lt: new Date(fiveMinutesAgo) } },
+        ],
+      },
+      select: {
+        id: true,
+        address: true,
+        symbol: true,
+        chainId: true,
+        lastPriceUpdate: true,
+      },
+      orderBy: {
+        lastPriceUpdate: 'asc',
+      },
+      take: 20,
+    });
+
+    if (tokensToUpdate.length === 0) {
+      return res.status(200).json({ success: true, updated: 0, errors: 0, skipped: tokens.length });
+    }
+
+    const batchSize = 2;
+    for (let i = 0; i < tokensToUpdate.length; i += batchSize) {
+      const batch = tokensToUpdate.slice(i, i + batchSize);
 
       const batchPromises = batch.map(async (token) => {
         const platformId = getPlatformId(token.chainId);
@@ -191,16 +220,19 @@ export default async function handler(
 
       await Promise.all(batchPromises);
 
-      if (i + batchSize < tokens.length) {
-        await delay(2000);
+      if (i + batchSize < tokensToUpdate.length) {
+        await delay(3000);
       }
     }
+
+    skipped = tokens.length - tokensToUpdate.length;
 
 
     return res.status(200).json({
       success: true,
       updated,
       errors,
+      skipped,
     });
   } catch (error: any) {
     return res.status(500).json({

@@ -469,17 +469,26 @@ export async function syncAllGamesFromGraphQL(
           }
 
           try {
-            if (batchSynced + batchUpdated > 0) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
+            const existingGameData = await prisma.game.findUnique({
+              where: { intId },
+              select: { updatedAt: true, status: true },
+            });
+
+            const shouldSyncDetails = !existingGameData?.updatedAt || 
+              (existingGameData.status === 'Waiting' && 
+               Date.now() - existingGameData.updatedAt.getTime() > 120000);
+
+            if (shouldSyncDetails && (batchSynced + batchUpdated > 0)) {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              
+              await syncGameDetailsFromBlockchain(
+                game.id,
+                intId,
+                factoryAddress,
+                chainId,
+                gameType
+              );
             }
-            
-            await syncGameDetailsFromBlockchain(
-              game.id,
-              intId,
-              factoryAddress,
-              chainId,
-              gameType
-            );
           } catch (syncDetailsError: any) {
             console.warn(`[GraphQL Sync] ⚠ Could not sync details for game ${intId}:`, syncDetailsError?.message || String(syncDetailsError));
           }
