@@ -441,7 +441,7 @@ if (SYNC_ENABLED) {
       .filter(id => !isNaN(id) && id > 0);
     logger.info(`Using custom chain list from GAME_SYNC_CHAINS: ${supportedChains.join(', ')}`);
   } else {
-    supportedChains = [ChainId.Polygon];
+    supportedChains = [ChainId.BSC];
     logger.info(`Using default chain list: ${supportedChains.join(', ')}`);
   }
   

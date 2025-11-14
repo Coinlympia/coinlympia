@@ -31,14 +31,13 @@ export default function CoinLeagueNetworkValidation({
   const { openDialog: openSwitchNetwork } = useSwitchNetwork();
   const switchNetworkMutation = useSwitchNetworkMutation();
 
-  const handleSwitchToPolygon = async () => {
+  const handleSwitchToBSC = async () => {
     try {
-      await switchNetworkMutation.mutateAsync({ chainId: ChainId.Polygon });
+      await switchNetworkMutation.mutateAsync({ chainId: ChainId.BSC });
     } catch (error) {
     }
   };
 
-  // Si no hay billetera conectada
   if (!account || !isActive) {
     if (!showConnectWallet) {
       return null;
@@ -83,8 +82,7 @@ export default function CoinLeagueNetworkValidation({
     );
   }
 
-  // Si la billetera está conectada pero no está en Polygon
-  if (chainId !== ChainId.Polygon) {
+  if (chainId !== ChainId.BSC) {
     return (
       <Box py={4}>
         <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
@@ -101,7 +99,7 @@ export default function CoinLeagueNetworkValidation({
               <Typography variant="body1" color="text.secondary" paragraph>
                 <FormattedMessage
                   id="coinlympia.wrong.network.description"
-                  defaultMessage="Coinlympia games are only available on Polygon network. Please switch your wallet to Polygon to continue."
+                  defaultMessage="Coinlympia games are only available on BNB Chain network. Please switch your wallet to BNB Chain to continue."
                 />
               </Typography>
             </Box>
@@ -115,7 +113,7 @@ export default function CoinLeagueNetworkValidation({
               </AlertTitle>
               <FormattedMessage
                 id="coinlympia.network.requirement.details"
-                defaultMessage="Coinlympia requires Polygon network (Chain ID: 137) for optimal performance and lower transaction costs. Other networks are not supported for gameplay."
+                defaultMessage="Coinlympia requires BNB Chain network (Chain ID: 56) for optimal performance and lower transaction costs. Other networks are not supported for gameplay."
               />
             </Alert>
 
@@ -123,13 +121,13 @@ export default function CoinLeagueNetworkValidation({
               variant="contained"
               size="large"
               startIcon={<SwitchIcon />}
-              onClick={handleSwitchToPolygon}
+              onClick={handleSwitchToBSC}
               disabled={switchNetworkMutation.isLoading}
               sx={{ minWidth: 200 }}
             >
               <FormattedMessage
-                  id="coinlympia.switch.to.polygon"
-                defaultMessage="Switch to Polygon"
+                  id="coinlympia.switch.to.bsc"
+                defaultMessage="Switch to BNB Chain"
               />
             </Button>
 
@@ -145,6 +143,5 @@ export default function CoinLeagueNetworkValidation({
     );
   }
 
-  // Si todo está correcto, renderizar el contenido
   return <>{children}</>;
 }

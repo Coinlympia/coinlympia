@@ -2,6 +2,7 @@ export enum ChainId {
   Ethereum = 1,
   Ropsten = 3,
   BSC = 56,
+  BSCTest = 97,
   Polygon = 137,
   Avax = 43114,
   Base = 8453,

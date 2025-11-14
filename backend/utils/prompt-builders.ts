@@ -357,7 +357,7 @@ Users can also join existing games instead of creating new ones. When a user wan
      "gameType": "bull",
      "maxEntry": "1000000",
      "minEntry": "100000",
-     "chainId": 137,
+     "chainId": 56,
      "status": "Waiting",
      "limit": 20
    }

@@ -95,7 +95,6 @@ export default function CoinLeagueErrorBoundary({
     );
   }
 
-  // Si la billetera está conectada pero no está en Polygon
   if (validation.needsNetworkSwitch) {
     return (
       <Box py={4}>
@@ -113,7 +112,7 @@ export default function CoinLeagueErrorBoundary({
               <Typography variant="body1" color="text.secondary" paragraph>
                 <FormattedMessage
                   id="coinlympia.wrong.network.description"
-                  defaultMessage="Coinlympia games are only available on Polygon network. Please switch your wallet to Polygon to continue."
+                  defaultMessage="Coinlympia games are only available on BNB Chain network. Please switch your wallet to BNB Chain to continue."
                 />
               </Typography>
             </Box>
@@ -125,7 +124,7 @@ export default function CoinLeagueErrorBoundary({
                 sx={{ mb: 2 }}
               />
               <Chip
-                label="Required: Polygon (137)"
+                label="Required: BNB Chain (56)"
                 color="success"
               />
             </Box>
@@ -139,7 +138,7 @@ export default function CoinLeagueErrorBoundary({
               </AlertTitle>
               <FormattedMessage
                 id="coinlympia.network.requirement.details"
-                defaultMessage="Coinlympia requires Polygon network (Chain ID: 137) for optimal performance and lower transaction costs. Other networks are not supported for gameplay."
+                defaultMessage="Coinlympia requires BNB Chain network (Chain ID: 56) for optimal performance and lower transaction costs. Other networks are not supported for gameplay."
               />
             </Alert>
 
@@ -147,12 +146,12 @@ export default function CoinLeagueErrorBoundary({
               variant="contained"
               size="large"
               startIcon={<SwitchIcon />}
-              onClick={() => openSwitchNetwork(ChainId.Polygon)}
+              onClick={() => openSwitchNetwork(ChainId.BSC)}
               sx={{ minWidth: 200 }}
             >
               <FormattedMessage
-                id="coinlympia.switch.to.polygon"
-                defaultMessage="Switch to Polygon"
+                id="coinlympia.switch.to.bsc"
+                defaultMessage="Switch to BNB Chain"
               />
             </Button>
 

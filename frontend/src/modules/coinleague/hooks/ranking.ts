@@ -23,7 +23,7 @@ export enum RankingType {
 export const useRanking = (
   type: RankingType,
   isNFTGame = false,
-  chainId = ChainId.Polygon
+  chainId = ChainId.BSC
 ) => {
   const queryString = useMemo(() => {
     switch (type) {
@@ -108,7 +108,7 @@ export const useRanking = (
 
 export const useRankingMostWinned = (
   isNFTGame = false,
-  chainId = ChainId.Polygon
+  chainId = ChainId.BSC
 ) => {
   return useQuery<PlayerGraph[]>([isNFTGame, chainId], async () => {
     const { players } = await request(
@@ -121,7 +121,7 @@ export const useRankingMostWinned = (
 
 export const useRankingMostJoined = (
   isNFTGame = false,
-  chainId = ChainId.Polygon
+  chainId = ChainId.BSC
 ) => {
   return useQuery<PlayerGraph[]>([isNFTGame, chainId], async () => {
     const { players } = await request(
@@ -134,7 +134,7 @@ export const useRankingMostJoined = (
 
 export const useRankingMostEarned = (
   isNFTGame = false,
-  chainId = ChainId.Polygon
+  chainId = ChainId.BSC
 ) => {
   return useQuery<PlayerGraph[]>([isNFTGame, chainId], async () => {
     const { players } = await request(
@@ -147,7 +147,7 @@ export const useRankingMostEarned = (
 
 export const useRankingMostProfit = (
   isNFTGame = false,
-  chainId = ChainId.Polygon
+  chainId = ChainId.BSC
 ) => {
   return useQuery<PlayerGraph[]>([isNFTGame, chainId], async () => {
     const { players } = await request(

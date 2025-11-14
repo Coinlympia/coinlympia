@@ -21,8 +21,7 @@ function TickerTapeTV() {
     }
   }, [mode, isMounted]);
 
-  const symbols = PriceFeeds[ChainId.Polygon]
-    // .concat(PriceFeeds[ChainId.BSC])
+  const symbols = PriceFeeds[ChainId.BSC]
     .filter((s) => s.tv)
     .map((s) => {
       return {

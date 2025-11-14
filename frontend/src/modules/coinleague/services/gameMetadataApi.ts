@@ -55,7 +55,7 @@ export const update = (
   room: string,
   id: string,
   account: string,
-  chainId: ChainId = ChainId.Polygon,
+  chainId: ChainId = ChainId.BSC,
 ) => {
   return gameMetadataApi.post(`/api/${id}`, {
     owner: account,
@@ -77,7 +77,7 @@ export const remove = (
   room: string,
   id: string,
   account: string,
-  chainId: ChainId = ChainId.Polygon,
+  chainId: ChainId = ChainId.BSC,
 ) => {
   return gameMetadataApi.delete(`/api/${id}`, {
     data: {
@@ -97,7 +97,7 @@ export const remove = (
 export const getGameMetadata = async (
   id: string,
   room: string,
-  chainId: ChainId = ChainId.Polygon,
+  chainId: ChainId = ChainId.BSC,
 ) => {
   return gameMetadataApi.get<GameMetadata>(
     `/api/${room}/${GET_API_PREFIX(chainId)}${id}`,
@@ -107,7 +107,7 @@ export const getGameMetadata = async (
 export const getGamesMetadata = (
   ids: string,
   room: string,
-  chainId: ChainId = ChainId.Polygon,
+  chainId: ChainId = ChainId.BSC,
 ) => {
   return gameMetadataApi.get<GameMetadata[]>(
     `/api/${room}/all-games/${GET_API_PREFIX(chainId)}${ids}`,
@@ -116,7 +116,7 @@ export const getGamesMetadata = (
 
 export const getAllGamesMetadata = (
   room: string,
-  chainId: ChainId = ChainId.Polygon,
+  chainId: ChainId = ChainId.BSC,
 ) => {
   return gameMetadataApi.get<GameMetadata[]>(
     `/api/${room}/${GET_API_PREFIX(chainId)}all-games`,

@@ -16,7 +16,13 @@ export const getGraphEndpoint = (isNFTGame: boolean, chainId?: ChainId) => {
   if (chainId === ChainId.Mumbai) {
     return GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[ChainId.Mumbai];
   }
-  return GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[ChainId.Polygon];
+
+  if (chainId === ChainId.Polygon) {
+    return GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[ChainId.Polygon];
+  }
+
+  // Default to BSC
+  return GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[ChainId.BSC];
 };
 
 export const GET_GRAPHQL_CLIENT_URL_MAIN_ROOM = {

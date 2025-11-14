@@ -42,7 +42,7 @@ export const create = (
   tokenId: string,
   username: string,
   account: string,
-  chainId: ChainId = ChainId.Polygon,
+  chainId: ChainId = ChainId.BSC,
 ) => {
 
   const data = {
@@ -64,7 +64,7 @@ export const createUsername = (
   message: string,
   username: string,
   account: string,
-  chainId: ChainId = ChainId.Polygon,
+  chainId: ChainId = ChainId.BSC,
 ) => {
   const data = {
     address: account,

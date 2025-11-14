@@ -20,6 +20,6 @@ export const useLeaguesChainInfo = () => {
   return {
     coinSymbol,
     chainId: chainId,
-    chainFromSearchName: NETWORKS[ChainId.Polygon].name,
+    chainFromSearchName: NETWORKS[chainId].name,
   };
 };

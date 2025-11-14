@@ -36,6 +36,12 @@ export const CoinToPlay: { [key in ChainId]?: CoinToPlayInterface[] } = {
       symbol: 'BNB',
       decimals: 18,
     },
+    {
+      address: '0x55d398326f99059fF775485246999027B3197955',
+      name: 'Tether',
+      symbol: 'USDT',
+      decimals: 18,
+    },
   ],
   [ChainId.Polygon]: [
     {
@@ -73,6 +79,12 @@ export const StableCoinToPlay: { [key in ChainId]?: CoinToPlayInterface } = {
     name: 'Tether',
     symbol: 'USDT',
     decimals: 6,
+  },
+  [ChainId.BSC]: {
+    address: '0x55d398326f99059fF775485246999027B3197955',
+    name: 'Tether',
+    symbol: 'USDT',
+    decimals: 18,
   },
   [ChainId.Polygon]: {
     address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
