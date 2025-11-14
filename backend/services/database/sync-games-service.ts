@@ -158,7 +158,7 @@ export async function syncGameDetailsFromBlockchain(
       const affiliate = player.affiliate ? ethers.utils.getAddress(player.affiliate) : null;
       
         if (index > 0) {
-          await new Promise(resolve => setTimeout(resolve, 600));
+          await new Promise(resolve => setTimeout(resolve, 800));
         }
       
       const playerCoinFeeds = await callContractWithProviderRetry<string[]>(
@@ -181,7 +181,7 @@ export async function syncGameDetailsFromBlockchain(
 
       if (!allCoinFeeds.has(captainCoin)) {
         try {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 800));
           
           interface CoinData {
             coin_feed: string;
@@ -209,7 +209,7 @@ export async function syncGameDetailsFromBlockchain(
       for (const feedAddress of normalizedFeeds) {
         if (!allCoinFeeds.has(feedAddress)) {
           try {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 800));
             
             interface CoinData {
               coin_feed: string;
