@@ -36,7 +36,7 @@ export default function Games({
   });
 
   const gameChainId = useMemo(() => {
-    return chainId ? chainId : ChainId.Polygon;
+    return chainId ? chainId : ChainId.BSC;
   }, [chainId]);
 
   const handleShowMetadata = useCallback((game: GameGraph) => {

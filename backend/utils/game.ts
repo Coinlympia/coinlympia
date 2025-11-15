@@ -5,15 +5,13 @@ import { GameLevel } from '../constants/coinleague';
 
 export const GET_GAME_LEVEL_AMOUNTS = (
   gameLevel: GameLevel,
-  chainId = ChainId.Polygon,
-  //This needs to be passed if using a new coin. We are passing here USDT
-  coinToPlayAddress = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
+  chainId = ChainId.BSC,
+  coinToPlayAddress = '0x55d398326f99059fF775485246999027B3197955'
 ) => {
   const coinToPlay = CoinToPlay[chainId]?.find(
     (c) => c.address.toLowerCase() === coinToPlayAddress?.toLowerCase()
   ) as CoinToPlayInterface;
 
-  // Validate coinToPlay exists
   if (!coinToPlay) {
     console.error('CoinToPlay not found:', { chainId, coinToPlayAddress });
     throw new Error(`CoinToPlay not found for chainId ${chainId} and address ${coinToPlayAddress}`);
@@ -30,24 +28,24 @@ export const GET_GAME_LEVEL_AMOUNTS = (
         return utils.parseUnits('0.001', coinToPlay.decimals);
       }
       switch (chainId) {
-        case ChainId.Polygon:
-          return utils.parseEther('1');
         case ChainId.BSC:
           return utils.parseEther('0.01');
-        default:
+        case ChainId.Polygon:
           return utils.parseEther('1');
+        default:
+          return utils.parseEther('0.01');
       }
     case GameLevel.Beginner:
       if (isStable) {
         return utils.parseUnits('1', coinToPlay.decimals);
       }
       switch (chainId) {
-        case ChainId.Polygon:
-          return utils.parseEther('1');
         case ChainId.BSC:
           return utils.parseEther('0.01');
-        default:
+        case ChainId.Polygon:
           return utils.parseEther('1');
+        default:
+          return utils.parseEther('0.01');
       }
 
     case GameLevel.Intermediate:
@@ -55,12 +53,12 @@ export const GET_GAME_LEVEL_AMOUNTS = (
         return utils.parseUnits('10', coinToPlay.decimals);
       }
       switch (chainId) {
-        case ChainId.Polygon:
-          return utils.parseEther('5');
         case ChainId.BSC:
           return utils.parseEther('0.05');
-        default:
+        case ChainId.Polygon:
           return utils.parseEther('5');
+        default:
+          return utils.parseEther('0.05');
       }
 
     case GameLevel.Advanced:
@@ -68,24 +66,24 @@ export const GET_GAME_LEVEL_AMOUNTS = (
         return utils.parseUnits('25', coinToPlay.decimals);
       }
       switch (chainId) {
-        case ChainId.Polygon:
-          return utils.parseEther('10');
         case ChainId.BSC:
           return utils.parseEther('0.1');
-        default:
+        case ChainId.Polygon:
           return utils.parseEther('10');
+        default:
+          return utils.parseEther('0.1');
       }
     case GameLevel.Expert:
       if (isStable) {
         return utils.parseUnits('100', coinToPlay.decimals);
       }
       switch (chainId) {
-        case ChainId.Polygon:
-          return utils.parseEther('50');
         case ChainId.BSC:
           return utils.parseEther('0.3');
-        default:
+        case ChainId.Polygon:
           return utils.parseEther('50');
+        default:
+          return utils.parseEther('0.3');
       }
     case GameLevel.Master:
       if (isStable) {
@@ -93,24 +91,24 @@ export const GET_GAME_LEVEL_AMOUNTS = (
       }
 
       switch (chainId) {
-        case ChainId.Polygon:
-          return utils.parseEther('250');
         case ChainId.BSC:
           return utils.parseEther('1');
-        default:
+        case ChainId.Polygon:
           return utils.parseEther('250');
+        default:
+          return utils.parseEther('1');
       }
     case GameLevel.GrandMaster:
       if (isStable) {
         return utils.parseUnits('500', coinToPlay.decimals);
       }
       switch (chainId) {
-        case ChainId.Polygon:
-          return utils.parseEther('500');
         case ChainId.BSC:
           return utils.parseEther('2');
-        default:
+        case ChainId.Polygon:
           return utils.parseEther('500');
+        default:
+          return utils.parseEther('2');
       }
     default:
       return utils.parseEther('0');

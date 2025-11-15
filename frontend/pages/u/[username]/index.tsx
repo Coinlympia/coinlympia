@@ -82,7 +82,7 @@ const CoinLeagueProfilePage: NextPage = () => {
   const router = useRouter();
 
   const { formatMessage } = useIntl();
-  const [selectedChainId, setSelectedChainId] = useState(ChainId.Polygon);
+  const [selectedChainId, setSelectedChainId] = useState(ChainId.BSC);
 
   const { account } = useWeb3React();
 

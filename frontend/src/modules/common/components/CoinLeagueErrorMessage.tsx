@@ -77,7 +77,7 @@ export default function CoinLeagueErrorMessage({
               color="inherit"
               size="small"
               startIcon={<SwitchIcon />}
-              onClick={() => openSwitchNetwork(ChainId.Polygon)}
+              onClick={() => openSwitchNetwork(ChainId.BSC)}
             >
               <FormattedMessage
                 id="coinlympia.switch.network"

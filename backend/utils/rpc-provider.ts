@@ -30,6 +30,11 @@ const RPC_ENDPOINTS: { [key: number]: string[] } = {
     'https://bsc-dataseed1.defibit.io',
     'https://bsc-dataseed1.ninicoin.io',
   ],
+  [ChainId.BSCTest]: [
+    process.env.BSC_TESTNET_RPC_URL || 'https://data-seed-prebsc-1-s1.binance.org:8545',
+    'https://data-seed-prebsc-2-s1.binance.org:8545',
+    'https://bsc-testnet.publicnode.com',
+  ],
   [ChainId.Mumbai]: [
     process.env.MUMBAI_RPC_URL || 'https://rpc-mumbai.maticvigil.com',
     'https://matic-mumbai.chainstacklabs.com',

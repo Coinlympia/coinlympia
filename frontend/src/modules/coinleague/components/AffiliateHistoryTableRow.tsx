@@ -1,5 +1,6 @@
 import { ChainId } from '@/modules/common/constants/enums';
 import {
+  getBlockExplorerUrl,
   getNetworkSlugFromChainId,
   truncateAddress,
 } from '@/modules/common/utils';
@@ -42,7 +43,7 @@ function AffiliateHistoryTableRow({ affiliate, chainId }: Props) {
           <Link
             color="inherit"
             target="_blank"
-            href={`https://polygonscan.com/address/${affiliate.player.id}`}
+            href={`${getBlockExplorerUrl(chainId) || 'https://bscscan.com'}/address/${affiliate.player.id}`}
           >
             {truncateAddress(affiliate.player.id)}
           </Link>

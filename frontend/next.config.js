@@ -23,6 +23,8 @@ export default {
       '@/animations': './src/animations',
       '@/components': './src/components',
       '@/lib': './src/lib',
+      '@/modules': './src/modules',
+      '@/hooks': './src/hooks',
     },
   },
   transpilePackages: [
@@ -54,6 +56,8 @@ export default {
       '@/animations': path.resolve(__dirname, 'src/animations'),
       '@/components': path.resolve(__dirname, 'src/components'),
       '@/lib': path.resolve(__dirname, 'src/lib'),
+      '@/modules': path.resolve(__dirname, 'src/modules'),
+      '@/hooks': path.resolve(__dirname, 'src/hooks'),
     };
 
     // Add backend directory to module resolution

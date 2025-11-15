@@ -8,6 +8,7 @@ import {
   searchTokenBySymbol,
 } from '../src/lib/coingecko-proxy';
 import { prisma } from '../src/lib/prisma';
+import { BSCPriceFeeds } from '../src/modules/coinleague/constants/PriceFeeds/bsc';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -125,9 +126,13 @@ async function main() {
       console.warn('⚠ No CoinGecko API key found, using free tier (limited rate)');
     }
 
-    const tokens = await prisma.gameToken.findMany({
+    const allowedAddresses = new Set(BSCPriceFeeds.map((feed) => feed.address.toLowerCase()));
+    console.log(`\nFiltering to ${allowedAddresses.size} tokens from BSC oracle (bsc.ts)`);
+
+    const allBscTokens = await prisma.gameToken.findMany({
       where: {
         isActive: true,
+        chainId: 56,
       },
       select: {
         id: true,
@@ -137,22 +142,28 @@ async function main() {
       },
     });
 
-    if (!tokens || tokens.length === 0) {
-      console.log('No active tokens found');
+    console.log(`Found ${allBscTokens.length} total BSC tokens in database`);
+
+    const filteredTokens = allBscTokens.filter((token) => 
+      allowedAddresses.has(token.address.toLowerCase())
+    );
+
+    if (!filteredTokens || filteredTokens.length === 0) {
+      console.log('No active tokens found in BSC oracle');
       return;
     }
 
-    console.log(`Found ${tokens.length} active tokens`);
+    console.log(`Found ${filteredTokens.length} tokens from BSC oracle (out of ${allBscTokens.length} total BSC tokens in database)`);
 
-    const testTokenAddress = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'; // USDC en Polygon
-    const testPlatformId = getPlatformId(137);
+    const testTokenAddress = '0x55d398326f99059fF775485246999027B3197955'; // USDT on BSC
+    const testPlatformId = getPlatformId(56);
     if (testPlatformId) {
-      console.log(`\nTesting with known token (USDC): ${testTokenAddress}...`);
-      const testPrice = await getTokenCurrentPrice(testTokenAddress, testPlatformId, 137);
+      console.log(`\nTesting with known token (USDT): ${testTokenAddress}...`);
+      const testPrice = await getTokenCurrentPrice(testTokenAddress, testPlatformId, 56);
       if (testPrice) {
-        console.log(`✓ Test successful! USDC price: $${testPrice}`);
+        console.log(`✓ Test successful! USDT price: $${testPrice}`);
       } else {
-        console.warn(`⚠ Test failed - USDC not found. This might indicate an API issue.`);
+        console.warn(`⚠ Test failed - USDT not found. This might indicate an API issue.`);
       }
       console.log('');
     }
@@ -161,8 +172,8 @@ async function main() {
     let errors = 0;
 
     const batchSize = 3;
-    for (let i = 0; i < tokens.length; i += batchSize) {
-      const batch = tokens.slice(i, i + batchSize);
+    for (let i = 0; i < filteredTokens.length; i += batchSize) {
+      const batch = filteredTokens.slice(i, i + batchSize);
 
       const batchPromises = batch.map(async (token) => {
         const platformId = getPlatformId(token.chainId);
@@ -221,7 +232,7 @@ async function main() {
 
       await Promise.all(batchPromises);
 
-      if (i + batchSize < tokens.length) {
+      if (i + batchSize < filteredTokens.length) {
         await delay(2000);
       }
     }

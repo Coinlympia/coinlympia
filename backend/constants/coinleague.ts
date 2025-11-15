@@ -10,7 +10,7 @@ export interface CoinToPlayInterface {
 export const COIN_LEAGUES_FACTORY_ADDRESS_V3 = {
   [ChainId.Mumbai]: '0xb33f24f9ddc38725F2b791e63Fb26E6CEc5e842A',
   [ChainId.Polygon]: '0x43fB5D9d4Dcd6D71d668dc6f12fFf97F35C0Bd7E',
-  [ChainId.BSC]: '',
+  [ChainId.BSC]: '0x5d5302993480eb4812f01b89b4823ac59a0cd136',
   [ChainId.Base]: '0x34C21825ef6Bfbf69cb8748B4587f88342da7aFb',
 };
 
@@ -34,6 +34,12 @@ export const CoinToPlay: { [key in ChainId]?: CoinToPlayInterface[] } = {
       address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
       name: 'Binance Coin',
       symbol: 'BNB',
+      decimals: 18,
+    },
+    {
+      address: '0x55d398326f99059fF775485246999027B3197955',
+      name: 'Tether',
+      symbol: 'USDT',
       decimals: 18,
     },
   ],
@@ -73,6 +79,12 @@ export const StableCoinToPlay: { [key in ChainId]?: CoinToPlayInterface } = {
     name: 'Tether',
     symbol: 'USDT',
     decimals: 6,
+  },
+  [ChainId.BSC]: {
+    address: '0x55d398326f99059fF775485246999027B3197955',
+    name: 'Tether',
+    symbol: 'USDT',
+    decimals: 18,
   },
   [ChainId.Polygon]: {
     address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',

@@ -76,7 +76,7 @@ export default async function handler(
           },
           tokenAddress: '',
           tokenId: '',
-          chainId: ChainId.Polygon,
+          chainId: ChainId.BSC,
         };
       } else {
         return {
@@ -89,7 +89,7 @@ export default async function handler(
           },
           tokenAddress: '',
           tokenId: '',
-          chainId: ChainId.Polygon,
+          chainId: ChainId.BSC,
         };
       }
     });

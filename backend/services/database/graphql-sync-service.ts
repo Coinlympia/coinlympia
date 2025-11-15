@@ -9,6 +9,116 @@ import { createContractWithRetry, callWithRetry } from '../../utils/rpc-provider
 
 config();
 
+const GRAPHQL_RATE_LIMIT_DELAY = 15000;
+const GRAPHQL_RETRY_DELAY_BASE = 5000;
+const GRAPHQL_MAX_RETRIES = 5;
+const GRAPHQL_REQUEST_DELAY = 2000;
+
+const lastGraphQLRequestTime = new Map<string, number>();
+
+function isGraphQLRateLimitError(error: any): boolean {
+  if (!error) return false;
+  
+  if (error.response?.status === 429) return true;
+  if (error.status === 429) return true;
+  
+  const errorMessage = error.message || error.response?.error || String(error);
+  if (typeof errorMessage === 'string') {
+    if (errorMessage.toLowerCase().includes('too many requests')) return true;
+    if (errorMessage.toLowerCase().includes('rate limit')) return true;
+    if (errorMessage.includes('429')) return true;
+  }
+  
+  if (error.response?.error) {
+    const responseError = String(error.response.error).toLowerCase();
+    if (responseError.includes('too many requests')) return true;
+    if (responseError.includes('rate limit')) return true;
+  }
+  
+  return false;
+}
+
+function isGraphQLRetryableError(error: any): boolean {
+  if (!error) return false;
+  
+  if (isGraphQLRateLimitError(error)) return true;
+  
+  if (error.message) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes('network') || msg.includes('timeout') || msg.includes('econnreset')) {
+      return true;
+    }
+  }
+  
+  if (error.response?.status >= 500 && error.response?.status < 600) {
+    return true;
+  }
+  
+  return false;
+}
+
+async function graphQLRateLimitDelay(endpoint: string): Promise<void> {
+  const lastRequest = lastGraphQLRequestTime.get(endpoint) || 0;
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequest;
+  
+  if (timeSinceLastRequest < GRAPHQL_REQUEST_DELAY) {
+    const waitTime = GRAPHQL_REQUEST_DELAY - timeSinceLastRequest;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastGraphQLRequestTime.set(endpoint, Date.now());
+}
+
+export async function graphQLRequestWithRetry<T = any>(
+  endpoint: string,
+  query: string,
+  variables?: any,
+  retries: number = GRAPHQL_MAX_RETRIES
+): Promise<T> {
+  let lastError: any = null;
+  
+  await graphQLRateLimitDelay(endpoint);
+  
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await request(endpoint, query, variables) as T;
+      return response;
+    } catch (error: any) {
+      lastError = error;
+      
+      if (isGraphQLRateLimitError(error)) {
+        if (attempt < retries - 1) {
+          const waitTime = GRAPHQL_RATE_LIMIT_DELAY * Math.pow(2, attempt);
+          const maxWaitTime = 120000;
+          const actualWaitTime = Math.min(waitTime, maxWaitTime);
+          
+          console.warn(`[GraphQL] Rate limit detected (attempt ${attempt + 1}/${retries}), waiting ${actualWaitTime}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, actualWaitTime));
+          
+          await graphQLRateLimitDelay(endpoint);
+          continue;
+        }
+      }
+      
+      if (!isGraphQLRetryableError(error)) {
+        throw error;
+      }
+      
+      if (attempt < retries - 1) {
+        const waitTime = GRAPHQL_RETRY_DELAY_BASE * Math.pow(2, attempt);
+        console.warn(`[GraphQL] Request failed (attempt ${attempt + 1}/${retries}), retrying in ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        
+        await graphQLRateLimitDelay(endpoint);
+        continue;
+      }
+    }
+  }
+  
+  throw lastError || new Error('GraphQL request failed after retries');
+}
+
 let prismaInstance: PrismaClient | null = null;
 
 function getPrismaClient(): PrismaClient {
@@ -45,7 +155,7 @@ function getPrismaClient(): PrismaClient {
 const DEFAULT_GRAPHQL_ENDPOINTS: { [key: number]: string } = {
   [ChainId.Polygon]: 'https://api.studio.thegraph.com/query/1827/coinleague-polygon/version/latest',
   [ChainId.Base]: 'https://api.studio.thegraph.com/query/1827/coinleague-base/version/latest',
-  [ChainId.BSC]: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguebsc',
+  [ChainId.BSC]: 'https://api.studio.thegraph.com/query/1827/coinleague-bnb/version/latest',
   [ChainId.Mumbai]: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguemumbaiv3',
 };
 
@@ -61,14 +171,14 @@ function getGraphEndpoint(chainId: number): string | null {
 }
 
 function getFactoryAddress(chainId: number): string {
+  if (chainId === ChainId.BSC && COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.BSC]) {
+    return COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.BSC];
+  }
   if (chainId === ChainId.Polygon && COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Polygon]) {
     return COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Polygon];
   }
   if (chainId === ChainId.Base && COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Base]) {
     return COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Base];
-  }
-  if (chainId === ChainId.BSC && COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.BSC]) {
-    return COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.BSC];
   }
   if (chainId === ChainId.Mumbai && COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Mumbai]) {
     return COIN_LEAGUES_FACTORY_ADDRESS_V3[ChainId.Mumbai];
@@ -247,14 +357,33 @@ export async function syncAllGamesFromGraphQL(
       let response: { games: any[] };
       try {
         console.log(`[GraphQL Sync] Making GraphQL request to ${graphEndpoint}...`);
-        response = await request(graphEndpoint, query, variables) as { games: any[] };
+        response = await graphQLRequestWithRetry<{ games: any[] }>(
+          graphEndpoint,
+          query,
+          variables,
+          GRAPHQL_MAX_RETRIES
+        );
         console.log(`[GraphQL Sync] GraphQL request successful for chainId ${chainId}`);
       } catch (error) {
-        console.error(`[GraphQL Sync] GraphQL request failed for chainId ${chainId}:`, error);
+        console.error(`[GraphQL Sync] GraphQL request failed for chainId ${chainId} after retries:`, error);
         if (error instanceof ClientError) {
           const errorMessage = error.response.errors?.[0]?.message || 'Unknown GraphQL error';
           const fullError = JSON.stringify(error.response, null, 2);
           console.error(`[GraphQL Sync] GraphQL error details for chainId ${chainId}:`, fullError);
+          
+          if (isGraphQLRateLimitError(error)) {
+            console.warn(`[GraphQL Sync] Rate limit persistente para chainId ${chainId} después de ${GRAPHQL_MAX_RETRIES} intentos`);
+            return {
+              success: false,
+              error: `Rate limit persistente: ${errorMessage}. Intenta nuevamente más tarde.`,
+              synced: totalSynced,
+              updated: totalUpdated,
+              skipped: totalSkipped,
+              errors: totalErrors,
+              errorsDetails: allErrorsDetails,
+            };
+          }
+          
           if (errorMessage.includes('removed') || errorMessage.includes('not found')) {
             console.warn(`[GraphQL Sync] GraphQL endpoint for chainId ${chainId} is not available: ${errorMessage}`);
             return {
@@ -515,6 +644,9 @@ export async function syncAllGamesFromGraphQL(
 
       if (syncAll && games.length === pageSize) {
         currentSkip += pageSize;
+        if (currentSkip < 1000) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       } else {
         hasMore = false;
       }

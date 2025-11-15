@@ -59,14 +59,14 @@ import { ChainId } from '../constants/enums';
 async function main() {
   const args = process.argv.slice(2);
   
-  let chainId = ChainId.Polygon;
+  let chainId = ChainId.BSC;
   if (args[0]) {
     const parsedChainId = parseInt(args[0], 10);
     if (!isNaN(parsedChainId)) {
       chainId = parsedChainId;
     } else {
       console.error(`Invalid chainId: ${args[0]}`);
-      console.log('Valid chainIds: 137 (Polygon), 8453 (Base), 56 (BSC), 80001 (Mumbai)');
+      console.log('Valid chainIds: 56 (BSC), 137 (Polygon), 8453 (Base), 80001 (Mumbai)');
       process.exit(1);
     }
   }

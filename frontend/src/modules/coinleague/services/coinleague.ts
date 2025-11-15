@@ -243,7 +243,7 @@ export const getChampionApiEndpoint = (chainId?: number) => {
     return undefined;
   }
 
-  if (chainId === ChainId.Polygon) {
+  if (chainId === ChainId.BSC) {
     return `https://coinleaguechampions.dexkit.com/api`;
   }
 

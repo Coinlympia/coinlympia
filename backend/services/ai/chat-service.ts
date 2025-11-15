@@ -28,9 +28,9 @@ export async function generateChatResponse(
     throw new Error('Message is required');
   }
 
-  const activeChainId = (chainId || tokenData?.chainId || ChainId.Polygon) as ChainId;
+  const activeChainId = (chainId || tokenData?.chainId || ChainId.BSC) as ChainId;
   const stableCoin = StableCoinToPlay[activeChainId];
-  const coinToPlayAddress = stableCoin?.address || '0xc2132D05D31c914a87C6611C10748AEb04B58e8F';
+  const coinToPlayAddress = stableCoin?.address || '0x55d398326f99059fF775485246999027B3197955';
   const coinToPlaySymbol = stableCoin?.symbol || 'USDT';
 
   const gameLevelPrices: { level: number; name: string; price: string }[] = [];
@@ -268,7 +268,7 @@ CRITICAL WORKFLOW FOR JOINING A GAME:
      ACTION:JOIN_EXISTING_GAME
      {
        "gameId": ${gameJoinState.gameId},
-       "chainId": ${gameJoinState.chainId || 137}
+       "chainId": ${gameJoinState.chainId || 56}
      }
    - If user cancels (says "no", "cancel", "change"), reset the selection and start over:
      "No problem! Let's start over. Please select your captain coin again."

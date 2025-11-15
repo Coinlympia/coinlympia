@@ -95,7 +95,7 @@ const CoinLeagueGame: NextPage = () => {
 
   const { account, isActive, signer, chainId: accountChainID } = useWeb3React();
   const validation = useCoinLeagueValidation();
-  const { openDialog: openSwitchNetwork, isOpen: isSwitchNetworkOpen, closeDialog: closeSwitchNetwork } = useCoinLeagueSwitchNetwork();
+  const { openDialog: openSwitchNetwork, isOpen: isSwitchNetworkOpen, closeDialog: closeSwitchNetwork, chainId: switchNetworkChainId } = useCoinLeagueSwitchNetwork();
   const switchNetworkMutation = useSwitchNetworkMutation();
 
   const { network, id, affiliate } = router.query;
@@ -646,11 +646,8 @@ const CoinLeagueGame: NextPage = () => {
     connectWallet();
   };
 
-  const handleSwitchToPolygon = async () => {
-    try {
-      await switchNetworkMutation.mutateAsync({ chainId: ChainId.Polygon });
-    } catch (error) {
-    }
+  const handleSwitchToBSC = () => {
+    openSwitchNetwork(ChainId.BSC);
   };
 
   const handleStartGame = async () => {
@@ -766,6 +763,7 @@ const CoinLeagueGame: NextPage = () => {
             fullWidth: true,
             maxWidth: 'xs',
           }}
+          chainId={switchNetworkChainId}
         />
       )}
       <AnimatePresence>
@@ -866,13 +864,13 @@ const CoinLeagueGame: NextPage = () => {
                 <AnimatedButton
                   startIcon={<SwitchIcon />}
                   size="small"
-                  onClick={handleSwitchToPolygon}
-                  disabled={switchNetworkMutation.isLoading}
+                  onClick={handleSwitchToBSC}
+                  disabled={isSwitchNetworkOpen}
                   variant="outlined"
                 >
                   <FormattedMessage
                     id="coinleague.switch.to.polygon"
-                    defaultMessage="Switch to Polygon"
+                    defaultMessage="Switch to BNB Chain"
                   />
                 </AnimatedButton>
               }
@@ -884,7 +882,7 @@ const CoinLeagueGame: NextPage = () => {
               <br />
               <FormattedMessage
                 id="coinleague.wrong.network.description"
-                defaultMessage="Coinlympia games are only available on Polygon network. Please switch your wallet to Polygon to continue."
+                defaultMessage="Coinlympia games are only available on BNB Chain network. Please switch your wallet to BNB Chain to continue."
               />
             </Alert>
           )}

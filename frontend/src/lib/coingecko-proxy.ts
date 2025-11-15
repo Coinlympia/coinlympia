@@ -42,8 +42,8 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 
 const CACHE_TTL = {
-  CURRENT_PRICE: 60 * 1000, // 1 minuto para precios actuales
-  HISTORICAL: 5 * 60 * 1000, // 5 minutos para datos históricos
+  CURRENT_PRICE: 60 * 1000,
+  HISTORICAL: 5 * 60 * 1000,
 };
 
 function getCacheKey(type: string, ...args: string[]): string {

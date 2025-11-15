@@ -15,7 +15,7 @@ export function useCoinLeagueValidation(): CoinLeagueValidationState {
   const { account, chainId, isActive } = useWeb3React();
 
   const isWalletConnected = Boolean(account && isActive);
-  const isCorrectNetwork = chainId === ChainId.Polygon;
+  const isCorrectNetwork = chainId === ChainId.BSC;
   const canPlay = isWalletConnected && isCorrectNetwork;
   const needsWallet = !isWalletConnected;
   const needsNetworkSwitch = isWalletConnected && !isCorrectNetwork;

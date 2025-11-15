@@ -1,10 +1,11 @@
 import request from 'graphql-request';
 import type { AvailableGame, FindGamesRequest, FindGamesResponse } from '../../types';
+import { graphQLRequestWithRetry } from '../database/graphql-sync-service';
 
 const GET_GRAPHQL_CLIENT_URL_MAIN_ROOM: { [key: number]: string } = {
   137: 'https://api.studio.thegraph.com/query/1827/coinleague-polygon/version/latest',
   8453: 'https://api.studio.thegraph.com/query/1827/coinleague-base/version/latest',
-  56: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguebsc',
+  56: 'https://api.studio.thegraph.com/query/1827/coinleague-bnb/version/latest',
   80001: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguemumbaiv3',
 };
 
@@ -12,7 +13,7 @@ function getGraphEndpoint(chainId?: number): string {
   if (chainId && GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[chainId]) {
     return GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[chainId];
   }
-  return GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[137];
+  return GET_GRAPHQL_CLIENT_URL_MAIN_ROOM[56];
 }
 
 function buildGamesQuery(variables: any): string {
@@ -122,7 +123,11 @@ export async function findAvailableGames(
     console.log('GraphQL query:', query);
     console.log('GraphQL variables:', variables);
 
-    const response = await request(graphEndpoint, query, variables) as { games: any[] };
+    const response = await graphQLRequestWithRetry<{ games: any[] }>(
+      graphEndpoint,
+      query,
+      variables
+    );
     const games = response.games || [];
 
     console.log(`Found ${games.length} games from GraphQL`);
@@ -272,7 +277,7 @@ export async function findAvailableGames(
       
       return {
       id: game.intId,
-      chainId: chainId || 137,
+      chainId: chainId || 56,
       type: gameType,
       typeName: typeName,
       status: game.status,
@@ -338,8 +343,8 @@ function formatDuration(seconds: number): string {
 function formatEntry(entry: string): string {
   try {
     const entryNumber = parseFloat(entry);
-    const entryInUSDT = entryNumber / 1e6;
-    return `${entryInUSDT.toFixed(2)} USDT`;
+    const entryInUSDT = entryNumber / 1e18;
+    return `${entryInUSDT.toFixed(3)} USDT`;
   } catch (error) {
     return `${entry} wei`;
   }
