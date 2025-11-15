@@ -5,7 +5,7 @@ import { graphQLRequestWithRetry } from '../database/graphql-sync-service';
 const GET_GRAPHQL_CLIENT_URL_MAIN_ROOM: { [key: number]: string } = {
   137: 'https://api.studio.thegraph.com/query/1827/coinleague-polygon/version/latest',
   8453: 'https://api.studio.thegraph.com/query/1827/coinleague-base/version/latest',
-  56: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguebsc',
+  56: 'https://api.studio.thegraph.com/query/1827/coinleague-bnb/version/latest',
   80001: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguemumbaiv3',
 };
 
@@ -343,8 +343,8 @@ function formatDuration(seconds: number): string {
 function formatEntry(entry: string): string {
   try {
     const entryNumber = parseFloat(entry);
-    const entryInUSDT = entryNumber / 1e6;
-    return `${entryInUSDT.toFixed(2)} USDT`;
+    const entryInUSDT = entryNumber / 1e18;
+    return `${entryInUSDT.toFixed(3)} USDT`;
   } catch (error) {
     return `${entry} wei`;
   }

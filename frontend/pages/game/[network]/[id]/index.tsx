@@ -95,7 +95,7 @@ const CoinLeagueGame: NextPage = () => {
 
   const { account, isActive, signer, chainId: accountChainID } = useWeb3React();
   const validation = useCoinLeagueValidation();
-  const { openDialog: openSwitchNetwork, isOpen: isSwitchNetworkOpen, closeDialog: closeSwitchNetwork } = useCoinLeagueSwitchNetwork();
+  const { openDialog: openSwitchNetwork, isOpen: isSwitchNetworkOpen, closeDialog: closeSwitchNetwork, chainId: switchNetworkChainId } = useCoinLeagueSwitchNetwork();
   const switchNetworkMutation = useSwitchNetworkMutation();
 
   const { network, id, affiliate } = router.query;
@@ -646,11 +646,8 @@ const CoinLeagueGame: NextPage = () => {
     connectWallet();
   };
 
-  const handleSwitchToBSC = async () => {
-    try {
-      await switchNetworkMutation.mutateAsync({ chainId: ChainId.BSC });
-    } catch (error) {
-    }
+  const handleSwitchToBSC = () => {
+    openSwitchNetwork(ChainId.BSC);
   };
 
   const handleStartGame = async () => {
@@ -766,6 +763,7 @@ const CoinLeagueGame: NextPage = () => {
             fullWidth: true,
             maxWidth: 'xs',
           }}
+          chainId={switchNetworkChainId}
         />
       )}
       <AnimatePresence>
@@ -867,7 +865,7 @@ const CoinLeagueGame: NextPage = () => {
                   startIcon={<SwitchIcon />}
                   size="small"
                   onClick={handleSwitchToBSC}
-                  disabled={switchNetworkMutation.isLoading}
+                  disabled={isSwitchNetworkOpen}
                   variant="outlined"
                 >
                   <FormattedMessage

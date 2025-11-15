@@ -155,7 +155,7 @@ function getPrismaClient(): PrismaClient {
 const DEFAULT_GRAPHQL_ENDPOINTS: { [key: number]: string } = {
   [ChainId.Polygon]: 'https://api.studio.thegraph.com/query/1827/coinleague-polygon/version/latest',
   [ChainId.Base]: 'https://api.studio.thegraph.com/query/1827/coinleague-base/version/latest',
-  [ChainId.BSC]: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguebsc',
+  [ChainId.BSC]: 'https://api.studio.thegraph.com/query/1827/coinleague-bnb/version/latest',
   [ChainId.Mumbai]: 'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguemumbaiv3',
 };
 

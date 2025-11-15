@@ -5,11 +5,11 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  const { MaticPriceFeeds } = await import('../../frontend/src/modules/coinleague/constants/PriceFeeds/matic.js');
+  const { BSCPriceFeeds } = await import('../../frontend/src/modules/coinleague/constants/PriceFeeds/bsc.js');
 
-  const targetChainId = 137;
+  const targetChainId = 56;
 
-  const tokens = MaticPriceFeeds || [];
+  const tokens = BSCPriceFeeds || [];
 
   if (tokens.length === 0) {
     console.log(`No tokens found for chain ${targetChainId}`);
@@ -47,7 +47,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${tokens.length} tokens for chain ${targetChainId} (Polygon)`);
+  console.log(`Seeded ${tokens.length} tokens for chain ${targetChainId} (BSC)`);
 
   console.log('Database seeded successfully!');
 }

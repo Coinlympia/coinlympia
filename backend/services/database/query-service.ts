@@ -27,10 +27,27 @@ export async function queryDatabase(
         }
       }
 
-      const tokens = await prisma.gameToken.findMany({
-        where,
+      let allowedAddresses: Set<string> | null = null;
+      if (where.chainId === 56) {
+        try {
+          // @ts-expect-error - Dynamic import with webpack alias, works at runtime
+          const { BSCPriceFeeds } = await import('@/modules/coinleague/constants/PriceFeeds/bsc');
+          allowedAddresses = new Set(BSCPriceFeeds.map((feed: any) => feed.address.toLowerCase()));
+          console.log(`[Query Service] Will filter to ${allowedAddresses.size} tokens from bsc.ts for BSC`);
+        } catch (error) {
+          console.error('[Query Service] Error importing BSCPriceFeeds:', error);
+        }
+      }
+
+      const whereWithoutAddress = { ...where };
+      if (allowedAddresses && whereWithoutAddress.address) {
+        delete whereWithoutAddress.address;
+      }
+
+      const allTokens = await prisma.gameToken.findMany({
+        where: whereWithoutAddress,
         orderBy: { symbol: 'asc' },
-        take: 200,
+        take: 1000,
         select: {
           address: true,
           symbol: true,
@@ -50,7 +67,19 @@ export async function queryDatabase(
         },
       });
 
-      const tokensWithPerformance = tokens.map(token => {
+      console.log(`[Query Service] Found ${allTokens.length} total tokens for chainId: ${where.chainId || 'all'}`);
+
+      let filteredTokens = allTokens;
+      if (allowedAddresses) {
+        filteredTokens = allTokens.filter((token) => 
+          allowedAddresses!.has(token.address.toLowerCase())
+        );
+        console.log(`[Query Service] Filtered from ${allTokens.length} to ${filteredTokens.length} tokens matching bsc.ts`);
+      }
+
+      filteredTokens = filteredTokens.slice(0, 200);
+
+      const tokensWithPerformance = filteredTokens.map(token => {
         const currentPrice = token.currentPrice ? parseFloat(token.currentPrice) : null;
         const price24h = token.price24h ? parseFloat(token.price24h) : null;
 
@@ -81,7 +110,7 @@ export async function queryDatabase(
         success: true,
         data: {
           type: 'tokens',
-          count: tokensWithPerformance.length,
+          count: filteredTokens.length,
           tokens: tokensWithPerformance,
         },
       };

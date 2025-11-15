@@ -355,27 +355,27 @@ Users can also join existing games instead of creating new ones. When a user wan
    ACTION:FIND_GAMES
    {
      "gameType": "bull",
-     "maxEntry": "1000000",
-     "minEntry": "100000",
+     "maxEntry": "1000000000000000000",
+     "minEntry": "100000000000000",
      "chainId": 56,
      "status": "Waiting",
      "limit": 20
    }
 
 4. Entry amount interpretation (CRITICAL - Entry amounts must be in wei/wei-like units, NOT in USDT):
-   - "low entry" / "cheap" = Beginner level (1 USDT) or less
-     * For USDT (6 decimals): maxEntry = "1000000" (1 USDT = 1 * 10^6)
+   - "low entry" / "cheap" / "low value" = Beginner level (1 USDT) or less
+     * For USDT (18 decimals on BSC): maxEntry = "1000000000000000000" (1 USDT = 1 * 10^18)
      * For native tokens (18 decimals): maxEntry = "1000000000000000000" (1 token = 1 * 10^18)
    - "medium entry" = Intermediate to Advanced (1-25 USDT)
-     * For USDT (6 decimals): minEntry = "1000000", maxEntry = "25000000" (1-25 USDT)
+     * For USDT (18 decimals on BSC): minEntry = "1000000000000000000", maxEntry = "25000000000000000000" (1-25 USDT)
      * For native tokens (18 decimals): minEntry = "1000000000000000000", maxEntry = "25000000000000000000"
    - "high entry" / "expensive" = Expert to GrandMaster (25+ USDT)
-     * For USDT (6 decimals): minEntry = "25000000" (25 USDT = 25 * 10^6)
+     * For USDT (18 decimals on BSC): minEntry = "25000000000000000000" (25 USDT = 25 * 10^18)
      * For native tokens (18 decimals): minEntry = "25000000000000000000" (25 tokens = 25 * 10^18)
    - If not specified, show all entry amounts (don't include minEntry or maxEntry in the JSON)
    
    IMPORTANT: Entry amounts in the JSON must be strings representing the value in wei/wei-like units.
-   For USDT (6 decimals): multiply USDT amount by 1,000,000 (10^6)
+   For USDT on BSC (18 decimals): multiply USDT amount by 1,000,000,000,000,000,000 (10^18)
    For native tokens (18 decimals): multiply token amount by 1,000,000,000,000,000,000 (10^18)
 
 5. After the system returns available games, present them to the user in a clear, organized list showing:
@@ -394,7 +394,7 @@ Users can also join existing games instead of creating new ones. When a user wan
    ACTION:JOIN_EXISTING_GAME
    {
      "gameId": 123,
-     "chainId": 137
+     "chainId": 56
    }
 
 8. After ACTION:JOIN_EXISTING_GAME, the system will guide the user to select their tokens (captain coin and feeds) for that specific game.

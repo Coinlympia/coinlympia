@@ -3,6 +3,7 @@ import { GameLevel, GameType } from '@/modules/coinleague/constants/enums';
 import { AppDialogTitle } from '@/modules/common/components/AppDialogTitle';
 import { getNetworkSlugFromChainId } from '@/modules/common/utils';
 import { useWeb3React } from '@dexkit/wallet-connectors/hooks/useWeb3React';
+import { useSwitchNetwork } from '@/hooks/blockchain';
 import SendIcon from '@mui/icons-material/Send';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -35,6 +36,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useCoinToPlayStable, useCreateGameMutation, useCreateGameServerMutation, useTotalGamesMutation } from '../hooks/coinleague';
 import { useFactoryAddress } from '../hooks/coinleagueFactory';
+import { useLeaguesChainInfo } from '../hooks/chain';
 import { joinGame } from '../services/coinLeagueFactoryV3';
 import { GET_GAME_LEVEL_AMOUNTS } from '../utils/game';
 import { AvailableGame, Message, TokenPerformance } from '../types/chat';
@@ -121,8 +123,11 @@ export function ChatBox({
   const [selectedTokenTimePeriod, setSelectedTokenTimePeriod] = useState<string | undefined>(undefined);
   const router = useRouter();
   const { provider, chainId: accountChainId, signer, account } = useWeb3React();
+  const { chainId: gameChainId } = useLeaguesChainInfo();
   const factoryAddress = useFactoryAddress();
-  const coinToPlay = useCoinToPlayStable(chainId || accountChainId);
+  const { openDialog: openSwitchNetwork } = useSwitchNetwork();
+  const activeChainId = chainId || gameChainId;
+  const coinToPlay = useCoinToPlayStable(activeChainId);
 
   const createGameMutation = useCreateGameMutation({
     factoryAddress,
@@ -666,7 +671,7 @@ export function ChatBox({
             content: m.content,
           })),
           tokenData: tokenData,
-          chainId: chainId,
+          chainId: activeChainId,
           gameCreationState: updatedGameCreationState,
           gameJoinState: hasGameJoinContext ? updatedGameJoinState : undefined,
           language: 'english',
@@ -726,7 +731,7 @@ export function ChatBox({
         
         if (isAskingForCaptainCoin || (needsMoreCoins && (isAskingForRemainingCoins || updatedGameJoinState.captainCoin))) {
           try {
-            const finalChainId = chainId || accountChainId;
+            const finalChainId = activeChainId;
             if (finalChainId) {
               const analysisResponse = await fetch('/api/analyze-tokens', {
                 method: 'POST',
@@ -906,10 +911,15 @@ export function ChatBox({
           { id: 'max-coins-5', label: formatMessage({ id: 'chat.option.max.coins.5', defaultMessage: '5 coins' }), value: 5, checked: false },
         ];
       }
-      else if (!isPureTokenAnalysis && !isUserAskingForAnalysis && (contentLower.includes('players') ||
+      else if (!isPureTokenAnalysis && !isUserAskingForAnalysis && 
+          !hasGameJoinContext &&
+          (contentLower.includes('players') ||
           (contentLower.includes('how many') && contentLower.includes('players')) ||
           (contentLower.includes('how many') && contentLower.includes('people'))) && 
-          !updatedGameCreationState.maxPlayers) {
+          !updatedGameCreationState.maxPlayers &&
+          // Only show player options if we don't have all other required params yet
+          (!updatedGameCreationState.gameType || !updatedGameCreationState.duration || 
+           updatedGameCreationState.gameLevel === undefined || !updatedGameCreationState.maxCoins)) {
         messageOptions = [
           { id: 'max-players-2', label: formatMessage({ id: 'chat.option.max.players.2', defaultMessage: '2 players' }), value: 2, checked: false },
           { id: 'max-players-3', label: formatMessage({ id: 'chat.option.max.players.3', defaultMessage: '3 players' }), value: 3, checked: false },
@@ -1195,7 +1205,7 @@ export function ChatBox({
     startDate: number;
     selectedCoins?: string[];
   }) => {
-    if (!provider || !factoryAddress || !signer || !chainId || !coinToPlay) {
+    if (!provider || !factoryAddress || !signer || !activeChainId || !coinToPlay) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
@@ -1256,7 +1266,7 @@ export function ChatBox({
         return;
       }
 
-      if (!chainId) {
+      if (!activeChainId) {
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
           role: 'assistant',
@@ -1271,12 +1281,28 @@ export function ChatBox({
         return;
       }
 
+      if (accountChainId && accountChainId !== activeChainId) {
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content: formatMessage({
+            id: 'chat.error.wrong.network',
+            defaultMessage: `Your wallet is connected to a different network. Please switch to BNB Chain (Chain ID: ${activeChainId}) to create the game.`,
+          }),
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        setIsCreatingGame(false);
+        openSwitchNetwork(activeChainId);
+        return;
+      }
+
 
       let amountToPlay;
       try {
         amountToPlay = GET_GAME_LEVEL_AMOUNTS(
           gameParams.gameLevel,
-          chainId,
+          activeChainId,
           coinToPlay.address,
         );
       } catch (error: any) {
@@ -1432,7 +1458,7 @@ export function ChatBox({
       try {
         await createGameServerMutation.mutateAsync({
           id: gameId?.toNumber() as number,
-          chainId: chainId,
+          chainId: activeChainId,
           startGame: finalStartDate,
           abortGame: Math.floor(finalStartDate / 1000) + gameParams.duration,
           duration: gameParams.duration,
@@ -1479,7 +1505,7 @@ export function ChatBox({
       
       setGameJoinState({
         gameId: gameId.toNumber(),
-        chainId: chainId || accountChainId,
+        chainId: activeChainId,
         maxCoins: gameParams.maxCoins,
         captainCoin: captainCoin,
         selectedCoins: otherCoins,
@@ -1546,7 +1572,7 @@ export function ChatBox({
         return [...prev, searchMessage];
       });
 
-      const finalChainId = findGamesParams.chainId || chainId || accountChainId;
+        const finalChainId = findGamesParams.chainId || activeChainId;
       
       const response = await fetch('/api/find-games', {
         method: 'POST',
@@ -1633,7 +1659,7 @@ export function ChatBox({
 
     const updatedGameJoinState = {
       gameId: joinGameParams.gameId,
-      chainId: joinGameParams.chainId || chainId || accountChainId,
+      chainId: joinGameParams.chainId || activeChainId,
       captainCoin: undefined,
       selectedCoins: [],
     };
@@ -1669,6 +1695,23 @@ export function ChatBox({
       return;
     }
 
+    const finalChainId = gameJoinState.chainId || activeChainId;
+    if (accountChainId && accountChainId !== finalChainId) {
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: formatMessage({
+          id: 'chat.error.wrong.network',
+          defaultMessage: `Your wallet is connected to a different network. Please switch to BNB Chain (Chain ID: ${finalChainId}) to join the game.`,
+        }),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setIsJoiningGame(false);
+      openSwitchNetwork(finalChainId);
+      return;
+    }
+
     if (!gameJoinState.captainCoin || !gameJoinState.selectedCoins || gameJoinState.selectedCoins.length === 0) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
@@ -1697,7 +1740,7 @@ export function ChatBox({
       };
       setMessages((prev) => [...prev, joiningMessage]);
 
-      const finalChainId = gameJoinState.chainId;
+      const finalChainId = gameJoinState.chainId || activeChainId;
       const tokenAddresses = await getTokenAddressesFromSymbols(
         [gameJoinState.captainCoin, ...gameJoinState.selectedCoins],
         finalChainId
@@ -2140,7 +2183,7 @@ export function ChatBox({
                                 (Array.isArray(children) ? children.join('') : String(children));
                               
                               if (isTokenSymbol(linkText)) {
-                                const finalChainId = chainId || accountChainId;
+                                const finalChainId = activeChainId;
                                 const tokenAddress = finalChainId ? getTokenAddress(linkText, finalChainId) : undefined;
                                 const messageTimePeriod = message.tokenPerformanceData?.timePeriod;
                                 
@@ -2354,7 +2397,7 @@ export function ChatBox({
                       onChange={(e, newValue) => {
                         const fetchTimeframeData = async (timeframe: string) => {
                           try {
-                            const finalChainId = chainId || accountChainId;
+                            const finalChainId = activeChainId;
                             if (!finalChainId) return;
 
                             const analysisResponse = await fetch('/api/analyze-tokens', {
@@ -2427,7 +2470,20 @@ export function ChatBox({
                     }}
                   >
                     <Grid container spacing={1}>
-                              {message.tokenPerformanceData.tokens.map((token) => {
+                              {(() => {
+                                const seenSymbols = new Map<string, typeof message.tokenPerformanceData.tokens[0]>();
+                                for (const token of message.tokenPerformanceData.tokens) {
+                                  const symbolLower = token.symbol?.toLowerCase();
+                                  if (!symbolLower) continue;
+                                  
+                                  const existing = seenSymbols.get(symbolLower);
+                                  if (!existing) {
+                                    seenSymbols.set(symbolLower, token);
+                                  }
+                                }
+                                
+                                return Array.from(seenSymbols.values());
+                              })().map((token) => {
                         const formatPrice = (price: number) => {
                           if (price >= 1000) {
                             return new Intl.NumberFormat('en-US', {
@@ -2813,7 +2869,7 @@ export function ChatBox({
                                       throw new Error('Game not found on blockchain');
                                     }
 
-                                    const finalChainId = game.chainId || chainId || accountChainId;
+                                    const finalChainId = game.chainId || activeChainId;
                                     
                                     const maxCoinsNum = typeof game.numCoins === 'string' 
                                       ? parseInt(game.numCoins, 10) 
@@ -3214,7 +3270,7 @@ export function ChatBox({
                                 (Array.isArray(children) ? children.join('') : String(children));
                               
                               if (isTokenSymbol(linkText)) {
-                                const finalChainId = chainId || accountChainId;
+                                const finalChainId = activeChainId;
                                 const tokenAddress = finalChainId ? getTokenAddress(linkText, finalChainId) : undefined;
                                 const messageTimePeriod = message.tokenPerformanceData?.timePeriod;
                                 
@@ -3348,7 +3404,7 @@ export function ChatBox({
                               };
                               setMessages((prev) => [...prev, editMessage]);
                               
-                              const finalChainId = chainId || accountChainId;
+                              const finalChainId = activeChainId;
                               if (finalChainId) {
                                 try {
                                   const analysisResponse = await fetch('/api/analyze-tokens', {
@@ -3611,7 +3667,7 @@ export function ChatBox({
           }}
           tokenSymbol={selectedTokenSymbol}
           tokenAddress={selectedTokenAddress}
-          chainId={chainId || accountChainId}
+          chainId={activeChainId}
           requestedTimePeriod={selectedTokenTimePeriod}
         />
     </Dialog>

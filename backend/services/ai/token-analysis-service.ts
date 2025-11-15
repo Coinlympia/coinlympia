@@ -15,7 +15,19 @@ export async function analyzeTokens(
     throw new Error('ChainId is required');
   }
 
-  const availableTokens = await prisma.gameToken.findMany({
+  let allowedAddresses: Set<string> | null = null;
+  if (chainId === 56) {
+    try {
+      // @ts-expect-error - Dynamic import with webpack alias, works at runtime
+      const { BSCPriceFeeds } = await import('@/modules/coinleague/constants/PriceFeeds/bsc');
+      allowedAddresses = new Set(BSCPriceFeeds.map((feed: any) => feed.address.toLowerCase()));
+      console.log(`[Token Analysis Service] Will filter to ${allowedAddresses.size} tokens from bsc.ts for BSC`);
+    } catch (error) {
+      console.error('[Token Analysis Service] Error importing BSCPriceFeeds:', error);
+    }
+  }
+
+  const allTokens = await prisma.gameToken.findMany({
     where: {
       chainId: chainId,
       isActive: true,
@@ -34,15 +46,30 @@ export async function analyzeTokens(
       price7d: true,
       price30d: true,
     },
-    take: 500,
+    take: 1000,
   });
 
-  if (!availableTokens || availableTokens.length === 0) {
+  if (!allTokens || allTokens.length === 0) {
     console.warn(`[Token Analysis Service] No active tokens found in database for chainId: ${chainId}`);
     return { tokens: [], timePeriod: '24h' };
   }
 
-  console.log(`[Token Analysis Service] Found ${availableTokens.length} active tokens for chainId: ${chainId}`);
+  console.log(`[Token Analysis Service] Found ${allTokens.length} total active tokens for chainId: ${chainId}`);
+
+  let filteredTokens = allTokens;
+  if (allowedAddresses) {
+    filteredTokens = allTokens.filter((token) => 
+      allowedAddresses!.has(token.address.toLowerCase())
+    );
+    console.log(`[Token Analysis Service] Filtered from ${allTokens.length} to ${filteredTokens.length} tokens matching bsc.ts`);
+  }
+
+  if (filteredTokens.length === 0) {
+    console.warn(`[Token Analysis Service] No tokens found after filtering for chainId: ${chainId}`);
+    return { tokens: [], timePeriod: '24h' };
+  }
+
+  console.log(`[Token Analysis Service] Using ${filteredTokens.length} tokens for analysis (from bsc.ts)`);
 
   const apiKey = process.env.OPENAI_API_KEY;
 
@@ -169,7 +196,7 @@ Return only valid JSON, no additional text.`;
 
   const tokenPerformances: TokenPerformance[] = [];
 
-  for (const token of availableTokens) {
+  for (const token of filteredTokens) {
     try {
       const currentPriceStr = token.currentPrice;
       if (!currentPriceStr) {
@@ -243,14 +270,28 @@ Return only valid JSON, no additional text.`;
 
   tokenPerformances.sort((a, b) => b.priceChangePercent - a.priceChangePercent);
 
-  console.log(`[Token Analysis Service] Returning ${tokenPerformances.length} tokens for timePeriod: ${timePeriod}`);
+  const seenSymbols = new Map<string, TokenPerformance>();
+  for (const token of tokenPerformances) {
+    const symbolLower = token.symbol?.toLowerCase();
+    if (!symbolLower) continue;
+    
+    const existing = seenSymbols.get(symbolLower);
+    if (!existing) {
+      seenSymbols.set(symbolLower, token);
+    } else {
+    }
+  }
+  
+  const uniqueTokenPerformances = Array.from(seenSymbols.values());
 
-  if (tokenPerformances.length === 0) {
+  console.log(`[Token Analysis Service] Returning ${uniqueTokenPerformances.length} unique tokens (${tokenPerformances.length} total before deduplication) for timePeriod: ${timePeriod}`);
+
+  if (uniqueTokenPerformances.length === 0) {
     console.warn('[Token Analysis Service] No token performances found. This might indicate an issue with the API calls or token data.');
   }
 
   return {
-    tokens: tokenPerformances,
+    tokens: uniqueTokenPerformances,
     timePeriod: timePeriod,
   };
 }

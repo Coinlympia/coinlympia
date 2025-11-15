@@ -8,6 +8,7 @@ import {
   searchTokenBySymbol,
 } from '@/lib/coingecko-proxy';
 import { prisma } from '@/lib/prisma';
+import { BSCPriceFeeds } from '@/modules/coinleague/constants/PriceFeeds/bsc';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -122,9 +123,15 @@ export default async function handler(
   }
 
   try {
+    const allowedAddresses = new Set(BSCPriceFeeds.map((feed) => feed.address.toLowerCase()));
+
     const tokens = await prisma.gameToken.findMany({
       where: {
         isActive: true,
+        chainId: 56,
+        address: {
+          in: Array.from(allowedAddresses),
+        },
       },
       select: {
         id: true,
@@ -134,8 +141,12 @@ export default async function handler(
       },
     });
 
-    if (!tokens || tokens.length === 0) {
-      return res.status(200).json({ success: true, updated: 0, errors: 0 });
+    const filteredTokens = tokens.filter((token) => 
+      allowedAddresses.has(token.address.toLowerCase())
+    );
+
+    if (!filteredTokens || filteredTokens.length === 0) {
+      return res.status(200).json({ success: true, updated: 0, errors: 0, skipped: 0 });
     }
 
     let updated = 0;
@@ -148,6 +159,10 @@ export default async function handler(
     const tokensToUpdate = await prisma.gameToken.findMany({
       where: {
         isActive: true,
+        chainId: 56,
+        address: {
+          in: Array.from(allowedAddresses),
+        },
         OR: [
           { lastPriceUpdate: null },
           { lastPriceUpdate: { lt: new Date(fiveMinutesAgo) } },
@@ -166,13 +181,17 @@ export default async function handler(
       take: 20,
     });
 
-    if (tokensToUpdate.length === 0) {
-      return res.status(200).json({ success: true, updated: 0, errors: 0, skipped: tokens.length });
+    const filteredTokensToUpdate = tokensToUpdate.filter((token) => 
+      allowedAddresses.has(token.address.toLowerCase())
+    );
+
+    if (filteredTokensToUpdate.length === 0) {
+      return res.status(200).json({ success: true, updated: 0, errors: 0, skipped: filteredTokens.length });
     }
 
     const batchSize = 2;
-    for (let i = 0; i < tokensToUpdate.length; i += batchSize) {
-      const batch = tokensToUpdate.slice(i, i + batchSize);
+    for (let i = 0; i < filteredTokensToUpdate.length; i += batchSize) {
+      const batch = filteredTokensToUpdate.slice(i, i + batchSize);
 
       const batchPromises = batch.map(async (token) => {
         const platformId = getPlatformId(token.chainId);
@@ -220,12 +239,12 @@ export default async function handler(
 
       await Promise.all(batchPromises);
 
-      if (i + batchSize < tokensToUpdate.length) {
+      if (i + batchSize < filteredTokensToUpdate.length) {
         await delay(3000);
       }
     }
 
-    skipped = tokens.length - tokensToUpdate.length;
+    skipped = filteredTokens.length - filteredTokensToUpdate.length;
 
 
     return res.status(200).json({

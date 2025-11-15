@@ -24,7 +24,7 @@ import {
   useColorScheme,
   useTheme,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { useIsMobile } from "@dexkit/core";
@@ -33,6 +33,7 @@ import { Network } from "@dexkit/core/types";
 import { AppDialogTitle } from "@dexkit/ui/components/AppDialogTitle";
 import { useActiveChainIds, useSwitchNetworkMutation } from "@dexkit/ui/hooks";
 import { useWeb3React } from "@dexkit/wallet-connectors/hooks/useWeb3React";
+import { ChainId } from "@/modules/common/constants/enums";
 
 interface Props {
   dialogProps: DialogProps;
@@ -83,7 +84,21 @@ function CoinLeagueSelectNetworkDialog({ dialogProps, chainId }: Props) {
 
   const switchNetworkMutation = useSwitchNetworkMutation();
 
+  useEffect(() => {
+    if (chainId !== undefined && chainId !== selectedChainId) {
+      setSelectedChainId(chainId);
+    }
+  }, [chainId]);
+
   const filteredNetworks = useMemo(() => {
+    if (chainId !== undefined) {
+      const targetNetwork = NETWORKS[chainId];
+      if (targetNetwork && !targetNetwork.testnet) {
+        return [targetNetwork];
+      }
+      return [];
+    }
+
     const availableNetworks = Object.keys(NETWORKS)
       .filter((k) => activeChainIds && activeChainIds?.includes(Number(k)))
       .filter((k) => Number(k) !== connectedChainId)
@@ -98,7 +113,7 @@ function CoinLeagueSelectNetworkDialog({ dialogProps, chainId }: Props) {
       network.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       network.symbol.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [activeChainIds, connectedChainId, searchQuery]);
+  }, [activeChainIds, connectedChainId, searchQuery, chainId]);
 
   const handleClose = () => onClose!({}, "backdropClick");
 
@@ -174,94 +189,96 @@ function CoinLeagueSelectNetworkDialog({ dialogProps, chainId }: Props) {
         }}
       />
 
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10002,
-          backgroundColor: paperColor,
-          borderBottom: `1px solid ${borderColor}`,
-          px: isMobile ? theme.spacing(2) : theme.spacing(3),
-          py: isMobile ? theme.spacing(1.5) : theme.spacing(2),
-        }}
-      >
-        <TextField
-          fullWidth
-          size={isMobile ? "medium" : "small"}
-          placeholder={intl.formatMessage({
-            id: "search.network",
-            defaultMessage: "Search networks by name...",
-          })}
-          value={searchQuery}
-          onChange={(e: any) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon
-                  sx={{
-                    color: textSecondaryColor,
-                    fontSize: isMobile ? theme.typography.h5.fontSize : theme.typography.body1.fontSize,
-                  }}
-                />
-              </InputAdornment>
-            ),
-            endAdornment: searchQuery && (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={handleClearSearch}
-                  sx={{
-                    color: textSecondaryColor,
-                    p: isMobile ? theme.spacing(1) : theme.spacing(0.5),
-                  }}
-                >
-                  <ClearIcon fontSize={isMobile ? "medium" : "small"} />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
+      {filteredNetworks.length > 1 && (
+        <Box
           sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: isMobile ? theme.spacing(1.5) : theme.spacing(1),
-              backgroundColor: inputBackgroundColor,
-              '& fieldset': {
-                borderColor: borderColor,
-              },
-              '&:hover fieldset': {
-                borderColor: theme.palette.primary.main,
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            '& .MuiInputBase-input': {
-              color: textPrimaryColor,
-              '&::placeholder': {
-                color: textSecondaryColor,
-                opacity: 1,
-              },
-            },
+            position: 'sticky',
+            top: 0,
+            zIndex: 10002,
+            backgroundColor: paperColor,
+            borderBottom: `1px solid ${borderColor}`,
+            px: isMobile ? theme.spacing(2) : theme.spacing(3),
+            py: isMobile ? theme.spacing(1.5) : theme.spacing(2),
           }}
-        />
-
-        {searchQuery && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              mt: 1,
-              display: 'block',
-              color: textSecondaryColor,
+        >
+          <TextField
+            fullWidth
+            size={isMobile ? "medium" : "small"}
+            placeholder={intl.formatMessage({
+              id: "search.network",
+              defaultMessage: "Search networks by name...",
+            })}
+            value={searchQuery}
+            onChange={(e: any) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon
+                    sx={{
+                      color: textSecondaryColor,
+                      fontSize: isMobile ? theme.typography.h5.fontSize : theme.typography.body1.fontSize,
+                    }}
+                  />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={handleClearSearch}
+                    sx={{
+                      color: textSecondaryColor,
+                      p: isMobile ? theme.spacing(1) : theme.spacing(0.5),
+                    }}
+                  >
+                    <ClearIcon fontSize={isMobile ? "medium" : "small"} />
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
-          >
-            <FormattedMessage
-              id="networks.found"
-              defaultMessage="{count} {count, plural, one {network} other {networks}} found"
-              values={{ count: filteredNetworks.length }}
-            />
-          </Typography>
-        )}
-      </Box>
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: isMobile ? theme.spacing(1.5) : theme.spacing(1),
+                backgroundColor: inputBackgroundColor,
+                '& fieldset': {
+                  borderColor: borderColor,
+                },
+                '&:hover fieldset': {
+                  borderColor: theme.palette.primary.main,
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: textPrimaryColor,
+                '&::placeholder': {
+                  color: textSecondaryColor,
+                  opacity: 1,
+                },
+              },
+            }}
+          />
+
+          {searchQuery && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                mt: 1,
+                display: 'block',
+                color: textSecondaryColor,
+              }}
+            >
+              <FormattedMessage
+                id="networks.found"
+                defaultMessage="{count} {count, plural, one {network} other {networks}} found"
+                values={{ count: filteredNetworks.length }}
+              />
+            </Typography>
+          )}
+        </Box>
+      )}
 
       <DialogContent
         dividers={false}

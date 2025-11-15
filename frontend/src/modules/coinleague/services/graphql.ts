@@ -32,7 +32,7 @@ export const GET_GRAPHQL_CLIENT_URL_MAIN_ROOM = {
   [ChainId.Base]:
     'https://api.studio.thegraph.com/query/1827/coinleague-base/version/latest',
   [ChainId.BSC]:
-    'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguebsc',
+    'https://api.studio.thegraph.com/query/1827/coinleague-bnb/version/latest',
   [ChainId.Mumbai]:
     'https://api.thegraph.com/subgraphs/name/joaocampos89/coinleaguemumbaiv3',
 };
